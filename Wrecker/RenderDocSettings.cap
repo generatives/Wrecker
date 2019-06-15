@@ -1,0 +1,27 @@
+{
+    "rdocCaptureSettings": 1,
+    "settings": {
+        "autoStart": false,
+        "commandLine": "D:/Development/GameDevelopment/Wrecker/Wrecker/bin/Debug/netcoreapp2.2/Wrecker.dll",
+        "environment": [
+        ],
+        "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "inject": false,
+        "numQueuedFrames": 0,
+        "options": {
+            "allowFullscreen": true,
+            "allowVSync": true,
+            "apiValidation": false,
+            "captureAllCmdLists": false,
+            "captureCallstacks": false,
+            "captureCallstacksOnlyDraws": false,
+            "debugOutputMute": true,
+            "delayForDebugger": 0,
+            "hookIntoChildren": false,
+            "refAllResources": false,
+            "verifyBufferAccess": false
+        },
+        "queuedFrameCap": 0,
+        "workingDir": "D:/Development/GameDevelopment/Wrecker/Wrecker/bin/Debug/netcoreapp2.2"
+    }
+}
