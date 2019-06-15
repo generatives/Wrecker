@@ -53,7 +53,7 @@ namespace Wrecker
 
             var types = new VoxelTypes(new[]
             {
-                new VoxelType(new Vector2(390, 1690), new Vector2(390, 1690), new Vector2(390, 1690))
+                new VoxelType(new Vector2(520, 0), new Vector2(520, 0), new Vector2(520, 0))
             });
 
             var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");

@@ -60,7 +60,7 @@ namespace Clunker.Physics
             {
                 if (voxel.Item2.Exists)
                 {
-                    voxelList.Add(voxel.Item1, pool);
+                    voxelList.AllocateUnsafely() = voxel.Item1;
                 }
             }
             VoxelIndices = voxelList;

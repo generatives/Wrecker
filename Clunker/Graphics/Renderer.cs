@@ -127,7 +127,7 @@ namespace Clunker.Graphics
             commandList.UpdateBuffer(_viewBuffer, 0, camera.GetViewMatrix());
 
             commandList.SetFramebuffer(GraphicsDevice.MainSwapchain.Framebuffer);
-            commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
+            commandList.ClearColorTarget(0, new RgbaFloat(25f / 255, 25f / 255, 112f / 255, 1.0f));
             commandList.ClearDepthStencil(1f);
 
             commandList.UpdateBuffer(_wireframeColourBuffer, 0, RgbaFloat.White);

@@ -14,12 +14,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BepuPhysics" Version="2.0.0" />
     <PackageReference Include="Veldrid" Version="4.6.1" />
     <PackageReference Include="Veldrid.ImageSharp" Version="4.6.1" />
     <PackageReference Include="Veldrid.ImGui" Version="5.69.0" />
     <PackageReference Include="Veldrid.SPIRV" Version="1.0.9" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="4.6.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\bepuphysics2\BepuPhysics\BepuPhysics.csproj" />
+    <ProjectReference Include="..\bepuphysics2\BepuUtilities\BepuUtilities.csproj" />
   </ItemGroup>
 
 </Project>

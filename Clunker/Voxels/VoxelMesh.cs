@@ -62,10 +62,10 @@ namespace Clunker.Voxels
                     indices.Add((ushort)(vertices.Count + 1));
                     indices.Add((ushort)(vertices.Count + 2));
                     indices.Add((ushort)(vertices.Count + 3));
-                    vertices.Add(new VertexPositionTextureNormal(quad.A, textureOffset, quad.Normal));
-                    vertices.Add(new VertexPositionTextureNormal(quad.B, textureOffset + new Vector2(0, 128), quad.Normal));
-                    vertices.Add(new VertexPositionTextureNormal(quad.C, textureOffset + new Vector2(128, 128), quad.Normal));
-                    vertices.Add(new VertexPositionTextureNormal(quad.D, textureOffset + new Vector2(128, 0), quad.Normal));
+                    vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / new Vector2(1024, 2048), quad.Normal));
+                    vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / new Vector2(1024, 2048), quad.Normal));
+                    vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / new Vector2(1024, 2048), quad.Normal));
+                    vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / new Vector2(1024, 2048), quad.Normal));
                 });
                 _newVertices = vertices.ToArray();
                 _newIndices = indices.ToArray();

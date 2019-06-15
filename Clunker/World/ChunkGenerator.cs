@@ -60,7 +60,7 @@ namespace Clunker.World
             var gameObject = new GameObject();
             gameObject.AddComponent(voxelSpace);
             gameObject.AddComponent(chunk);
-            gameObject.AddComponent(new VoxelBody());
+            //gameObject.AddComponent(new VoxelBody());
             gameObject.AddComponent(new VoxelMesh(_types, _materialInstance));
             
             gameObject.GetComponent<Transform>().Position = coordinates * _chunkSize * _voxelSize;

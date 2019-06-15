@@ -3,24 +3,54 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.452
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrecker", "Wrecker\Wrecker.csproj", "{F5630946-04C7-4409-9EC5-DD511A923646}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wrecker", "Wrecker\Wrecker.csproj", "{F5630946-04C7-4409-9EC5-DD511A923646}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clunker", "Clunker\Clunker.csproj", "{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clunker", "Clunker\Clunker.csproj", "{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "bepuphysics2\BepuPhysics\BepuPhysics.csproj", "{615F6711-7FA0-45F7-A0F0-3D382ECAC904}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "bepuphysics2\BepuUtilities\BepuUtilities.csproj", "{F4F7FBCE-221A-4BCD-A516-7455917A6441}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+		ReleaseStrip|Any CPU = ReleaseStrip|Any CPU
+		ReleaseStripNoProfiling|Any CPU = ReleaseStripNoProfiling|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{F5630946-04C7-4409-9EC5-DD511A923646}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F5630946-04C7-4409-9EC5-DD511A923646}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5630946-04C7-4409-9EC5-DD511A923646}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5630946-04C7-4409-9EC5-DD511A923646}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5630946-04C7-4409-9EC5-DD511A923646}.ReleaseStrip|Any CPU.ActiveCfg = Release|Any CPU
+		{F5630946-04C7-4409-9EC5-DD511A923646}.ReleaseStrip|Any CPU.Build.0 = Release|Any CPU
+		{F5630946-04C7-4409-9EC5-DD511A923646}.ReleaseStripNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{F5630946-04C7-4409-9EC5-DD511A923646}.ReleaseStripNoProfiling|Any CPU.Build.0 = Release|Any CPU
 		{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}.ReleaseStrip|Any CPU.ActiveCfg = Release|Any CPU
+		{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}.ReleaseStrip|Any CPU.Build.0 = Release|Any CPU
+		{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}.ReleaseStripNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{54618F2E-5BA0-4E8F-84C1-F171B60AB51F}.ReleaseStripNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{615F6711-7FA0-45F7-A0F0-3D382ECAC904}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{615F6711-7FA0-45F7-A0F0-3D382ECAC904}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{615F6711-7FA0-45F7-A0F0-3D382ECAC904}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{615F6711-7FA0-45F7-A0F0-3D382ECAC904}.Release|Any CPU.Build.0 = Release|Any CPU
+		{615F6711-7FA0-45F7-A0F0-3D382ECAC904}.ReleaseStrip|Any CPU.ActiveCfg = ReleaseStrip|Any CPU
+		{615F6711-7FA0-45F7-A0F0-3D382ECAC904}.ReleaseStrip|Any CPU.Build.0 = ReleaseStrip|Any CPU
+		{615F6711-7FA0-45F7-A0F0-3D382ECAC904}.ReleaseStripNoProfiling|Any CPU.ActiveCfg = ReleaseStripNoProfiling|Any CPU
+		{615F6711-7FA0-45F7-A0F0-3D382ECAC904}.ReleaseStripNoProfiling|Any CPU.Build.0 = ReleaseStripNoProfiling|Any CPU
+		{F4F7FBCE-221A-4BCD-A516-7455917A6441}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4F7FBCE-221A-4BCD-A516-7455917A6441}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4F7FBCE-221A-4BCD-A516-7455917A6441}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4F7FBCE-221A-4BCD-A516-7455917A6441}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4F7FBCE-221A-4BCD-A516-7455917A6441}.ReleaseStrip|Any CPU.ActiveCfg = ReleaseStrip|Any CPU
+		{F4F7FBCE-221A-4BCD-A516-7455917A6441}.ReleaseStrip|Any CPU.Build.0 = ReleaseStrip|Any CPU
+		{F4F7FBCE-221A-4BCD-A516-7455917A6441}.ReleaseStripNoProfiling|Any CPU.ActiveCfg = ReleaseStrip|Any CPU
+		{F4F7FBCE-221A-4BCD-A516-7455917A6441}.ReleaseStripNoProfiling|Any CPU.Build.0 = ReleaseStrip|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
