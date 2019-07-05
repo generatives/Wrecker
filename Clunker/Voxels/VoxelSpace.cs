@@ -39,6 +39,7 @@ namespace Clunker.Voxels
 
         private void StartVoxelsChanged()
         {
+            VoxelsChanged?.Invoke();
             _requestedVoxelsChanged = false;
         }
 

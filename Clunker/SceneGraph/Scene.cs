@@ -17,13 +17,14 @@ namespace Clunker.SceneGraph
     public class Scene
     {
         private List<GameObject> _gameObjects;
+        private List<GameObject> _toRemove;
         public IEnumerable<GameObject> GameObjects { get => _gameObjects; }
 
         private List<IUpdatableSystem> _updatables;
         private List<ISystemEventProcessor> _eventProcessors;
         private Dictionary<Type, SceneSystem> _systems;
 
-        public DrivenMetaQueue FrameQueue { get; private set; }
+        public DrivenWorkQueue FrameQueue { get; private set; }
 
         public bool IsRunning { get; private set; }
         public Camera Camera => App.Camera;
@@ -32,10 +33,11 @@ namespace Clunker.SceneGraph
         public Scene()
         {
             _gameObjects = new List<GameObject>();
+            _toRemove = new List<GameObject>();
             _updatables = new List<IUpdatableSystem>();
             _eventProcessors = new List<ISystemEventProcessor>();
             _systems = new Dictionary<Type, SceneSystem>();
-            FrameQueue = new DrivenMetaQueue();
+            FrameQueue = new DrivenWorkQueue();
         }
 
         internal void SceneStarted(ClunkerApp app)
@@ -156,7 +158,6 @@ namespace Clunker.SceneGraph
                 if (gameObject.CurrentScene != null) gameObject.CurrentScene.RemoveGameObject(gameObject);
                 _gameObjects.Add(gameObject);
                 gameObject.AddedToScene(this);
-                if (IsRunning) gameObject.SceneStarted();
             }
         }
 
@@ -165,8 +166,15 @@ namespace Clunker.SceneGraph
             if(gameObject.CurrentScene == this)
             {
                 _gameObjects.Remove(gameObject);
-                gameObject.SceneStopped();
                 gameObject.RemovedFromCurrentScene();
+                //if (gameObject.HasJobs)
+                //{
+                //    _toRemove.Add(gameObject);
+                //}
+                //else
+                //{
+                //    gameObject.RemovedFromCurrentScene();
+                //}
             }
         }
 
@@ -183,6 +191,21 @@ namespace Clunker.SceneGraph
             {
                 _updatables[i].Update(time);
             }
+
+            var toRemove = new List<GameObject>(_toRemove.Count);
+            for (int i = 0; i < _toRemove.Count; i++)
+            {
+                var obj = _toRemove[i];
+                if(obj.HasJobs)
+                {
+                    toRemove.Add(obj);
+                }
+                else
+                {
+                    obj.RemovedFromCurrentScene();
+                }
+            }
+            _toRemove = toRemove;
         }
 
         internal void RenderUpdate(float time)

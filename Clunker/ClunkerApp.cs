@@ -15,6 +15,7 @@ using Veldrid.StartupUtilities;
 using System.Linq;
 using Clunker.Diagnostics;
 using Clunker.Runtime;
+using ImGuiNET;
 
 namespace Clunker
 {
@@ -30,7 +31,7 @@ namespace Clunker
 
         private List<IRenderer> _renderers;
 
-        public RoundRobinMetaQueue WorkQueue { get; private set; }
+        public RoundRobinWorkQueue WorkQueue { get; private set; }
 
         public event Action Started;
         public event Action Tick;
@@ -39,7 +40,7 @@ namespace Clunker
         {
             NextScene = initialScene;
             _renderers = new List<IRenderer>();
-            WorkQueue = new RoundRobinMetaQueue(new ThreadedWorkMetaQueue(), new ThreadedWorkMetaQueue(), new ThreadedWorkMetaQueue(), new ThreadedWorkMetaQueue());
+            WorkQueue = new RoundRobinWorkQueue(new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue());
         }
 
         public void AddRenderer(IRenderer renderer)
@@ -89,6 +90,7 @@ namespace Clunker
 
                     if (InputTracker.WasKeyDowned(Key.Escape)) break;
                     if (InputTracker.WasKeyDowned(Key.Tab)) InputTracker.LockMouse = !InputTracker.LockMouse;
+                    if (InputTracker.WasKeyDowned(Key.T)) { StackedTiming.Enabled = !StackedTiming.Enabled; Timing.Enabled = !Timing.Enabled; }
 
                     if (_windowResized)
                     {
@@ -116,20 +118,26 @@ namespace Clunker
                     }
                     if (CurrentScene != null)
                     {
-                        Timing.PushFrameTimer("Scene Update");
+                        StackedTiming.PushFrameTimer("Scene Update");
                         CurrentScene.Update(frameTime);
-                        Timing.PopFrameTimer();
+                        StackedTiming.PopFrameTimer();
                         CurrentScene.RenderUpdate(frameTime);
                     }
 
-                    Timing.PushFrameTimer("Render");
+                    StackedTiming.PushFrameTimer("Render");
                     if (Camera != null)
                     {
                         _renderers.ForEach(r => r.Render(Camera, _graphicsDevice, _commandList));
                     }
-                    Timing.PopFrameTimer();
+                    StackedTiming.PopFrameTimer();
 
+                    StackedTiming.Render(frameTime);
                     Timing.Render(frameTime);
+
+                    ImGui.Begin("Queues");
+                    ImGui.Text($"{WorkQueue.NumJobs} Worker Jobs");
+                    ImGui.Text($"{CurrentScene.FrameQueue.NumJobs} Frame Jobs");
+                    ImGui.End();
 
                     imGuiRenderer.Render(_graphicsDevice, _commandList);
 

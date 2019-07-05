@@ -2,6 +2,7 @@
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
 using Clunker.Physics;
+using Clunker.Physics.CharacterController;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentsInterfaces;
 using Clunker.SceneGraph.Core;
@@ -46,24 +47,27 @@ namespace Wrecker
             camera.AddComponent(new Camera());
             //camera.AddComponent(new CylinderBody());
             //camera.AddComponent(new PhysicsMovement());
-            camera.AddComponent(new FreeMovement());
+            //camera.AddComponent(new FreeMovement());
+            camera.AddComponent(new Character());
+            camera.AddComponent(new CharacterInput());
             camera.AddComponent(new LookRayCaster());
             camera.GetComponent<Transform>().Position = new Vector3(50, 0, 50);
             scene.AddGameObject(camera);
 
             var types = new VoxelTypes(new[]
             {
-                new VoxelType(new Vector2(520, 0), new Vector2(520, 0), new Vector2(520, 0))
+                new VoxelType(new Vector2(650, 130), new Vector2(130, 1690), new Vector2(520, 0))
             });
 
             var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
             var voxelMaterialInstance = new MaterialInstance(new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode), voxelTextures);
 
+            var chunkSize = 32;
             var worldSystem = new WorldSystem(
                 camera,
                 new ChunkStorage(),
-                new ChunkGenerator(types, voxelMaterialInstance, 32, 1),
-                5, 32);
+                new ChunkGenerator(types, voxelMaterialInstance, chunkSize, 1),
+                2, chunkSize);
             scene.AddSystem(worldSystem);
             scene.AddSystem(new PhysicsSystem());
 

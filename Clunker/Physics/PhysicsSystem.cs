@@ -6,6 +6,7 @@ using BepuPhysics.CollisionDetection.SweepTasks;
 using BepuPhysics.Constraints;
 using BepuPhysics.Trees;
 using BepuUtilities.Memory;
+using Clunker.Physics.CharacterController;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.SceneSystemInterfaces;
 using System;
@@ -22,13 +23,16 @@ namespace Clunker.Physics
         private SimpleThreadDispatcher _threadDispatcher;
         public BufferPool Pool { get; private set; }
 
+        private CharacterControllers _characters;
+
         public PhysicsSystem()
         {
             //The buffer pool is a source of raw memory blobs for the engine to use.
             Pool = new BufferPool();
+            _characters = new CharacterControllers(Pool);
             //Note that you can also control the order of internal stage execution using a different ITimestepper implementation.
             //For the purposes of this demo, we just use the default by passing in nothing (which happens to be PositionFirstTimestepper at the time of writing).
-            _simulation = Simulation.Create(Pool, new NarrowPhaseCallbacks(), new PoseIntegratorCallbacks(new Vector3(0, -10, 0)));
+            _simulation = Simulation.Create(Pool, new CharacterNarrowphaseCallbacks(_characters), new PoseIntegratorCallbacks(new Vector3(0, -20, 0)));
 
             //The narrow phase must be notified about the existence of the new collidable type. For every pair type we want to support, a collision task must be registered.
             //All of the default engine types are registered upon simulation creation by a call to DefaultTypes.CreateDefaultCollisionTaskRegistry.
@@ -61,6 +65,12 @@ namespace Clunker.Physics
             sphere.ComputeInertia(1, out var sphereInertia);
             
             _threadDispatcher = new SimpleThreadDispatcher(Environment.ProcessorCount);
+        }
+
+        public CharacterControllerRef CreateCharacter(Vector3 position, Capsule capsule, float speculativeMargin, float mass, float maximumHorizontalForce,
+            float maximumVerticalGlueForce, float jumpVelocity, float speed, float maximumSlope)
+        {
+            return new CharacterControllerRef(_characters, position, capsule, speculativeMargin, mass, maximumHorizontalForce, maximumVerticalGlueForce, jumpVelocity, speed, 0.75f, 0.75f, maximumSlope);
         }
 
         public int AddStatic(StaticDescription description)
@@ -121,6 +131,7 @@ namespace Clunker.Physics
 
         public void Dispose()
         {
+            _characters.Dispose();
             //If you intend to reuse the BufferPool, disposing the simulation is a good idea- it returns all the buffers to the pool for reuse.
             //Here, we dispose it, but it's not really required; we immediately thereafter clear the BufferPool of all held memory.
             //Note that failing to dispose buffer pools can result in memory leaks.

@@ -22,9 +22,9 @@ namespace Clunker.Physics
     //Note that we don't just use ICompoundShape, even though that would lessen the amount of special case work needed-
     //ICompoundShape is designed to work in a more general case where every child may have a unique shape.
     //Meshes and voxel sets don't behave this way- all children are a single type, hence 'homogeneous'.
-    public struct VoxelCollidable : IHomogeneousCompoundShape<Box, BoxWide>
+    public struct VoxelGridCollidable : IHomogeneousCompoundShape<Box, BoxWide>
     {
-        public static readonly int VoxelCollidableTypeId = 12;
+        public static readonly int VoxelCollidableTypeId = 13;
 
         //Type ids should be unique across all shape types in a simulation.
         public int TypeId => VoxelCollidableTypeId;
@@ -38,6 +38,8 @@ namespace Clunker.Physics
         //advantage of regular voxel grids' unique properties.)
         public Tree Tree;
 
+        public VoxelSpaceData Voxels;
+
         /// <summary>
         /// List of the voxels in the voxel set by three dimensional index.
         /// </summary>
@@ -48,14 +50,15 @@ namespace Clunker.Physics
         /// </summary>
         public Vector3 VoxelSize;
 
-        public VoxelSpace Space { get; private set; }
+        public Vector3i Coordinates { get; private set; }
 
         public int ChildCount => VoxelIndices.Count;
 
-        public VoxelCollidable(VoxelSpace space, BufferPool pool)
+        public VoxelGridCollidable(Vector3i coordinates, VoxelSpace space, BufferPool pool)
         {
-            Space = space;
+            Coordinates = coordinates;
             var data = space.Data;
+            Voxels = data;
             var voxelList = new QuickList<Vector3>(data.XLength * data.YLength * data.ZLength, pool);
             foreach (var voxel in data)
             {
@@ -224,15 +227,26 @@ namespace Clunker.Physics
             //This sequentializes a whole lot of cache misses. You could probably get some benefit out of traversing all pairs 'simultaneously'- that is, 
             //using the fact that we have lots of independent queries to ensure the CPU always has something to do. But for the sake of this demo, we'll do it the simple way.
 
-            //All this enumerator does is take an overlap reported by the GetOverlaps function and add it to the overlaps list.
-            ShapeTreeOverlapEnumerator<TSubpairOverlaps> enumerator;
-            enumerator.Pool = pool;
             for (int i = 0; i < pairs.Length; ++i)
             {
                 ref var pair = ref pairs[i];
-                ref var voxelsSet = ref Unsafe.AsRef<VoxelCollidable>(pair.Container);
-                enumerator.Overlaps = Unsafe.AsPointer(ref overlaps.GetOverlapsForPair(i));
-                Tree.GetOverlaps(pair.Min, pair.Max, ref enumerator);
+                ref var voxelsSet = ref Unsafe.AsRef<VoxelGridCollidable>(pair.Container);
+                ref var overlapsForPair = ref overlaps.GetOverlapsForPair(i);
+                var startIndex = new Vector3i((int)(pair.Min.X / Voxels.VoxelSize), (int)(pair.Min.Y / Voxels.VoxelSize), (int)(pair.Min.Z / Voxels.VoxelSize));
+                var endIndex = new Vector3i((int)(pair.Max.X / Voxels.VoxelSize), (int)(pair.Max.Y / Voxels.VoxelSize), (int)(pair.Max.Z / Voxels.VoxelSize));
+                for(int x = startIndex.X; x <= endIndex.X; x++)
+                {
+                    for (int y = startIndex.Y; y <= endIndex.Y; y++)
+                    {
+                        for (int z = startIndex.Z; z <= endIndex.Z; z++)
+                        {
+                            if(Voxels[x, y, z].Exists)
+                            {
+                                overlapsForPair.Allocate(pool) = GetSubShapeIndex(x, y, z);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -252,6 +266,18 @@ namespace Clunker.Physics
             Tree.Dispose(pool);
             VoxelIndices.Dispose(pool);
         }
+
+        private int GetSubShapeIndex(int x, int y, int z)
+        {
+            return (z << 16) | (y << 8) | x;
+        }
+
+        private void GetCoordinates(int i, out int x, out int y, out int z)
+        {
+            z = (0x00FF0000 | i) >> 20;
+            y = (0x0000FF00 | i) >> 10;
+            x = (0x000000FF | i);
+        }
     }
 
     //"Continuations" tell the collision batcher what to do with the collision detection results after completing a batch.
@@ -261,7 +287,7 @@ namespace Clunker.Physics
     //There is also a "MeshReduction" which is a bit more involved- it tries to smooth out collisions at the boundaries of triangles to avoid bumps during sliding.
     //For our voxel set, we'll just use the NonconvexReduction despite the fact that it'll allow bumps at shape boundaries during sliding.
     //(I'll leave boundary smoothing for voxels as a not-easy exercise for the highly motivated reader.)
-    public struct ConvexVoxelsContinuations : IConvexCompoundContinuationHandler<NonconvexReduction>
+    public struct ConvexVoxelsGridContinuations : IConvexCompoundContinuationHandler<NonconvexReduction>
     {
         public CollisionContinuationType CollisionContinuationType => CollisionContinuationType.NonconvexReduction;
 
@@ -278,7 +304,7 @@ namespace Clunker.Physics
             in BoundsTestedPair pair, int shapeTypeA, int childIndexB, out RigidPose childPoseB, out int childTypeB, out void* childShapeDataB)
             where TCallbacks : struct, ICollisionCallbacks
         {
-            ref var voxels = ref Unsafe.AsRef<VoxelCollidable>(pair.B);
+            ref var voxels = ref Unsafe.AsRef<VoxelGridCollidable>(pair.B);
             ref var voxelIndex = ref voxels.VoxelIndices[childIndexB];
             var localPosition = (voxelIndex + new Vector3(0.5f)) * voxels.VoxelSize;
             Quaternion.TransformWithoutOverlap(localPosition, pair.OrientationB, out childPoseB.Position);
@@ -323,7 +349,7 @@ namespace Clunker.Physics
         }
     }
 
-    public unsafe struct CompoundVoxelsGridContinuations<TCompoundA> : ICompoundPairContinuationHandler<NonconvexReduction>
+    public unsafe struct CompoundVoxelsContinuations<TCompoundA> : ICompoundPairContinuationHandler<NonconvexReduction>
         where TCompoundA : ICompoundShape
     {
         public CollisionContinuationType CollisionContinuationType => CollisionContinuationType.NonconvexReduction;

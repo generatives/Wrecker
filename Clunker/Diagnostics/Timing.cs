@@ -1,7 +1,6 @@
 ﻿using ImGuiNET;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -10,36 +9,35 @@ namespace Clunker.Diagnostics
     public class Timing
     {
         public static bool Enabled { get; set; }
-        private static List<(string, int, Stopwatch)> _watches = new List<(string, int, Stopwatch)>();
-        private static int _depth;
+        private static Dictionary<string, (double, DateTime)> _previousTimes = new Dictionary<string, (double, DateTime)>();
 
-        public static void PushFrameTimer(string name)
+        public static void ReportTime(string name, double time, float ttk = 1000f)
         {
             if (!Enabled) return;
-            _watches.Add((name, _depth, Stopwatch.StartNew()));
-            _depth++;
-        }
-
-        public static void PopFrameTimer()
-        {
-            if (!Enabled) return;
-            var (name, depth, watch) = _watches[_watches.Count - _depth];
-            watch.Stop();
-            _depth--;
+            _previousTimes[name] = (time, DateTime.Now + TimeSpan.FromMilliseconds(ttk));
         }
 
         internal static void Render(float frameTime)
         {
-            if (!_watches.Any()) return;
+            if (!_previousTimes.Any()) return;
 
-            ImGui.Begin("Frame Times");
-            ImGui.Text($"Framerate: {1f / frameTime}");
-            foreach(var (name, depth, watch) in _watches)
+            var now = DateTime.Now;
+            var toRemove = new List<string>();
+            ImGui.Begin("Times");
+            foreach (var (name, (time, ttk)) in _previousTimes)
             {
-                ImGui.Text($"{new string(' ', depth)}{name}: {(float)watch.Elapsed.TotalMilliseconds}ms");
+                ImGui.Text($"{name}: {time}ms");
+                if(ttk < now)
+                {
+                    toRemove.Add(name);
+                }
             }
             ImGui.End();
-            _watches.Clear();
+
+            foreach(var name in toRemove)
+            {
+                _previousTimes.Remove(name);
+            }
         }
     }
 }

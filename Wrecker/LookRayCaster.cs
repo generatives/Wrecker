@@ -5,6 +5,8 @@ using Clunker.Math;
 using Clunker.Physics;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.Voxels;
+using Clunker.World;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -15,27 +17,29 @@ namespace Wrecker
     public class LookRayCaster : Component, IUpdateable
     {
         private PhysicsSystem _physicsSystem;
+        private WorldSystem _worldSystem;
 
         public void Update(float time)
         {
-            if (_physicsSystem == null) _physicsSystem = GameObject.CurrentScene.GetSystem<PhysicsSystem>();
-
-            var handler = new FirstHitHandler(BepuPhysics.Collidables.CollidableMobility.Static);
-            var forward = GameObject.Transform.Orientation.GetForwardVector();
-            _physicsSystem.Raycast(GameObject.Transform.Position, forward, float.MaxValue, ref handler);
-            if(handler.Hit)
+            if (InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left))
             {
-                var t = handler.T;
-                var body = _physicsSystem.GetStaticReference(handler.Collidable.Handle);
-                if(body.Collidable.Shape.Type == VoxelCollidable.VoxelCollidableTypeId)
+                if (_physicsSystem == null) _physicsSystem = GameObject.CurrentScene.GetSystem<PhysicsSystem>();
+                if (_worldSystem == null) _worldSystem = GameObject.CurrentScene.GetSystem<WorldSystem>();
+
+                var handler = new FirstHitHandler(CollidableMobility.Static);
+                var forward = GameObject.Transform.Orientation.GetForwardVector();
+                _physicsSystem.Raycast(GameObject.Transform.Position, forward, float.MaxValue, ref handler);
+                if (handler.Hit)
                 {
-                    var voxels = _physicsSystem.GetShape<VoxelCollidable>(body.Collidable.Shape.Index);
-                    var space = voxels.Space;
-                    var hitLocation = GameObject.Transform.Position + forward * t;
-                    if(InputTracker.IsMouseButtonPressed(Veldrid.MouseButton.Left))
+                    var t = handler.T;
+                    var body = _physicsSystem.GetStaticReference(handler.Collidable.Handle);
+                    if (body.Collidable.Shape.Type == VoxelCollidable.VoxelCollidableTypeId)
                     {
+                        var voxels = _physicsSystem.GetShape<VoxelCollidable>(body.Collidable.Shape.Index);
+                        var hitLocation = GameObject.Transform.Position + forward * t;
+                        var space = voxels.Space.GameObject.GetComponent<VoxelSpace>();
                         var index = space.GetVoxelIndex(hitLocation);
-                        voxels.Space.Data[index] = new Clunker.Voxels.Voxel() { Exists = false };
+                        space.Data[index] = new Voxel() { Exists = false };
                     }
                 }
             }

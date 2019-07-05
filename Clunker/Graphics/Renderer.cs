@@ -144,7 +144,7 @@ namespace Clunker.Graphics
                 var (meshGeometry, materialInstance) = mesh.ProvideMeshAndMaterial();
                 if(meshGeometry != null && materialInstance != null)
                 {
-                    if (meshGeometry.MustUpdateResources) meshGeometry.UpdateResources(this);
+                    if (meshGeometry.MustUpdateResources) meshGeometry.UpdateResources(this.GraphicsDevice);
                     if (materialInstance.MustUpdateResources) materialInstance.UpdateResources(this);
                     if (materialInstance.Material.MustUpdateResources) materialInstance.Material.UpdateResources(this);
 

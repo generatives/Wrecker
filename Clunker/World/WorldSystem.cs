@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Clunker.SceneGraph.SceneSystemInterfaces;
+using Clunker.Diagnostics;
+using System.Diagnostics;
+using System.Collections.Concurrent;
 
 namespace Clunker.World
 {
@@ -44,6 +47,9 @@ namespace Clunker.World
         public Vector3i CenterChunk { get; private set; }
         public int LoadRadius { get; set; }
 
+        private ConcurrentQueue<Vector3i> _chunksToLoad;
+        private ConcurrentQueue<Chunk> _chunksToAdd;
+
         public WorldSystem(GameObject player, ChunkStorage storage, ChunkGenerator generator, int loadRadius, int chunkLength)
         {
             _player = player;
@@ -53,6 +59,8 @@ namespace Clunker.World
             _chunkLength = chunkLength;
 
             _chunkMap = new Dictionary<Vector3i, Chunk>();
+            _chunksToLoad = new ConcurrentQueue<Vector3i>();
+            _chunksToAdd = new ConcurrentQueue<Chunk>();
         }
 
         public void Update(float time)
@@ -60,20 +68,28 @@ namespace Clunker.World
             var position = _player.Transform.Position;
             SetCenterChunk((int)MathF.Floor(position.X / _chunkLength), (int)MathF.Floor(position.Y / _chunkLength), (int)MathF.Floor(position.Z / _chunkLength));
             //SetCenterChunk(0, 0, 0);
+
+            while (_chunksToAdd.TryDequeue(out Chunk chunk))
+            {
+                _chunkMap[chunk.Coordinates] = chunk;
+                CurrentScene.AddGameObject(chunk.GameObject);
+            }
         }
 
         public void SetCenterChunk(int x, int y, int z)
         {
             if (_chunkMap.Count == 0 || x != CenterChunk.X || y != CenterChunk.Y || z != CenterChunk.Z)
             {
+                var watch = Stopwatch.StartNew();
                 CenterChunk = new Vector3i(x, y, z);
-                //Console.WriteLine($"Player is {_player.Transform.Position}");
-                //Console.WriteLine($"Chunk is {x}, {y}, {z}");
+                _chunksToLoad.Clear();
 
+                int removed = 0;
                 foreach (var chunk in new List<Chunk>(this))
                 {
                     if (!AreaContainsChunk(chunk))
                     {
+                        removed++;
                         UnloadChunk(chunk);
                     }
                 }
@@ -89,17 +105,17 @@ namespace Clunker.World
                                 var coordinates = new Vector3i(x + xOffset, y + yOffset, z + zOffset);
                                 if (!_chunkMap.ContainsKey(coordinates))
                                 {
-                                    LoadChunk(coordinates);
+                                    _chunksToLoad.Enqueue(coordinates);
+                                    if(_chunksToLoad.Count == 1)
+                                    {
+                                        CurrentScene.App.WorkQueue.Enqueue(LoadQueuedChunks);
+                                    }
                                 }
                             }
                         }
                     }
                 }
-
-                //foreach (var chunk in new List<Chunk>(this))
-                //{
-                //    Console.WriteLine($"Loaded {chunk.Coordinates}");
-                //}
+                Timing.ReportTime("Generate Chunks", watch.Elapsed.TotalMilliseconds);
             }
         }
 
@@ -110,19 +126,21 @@ namespace Clunker.World
             _storage.StoreChunk(chunk);
         }
 
-        private void LoadChunk(Vector3i coordinates)
+        private void LoadQueuedChunks()
         {
-            Chunk chunk;
-            if(_storage.ChunkExists(coordinates))
+            while (_chunksToLoad.TryDequeue(out Vector3i coordinates))
             {
-                chunk = _storage.LoadChunk(coordinates);
+                Chunk chunk;
+                if (_storage.ChunkExists(coordinates))
+                {
+                    chunk = _storage.LoadChunk(coordinates);
+                }
+                else
+                {
+                    chunk = _generator.GenerateChunk(coordinates);
+                }
+                _chunksToAdd.Enqueue(chunk);
             }
-            else
-            {
-                chunk = _generator.GenerateChunk(coordinates);
-            }
-            _chunkMap[coordinates] = chunk;
-            CurrentScene.AddGameObject(chunk.GameObject);
         }
 
         public bool AreaContainsChunk(Chunk chunk)

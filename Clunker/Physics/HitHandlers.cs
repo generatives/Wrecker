@@ -19,9 +19,9 @@ namespace Clunker.Physics
 
         public FirstHitHandler(CollidableMobility mobilityFilter)
         {
-            Collidable = default(CollidableReference);
+            Collidable = default;
             T = float.MaxValue;
-            Normal = default(Vector3);
+            Normal = default;
             Hit = false;
 
             MobilityFilter = mobilityFilter;

@@ -25,11 +25,18 @@ namespace Clunker.Graphics
             MustUpdateResources = true;
         }
 
-        internal void UpdateResources(Renderer renderer)
+        public void UpdateMesh(GraphicsDevice graphicsDevice, VertexPositionTextureNormal[] vertices, ushort[] indices)
+        {
+            _vertices = vertices;
+            _indices = indices;
+            _numIndices = (uint)indices.Length;
+            UpdateResources(graphicsDevice);
+        }
+
+        internal void UpdateResources(GraphicsDevice graphicsDevice)
         {
             if (_vertices == null || _indices == null) return;
 
-            var graphicsDevice = renderer.GraphicsDevice;
             var factory = graphicsDevice.ResourceFactory;
             var vertexBufferSize = (uint)(VertexPositionTextureNormal.SizeInBytes * _vertices.Length);
             if (_vertexBuffer == null || _vertexBuffer.SizeInBytes < vertexBufferSize)

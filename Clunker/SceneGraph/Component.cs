@@ -13,8 +13,8 @@ namespace Clunker.SceneGraph
         public Scene CurrentScene { get => GameObject?.CurrentScene; }
         internal ConcurrentQueue<Action> WorkerJobs { get; private set; }
         internal ConcurrentQueue<Action> FrameJobs { get; private set; }
-        internal bool HasJobs => WorkerJobs.Count != 0 && FrameJobs.Count != 0;
-
+        internal int JobsSubmitted { get; private set; }
+        internal bool HasJobs => JobsSubmitted != 0;
         public bool IsAlive { get; internal set; }
 
         public Component()
@@ -26,15 +26,15 @@ namespace Clunker.SceneGraph
         protected void EnqueueWorkerJob(Action action)
         {
             if (!IsAlive) return;
-            WorkerJobs.Enqueue(() => { if (IsAlive) { action(); } });
-            if (WorkerJobs.Count == 1) GameObject.CurrentScene.App.WorkQueue.Enqueue(WorkerJobs);
+            JobsSubmitted++;
+            GameObject.CurrentScene.App.WorkQueue.Enqueue(() => { if (IsAlive) { action(); JobsSubmitted--; } });
         }
 
         protected void EnqueueFrameJob(Action action)
         {
             if (!IsAlive) return;
-            FrameJobs.Enqueue(() => { if (IsAlive) { action(); } });
-            if (WorkerJobs.Count == 1) GameObject.CurrentScene.FrameQueue.Enqueue(FrameJobs);
+            JobsSubmitted++;
+            GameObject.CurrentScene.FrameQueue.Enqueue(() => { if (IsAlive) { action(); JobsSubmitted--; } });
         }
     }
 }

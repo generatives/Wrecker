@@ -21,9 +21,6 @@ namespace Clunker.Voxels
         private static MaterialInstance _materialInstance;
         private MeshGeometry _meshGeometry;
 
-        private VertexPositionTextureNormal[] _newVertices;
-        private ushort[] _newIndices;
-
         private VoxelTypes _types;
 
         public VoxelMesh(VoxelTypes types, MaterialInstance materialInstance)
@@ -48,6 +45,7 @@ namespace Clunker.Voxels
         {
             this.EnqueueWorkerJob(() =>
             {
+                //Thread.Sleep(750);
                 var voxels = space.Data;
                 var vertices = new List<VertexPositionTextureNormal>(voxels.XLength * voxels.YLength * voxels.ZLength);
                 var indices = new List<ushort>(voxels.XLength * voxels.YLength * voxels.ZLength);
@@ -67,15 +65,8 @@ namespace Clunker.Voxels
                     vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / new Vector2(1024, 2048), quad.Normal));
                     vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / new Vector2(1024, 2048), quad.Normal));
                 });
-                _newVertices = vertices.ToArray();
-                _newIndices = indices.ToArray();
-                this.EnqueueFrameJob(UpdateGeometry);
+                _meshGeometry.UpdateMesh(vertices.ToArray(), indices.ToArray());
             });
-        }
-
-        private void UpdateGeometry()
-        {
-            _meshGeometry.UpdateMesh(_newVertices, _newIndices);
         }
 
         //public void GenerateMesh(out List<VertexPositionTextureNormal> vertices, out List<ushort> indices)

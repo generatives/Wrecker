@@ -13,6 +13,8 @@ namespace Clunker.SceneGraph
     {
         public Scene CurrentScene { get; private set; }
 
+        internal bool HasJobs => _components.Any(c => c.Value.HasJobs) || _listenersToStop.Any(c => (c as Component).HasJobs);
+
         private Dictionary<Type, Component> _components;
         private List<IUpdateable> _updateables;
         private List<IRenderUpdateable> _renderUpdateables;
@@ -64,6 +66,7 @@ namespace Clunker.SceneGraph
         public void RemoveComponent(Component component)
         {
             if (component.GameObject != this) return;
+            component.IsAlive = false;
 
             if (component is IUpdateable updateable)
             {
@@ -84,7 +87,6 @@ namespace Clunker.SceneGraph
                 }
             }
 
-            component.IsAlive = false;
             component.GameObject = null;
             _components.Remove(component.GetType());
         }
@@ -111,11 +113,11 @@ namespace Clunker.SceneGraph
             CurrentScene = scene;
             if(scene.IsRunning)
             {
-                _componentListeners.ForEach(l => l.ComponentStarted());
                 foreach (var component in _components.Values)
                 {
                     component.IsAlive = true;
                 }
+                _componentListeners.ForEach(l => l.ComponentStarted());
             }
         }
 
@@ -123,43 +125,44 @@ namespace Clunker.SceneGraph
         {
             if(CurrentScene.IsRunning)
             {
-                _componentListeners.ForEach(l => TryTellComponentStop(l));
                 foreach (var component in _components.Values)
                 {
                     component.IsAlive = false;
                 }
+                _componentListeners.ForEach(l => TryTellComponentStop(l));
             }
             CurrentScene = null;
         }
 
         internal void SceneStarted()
         {
-            _componentListeners.ForEach(l => l.ComponentStarted());
             foreach (var component in _components.Values)
             {
                 component.IsAlive = true;
             }
+            _componentListeners.ForEach(l => l.ComponentStarted());
         }
 
         internal void SceneStopped()
         {
-            _componentListeners.ForEach(l => TryTellComponentStop(l));
             foreach (var component in _components.Values)
             {
                 component.IsAlive = false;
             }
+            _componentListeners.ForEach(l => TryTellComponentStop(l));
         }
 
         private void TryTellComponentStop(IComponentEventListener listener)
         {
-            if (!(listener as Component).HasJobs)
-            {
-                listener.ComponentStopped();
-            }
-            else
-            {
-                _listenersToStop.Add(listener);
-            }
+            listener.ComponentStopped();
+            //if (!(listener as Component).HasJobs)
+            //{
+            //    listener.ComponentStopped();
+            //}
+            //else
+            //{
+            //    _listenersToStop.Add(listener);
+            //}
         }
 
         internal void Update(float time)

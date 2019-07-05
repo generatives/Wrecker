@@ -1,4 +1,5 @@
-﻿using Clunker.Graphics;
+﻿using Clunker.Diagnostics;
+using Clunker.Graphics;
 using Clunker.Math;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentsInterfaces;
@@ -17,6 +18,7 @@ namespace Clunker.World
         private MaterialInstance _materialInstance;
         private int _chunkSize;
         private int _voxelSize;
+        private FastNoise _noise;
 
         public ChunkGenerator(VoxelTypes types, MaterialInstance materialInstance, int chunkSize, int voxelSize)
         {
@@ -24,6 +26,8 @@ namespace Clunker.World
             _materialInstance = materialInstance;
             _chunkSize = chunkSize;
             _voxelSize = voxelSize;
+            _noise = new FastNoise(DateTime.Now.Second);
+            _noise.SetFrequency(0.08f);
         }
 
         public Chunk GenerateChunk(Vector3i coordinates)
@@ -32,16 +36,80 @@ namespace Clunker.World
             var random = new Random((coordinates.X << 20) ^ (coordinates.Y << 10) ^ (coordinates.Z));
             var voxelSpaceData = new VoxelSpaceData(_chunkSize, _chunkSize, _chunkSize, _voxelSize);
 
-            //for (int x = 0; x < voxelSpaceData.XLength; x++)
-            //    for (int y = 0; y < voxelSpaceData.YLength; y++)
-            //        for (int z = 0; z < voxelSpaceData.ZLength; z++)
-            //        {
-            //        }
+            var voxels = GenerateSpheres(random);
+            //JoinVoxels(voxels);
+            SplatterHoles(voxels, random);
 
-            var numAstroids = random.Next(1, 4);
-            for (int a = 0; a < numAstroids; a++)
+            for (int x = 0; x < _chunkSize; x++)
+                for (int y = 0; y < _chunkSize; y++)
+                    for (int z = 0; z < _chunkSize; z++)
+                    {
+                        //voxelSpaceData[x, y, z] = new Voxel() { Exists = voxels[x, y, z] != 0 };
+                        voxelSpaceData[x, y, z] = new Voxel() { Exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f };
+                    }
+
+            var voxelSpace = new VoxelSpace(voxelSpaceData);
+            var chunk = new Chunk(coordinates);
+            var gameObject = new GameObject();
+            gameObject.AddComponent(voxelSpace);
+            gameObject.AddComponent(chunk);
+            gameObject.AddComponent(new VoxelBody());
+            gameObject.AddComponent(new VoxelMesh(_types, _materialInstance));
+            
+            gameObject.GetComponent<Transform>().Position = coordinates * _chunkSize * _voxelSize;
+            //Console.WriteLine($"Chunk gen: {watch.Elapsed.TotalMilliseconds}");
+
+            return chunk;
+        }
+
+        public byte[,,] GenerateSpheres(Random random)
+        {
+            var voxels = new byte[_chunkSize, _chunkSize, _chunkSize];
+            var numAstroids = random.Next(3, 10);
+            var locations = new (Vector3i, int)[numAstroids];
+            for (byte a = 0; a < numAstroids; a++)
             {
-                int r = random.Next(2, 10);
+                int r = random.Next(2, 4);
+                int aX = random.Next(r, _chunkSize - r);
+                int aY = random.Next(r, _chunkSize - r);
+                int aZ = random.Next(r, _chunkSize - r);
+                locations[a] = (new Vector3i(aX, aY, aZ), r);
+            }
+
+            for (int x = 0; x < _chunkSize; x++)
+                for (int y = 0; y < _chunkSize; y++)
+                    for (int z = 0; z < _chunkSize; z++)
+                    {
+                        var strength = 0f;
+                        for (byte a = 0; a < numAstroids; a++)
+                        {
+                            var (location, radius) = locations[a];
+                            var rSq = ((x - location.X) * (x - location.X)) + ((y - location.Y) * (y - location.Y)) + ((z - location.Z) * (z - location.Z));
+                            if(rSq == 0)
+                            {
+                                strength = 500;
+                                break;
+                            }
+                            else
+                            {
+                                strength += (float)(radius * radius) / rSq;
+                            }
+                        }
+                        if(strength > 0.5f)
+                        {
+                            voxels[x, y, z] = 1;
+                        }
+                    }
+
+            return voxels;
+        }
+
+        public void SplatterHoles(byte[,,] voxels, Random random)
+        {
+            var numHoles = random.Next(0, 50);
+            for (int a = 0; a < numHoles; a++)
+            {
+                int r = random.Next(1, 5);
                 int aX = random.Next(r, _chunkSize - r);
                 int aY = random.Next(r, _chunkSize - r);
                 int aZ = random.Next(r, _chunkSize - r);
@@ -49,24 +117,12 @@ namespace Clunker.World
                     for (int yOffset = -r; yOffset <= r; yOffset++)
                         for (int zOffset = -r; zOffset <= r; zOffset++)
                         {
-                            if((xOffset * xOffset + yOffset * yOffset + zOffset * zOffset) <= r * r)
+                            if ((xOffset * xOffset + yOffset * yOffset + zOffset * zOffset) <= r * r)
                             {
-                                voxelSpaceData[aX + xOffset, aY + yOffset, aZ + zOffset] = new Voxel() { Exists = true };
+                                voxels[aX + xOffset, aY + yOffset, aZ + zOffset] = 0;
                             }
                         }
             }
-            var voxelSpace = new VoxelSpace(voxelSpaceData);
-            var chunk = new Chunk(coordinates);
-            var gameObject = new GameObject();
-            gameObject.AddComponent(voxelSpace);
-            gameObject.AddComponent(chunk);
-            //gameObject.AddComponent(new VoxelBody());
-            gameObject.AddComponent(new VoxelMesh(_types, _materialInstance));
-            
-            gameObject.GetComponent<Transform>().Position = coordinates * _chunkSize * _voxelSize;
-            //Console.WriteLine($"Chunk gen: {watch.Elapsed.TotalMilliseconds}");
-
-            return chunk;
         }
     }
 }
