@@ -35,11 +35,14 @@ namespace Wrecker
                     var body = _physicsSystem.GetStaticReference(handler.Collidable.Handle);
                     if (body.Collidable.Shape.Type == VoxelCollidable.VoxelCollidableTypeId)
                     {
-                        var voxels = _physicsSystem.GetShape<VoxelCollidable>(body.Collidable.Shape.Index);
-                        var hitLocation = GameObject.Transform.Position + forward * t;
-                        var space = voxels.Space.GameObject.GetComponent<VoxelSpace>();
-                        var index = space.GetVoxelIndex(hitLocation);
-                        space.Data[index] = new Voxel() { Exists = false };
+                        var context = _physicsSystem.GetStaticContext(body);
+                        if(context is VoxelBody voxels)
+                        {
+                            var hitLocation = GameObject.Transform.Position + forward * t;
+                            var space = voxels.GameObject.GetComponent<VoxelSpace>();
+                            var index = space.GetVoxelIndex(hitLocation);
+                            space.Data[index] = new Voxel() { Exists = false };
+                        }
                     }
                 }
             }

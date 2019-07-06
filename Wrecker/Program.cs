@@ -1,4 +1,5 @@
 ﻿using Clunker;
+using Clunker.Construct;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
 using Clunker.Physics;
@@ -62,6 +63,8 @@ namespace Wrecker
             var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
             var voxelMaterialInstance = new MaterialInstance(new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode), voxelTextures);
 
+            scene.AddGameObject(CreateShip(types, voxelMaterialInstance));
+
             var chunkSize = 32;
             var worldSystem = new WorldSystem(
                 camera,
@@ -73,6 +76,29 @@ namespace Wrecker
 
             var app = new ClunkerApp(scene);
             app.Start(wci, options).Wait();
+        }
+
+        private static GameObject CreateShip(VoxelTypes types, MaterialInstance materialInstance)
+        {
+            var voxelSpaceData = new VoxelSpaceData(5, 5, 10, 1);
+
+            for (int x = 0; x < voxelSpaceData.XLength; x++)
+                for (int y = 0; y < voxelSpaceData.YLength; y++)
+                    for (int z = 0; z < voxelSpaceData.ZLength; z++)
+                    {
+                        //voxelSpaceData[x, y, z] = new Voxel() { Exists = x == 0 || x == voxelSpaceData.XLength - 1 || y == 0 || y == voxelSpaceData.YLength - 1 || z == 0 || z == voxelSpaceData.ZLength - 1};
+                        voxelSpaceData[x, y, z] = new Voxel() { Exists = true };
+                    }
+
+            var voxelSpace = new VoxelSpace(voxelSpaceData);
+            var construct = new Construct();
+            var gameObject = new GameObject();
+            gameObject.AddComponent(voxelSpace);
+            gameObject.AddComponent(construct);
+            gameObject.AddComponent(new DynamicVoxelBody());
+            gameObject.AddComponent(new VoxelMesh(types, materialInstance));
+
+            return gameObject;
         }
     }
 }

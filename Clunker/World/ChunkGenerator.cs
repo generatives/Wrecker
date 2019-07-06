@@ -44,8 +44,8 @@ namespace Clunker.World
                 for (int y = 0; y < _chunkSize; y++)
                     for (int z = 0; z < _chunkSize; z++)
                     {
-                        //voxelSpaceData[x, y, z] = new Voxel() { Exists = voxels[x, y, z] != 0 };
-                        voxelSpaceData[x, y, z] = new Voxel() { Exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f };
+                        voxelSpaceData[x, y, z] = new Voxel() { Exists = voxels[x, y, z] != 0 };
+                        //voxelSpaceData[x, y, z] = new Voxel() { Exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f };
                     }
 
             var voxelSpace = new VoxelSpace(voxelSpaceData);
@@ -53,7 +53,7 @@ namespace Clunker.World
             var gameObject = new GameObject();
             gameObject.AddComponent(voxelSpace);
             gameObject.AddComponent(chunk);
-            gameObject.AddComponent(new VoxelBody());
+            gameObject.AddComponent(new StaticVoxelBody());
             gameObject.AddComponent(new VoxelMesh(_types, _materialInstance));
             
             gameObject.GetComponent<Transform>().Position = coordinates * _chunkSize * _voxelSize;

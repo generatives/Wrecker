@@ -2,6 +2,7 @@
 using BepuPhysics.Collidables;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
+using Clunker.Math;
 using Clunker.Physics;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentsInterfaces;
@@ -17,16 +18,15 @@ using System.Threading.Tasks;
 
 namespace Clunker.Voxels
 {
-    public class VoxelBody : Component, IComponentEventListener
+    public abstract class VoxelBody : Component, IComponentEventListener
     {
-        private Guid _id = Guid.NewGuid();
         private TypedIndex _voxelShape;
-        private VoxelCollidable _collidable;
-        private int _voxelStatic;
+        private BigCompound _collidable;
 
-        private VoxelCollidable? _newCollidable;
+        private BigCompound? _newCollidable;
+        private BodyInertia _bodyInertia;
 
-        private bool _hasBody;
+        public bool HasBody { get; private set; }
         private BufferPool _collidablePool;
         public VoxelBody()
         {
@@ -35,7 +35,6 @@ namespace Clunker.Voxels
 
         public void ComponentStarted()
         {
-            //Console.WriteLine($"Starting {_id}");
             var voxels = GameObject.GetComponent<VoxelSpace>();
             voxels.VoxelsChanged += Voxels_VoxelsChanged;
             Voxels_VoxelsChanged();
@@ -43,29 +42,33 @@ namespace Clunker.Voxels
 
         private void Voxels_VoxelsChanged()
         {
-            this.EnqueueWorkerJob(() =>
+            var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
+            var voxels = GameObject.GetComponent<VoxelSpace>();
+            var chunk = GameObject.GetComponent<Chunk>();
+            if (voxels.Data.Any(t => t.Item2.Exists))
             {
-                //Thread.Sleep(750);
-                var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
-                var voxels = GameObject.GetComponent<VoxelSpace>();
-                var chunk = GameObject.GetComponent<Chunk>();
-                if (voxels.Data.Any(t => t.Item2.Exists))
+                lock (_collidablePool)
                 {
-                    lock(_collidablePool)
-                    {
-                        _newCollidable = new VoxelCollidable(voxels, _collidablePool);
-                    }
-                    this.EnqueueFrameJob(AddNewCollidable);
+                    //_newCollidable = new VoxelCollidable(voxels, _collidablePool);
+                    var (newCollidable, inertia) = CreateCollisionShape(voxels);
+                    _newCollidable = newCollidable;
+                    _bodyInertia = inertia;
                 }
-            });
+                //this.EnqueueFrameJob(AddNewCollidable);
+                AddNewCollidable();
+            }
+            //this.EnqueueWorkerJob(() =>
+            //{
+                
+            //});
         }
 
         private void AddNewCollidable()
         {
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
-            if (_hasBody)
+            if (HasBody)
             {
-                physicsSystem.RemoveStatic(_voxelStatic);
+                RemoveBody();
                 physicsSystem.RemoveShape(_voxelShape);
                 _collidable.Dispose(_collidablePool);
             }
@@ -73,30 +76,65 @@ namespace Clunker.Voxels
             _voxelShape = physicsSystem.AddShape(_newCollidable.Value);
             _collidable = _newCollidable.Value;
             _newCollidable = null;
-            _voxelStatic = physicsSystem.AddStatic(new StaticDescription(GameObject.Transform.Position, new CollidableDescription(_voxelShape, 0.1f)));
-            _hasBody = true;
+            CreateBody(new CollidableDescription(_voxelShape, 0.1f), _bodyInertia);
+            HasBody = true;
         }
 
         public void ComponentStopped()
         {
-            //Console.WriteLine($"Stopping {_id}");
             var voxels = GameObject.GetComponent<VoxelSpace>();
             voxels.VoxelsChanged -= Voxels_VoxelsChanged;
-            if (_hasBody)
+            var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
+            if (HasBody)
             {
-                var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
-                physicsSystem.RemoveStatic(_voxelStatic);
+                RemoveBody();
                 physicsSystem.RemoveShape(_voxelShape);
-                _collidable.Dispose(_collidablePool);
-                _hasBody = false;
+                _collidable.Dispose(physicsSystem.Pool);
+                HasBody = false;
             }
             if(_newCollidable.HasValue)
             {
-                _newCollidable.Value.Dispose(_collidablePool);
+                _newCollidable.Value.Dispose(physicsSystem.Pool);
             }
             lock(_collidablePool)
             {
                 _collidablePool.Clear();
+            }
+        }
+
+        protected abstract void RemoveBody();
+        protected abstract void CreateBody(CollidableDescription collidable, BodyInertia inertia);
+
+        private (BigCompound, BodyInertia) CreateCollisionShape(VoxelSpace space)
+        {
+            var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
+
+            var voxels = space.Data;
+            var size = voxels.VoxelSize;
+            var exposedVoxels = new List<Vector3i>(voxels.XLength * voxels.YLength * voxels.ZLength / 6);
+            voxels.FindExposedBlocks((v, x, y, z) =>
+            {
+                exposedVoxels.Add(new Vector3i(x, y, z));
+            });
+
+            lock(_collidablePool)
+            {
+                using (var compoundBuilder = new CompoundBuilder(physicsSystem.Pool, physicsSystem.Simulation.Shapes, 8))
+                {
+                    for (int i = 0; i < exposedVoxels.Count; ++i)
+                    {
+                        var position = exposedVoxels[i];
+                        var box = new Box(size, size, size);
+                        var pose = new RigidPose(new Vector3(
+                            position.X * size + size / 2,
+                            position.Y * size + size / 2,
+                            position.Z * size + size / 2));
+                        compoundBuilder.Add(box, pose, 1);
+                    }
+
+                    compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia);
+                    return (new BigCompound(compoundChildren, physicsSystem.Simulation.Shapes, physicsSystem.Pool), compoundInertia);
+                }
             }
         }
     }

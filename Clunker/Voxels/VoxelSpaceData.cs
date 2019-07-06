@@ -109,6 +109,28 @@ namespace Clunker.Voxels
                     }
         }
 
+        public void FindExposedBlocks(Action<Voxel, int, int, int> blockProcessor)
+        {
+            for (int x = 0; x < XLength; x++)
+                for (int y = 0; y < YLength; y++)
+                    for (int z = 0; z < ZLength; z++)
+                    {
+                        Voxel voxel = this[x, y, z];
+                        if (voxel.Exists)
+                        {
+                            if (!WithinBounds(x, y - 1, z) || !this[x, y - 1, z].Exists ||
+                                !WithinBounds(x + 1, y, z) || !this[x + 1, y, z].Exists ||
+                                !WithinBounds(x - 1, y, z) || !this[x - 1, y, z].Exists ||
+                                !WithinBounds(x, y + 1, z) || !this[x, y + 1, z].Exists ||
+                                !WithinBounds(x, y, z - 1) || !this[x, y, z - 1].Exists ||
+                                !WithinBounds(x, y, z + 1) || !this[x, y, z + 1].Exists)
+                            {
+                                blockProcessor(voxel, x, y, z);
+                            }
+                        }
+                    }
+        }
+
         public IEnumerator<(Vector3, Voxel)> GetEnumerator()
         {
             for (int x = 0; x < XLength; x++)
