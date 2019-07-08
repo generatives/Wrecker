@@ -28,7 +28,7 @@ namespace Clunker.SceneGraph.ComponentsInterfaces
 
         public Matrix4x4 GetViewMatrix()
         {
-            var position = GameObject.Transform.Position;
+            var position = GameObject.Transform.WorldPosition;
             var orientation = GameObject.Transform.Orientation;
             Vector3 lookDir = Vector3.Transform(-Vector3.UnitZ, orientation);
             return Matrix4x4.CreateLookAt(position, position + lookDir, Vector3.UnitY);

@@ -46,14 +46,12 @@ namespace Clunker.Voxels
             this.EnqueueWorkerJob(() =>
             {
                 //Thread.Sleep(750);
-                var voxels = space.Data;
+                var voxels = space.Grid;
                 var vertices = new List<VertexPositionTextureNormal>(voxels.XLength * voxels.YLength * voxels.ZLength);
                 var indices = new List<ushort>(voxels.XLength * voxels.YLength * voxels.ZLength);
                 MeshGenerator.GenerateMesh(voxels, (voxel, side, quad) =>
                 {
-                    var type = _types.Types[voxel.BlockType];
-                    var textureOffset = side == VoxelSide.TOP ? type.TopTexCoords :
-                        side == VoxelSide.BOTTOM ? type.BottomTexCoords : type.SideTexCoords;
+                    var textureOffset = GetTexCoords(voxel, side);
                     indices.Add((ushort)(vertices.Count + 0));
                     indices.Add((ushort)(vertices.Count + 1));
                     indices.Add((ushort)(vertices.Count + 3));
@@ -67,6 +65,64 @@ namespace Clunker.Voxels
                 });
                 _meshGeometry.UpdateMesh(vertices.ToArray(), indices.ToArray());
             });
+        }
+
+        private Vector2 GetTexCoords(Voxel voxel, VoxelSide side)
+        {
+            var type = _types.Types[voxel.BlockType];
+            switch(voxel.Orientation)
+            {
+                case VoxelSide.TOP:
+                    return
+                        side == VoxelSide.TOP ? type.TopTexCoords :
+                        side == VoxelSide.BOTTOM ? type.BottomTexCoords :
+                        side == VoxelSide.NORTH ? type.NorthTexCoords :
+                        side == VoxelSide.SOUTH ? type.SouthTexCoords :
+                        side == VoxelSide.EAST ? type.EastTexCoords :
+                        side == VoxelSide.WEST ? type.WestTexCoords : type.TopTexCoords;
+                case VoxelSide.BOTTOM:
+                    return
+                        side == VoxelSide.TOP ? type.BottomTexCoords :
+                        side == VoxelSide.BOTTOM ? type.TopTexCoords :
+                        side == VoxelSide.NORTH ? type.NorthTexCoords :
+                        side == VoxelSide.SOUTH ? type.SouthTexCoords :
+                        side == VoxelSide.EAST ? type.EastTexCoords :
+                        side == VoxelSide.WEST ? type.WestTexCoords : type.TopTexCoords;
+                case VoxelSide.NORTH:
+                    return
+                        side == VoxelSide.TOP ? type.SouthTexCoords :
+                        side == VoxelSide.BOTTOM ? type.NorthTexCoords :
+                        side == VoxelSide.NORTH ? type.BottomTexCoords :
+                        side == VoxelSide.SOUTH ? type.TopTexCoords :
+                        side == VoxelSide.EAST ? type.EastTexCoords :
+                        side == VoxelSide.WEST ? type.WestTexCoords : type.TopTexCoords;
+                case VoxelSide.SOUTH:
+                    return
+                        side == VoxelSide.TOP ? type.NorthTexCoords :
+                        side == VoxelSide.BOTTOM ? type.SouthTexCoords :
+                        side == VoxelSide.NORTH ? type.TopTexCoords :
+                        side == VoxelSide.SOUTH ? type.BottomTexCoords :
+                        side == VoxelSide.EAST ? type.EastTexCoords :
+                        side == VoxelSide.WEST ? type.WestTexCoords : type.TopTexCoords;
+                case VoxelSide.EAST:
+                    return
+                        side == VoxelSide.TOP ? type.WestTexCoords :
+                        side == VoxelSide.BOTTOM ? type.EastTexCoords :
+                        side == VoxelSide.NORTH ? type.NorthTexCoords :
+                        side == VoxelSide.SOUTH ? type.SouthTexCoords :
+                        side == VoxelSide.EAST ? type.BottomTexCoords :
+                        side == VoxelSide.WEST ? type.TopTexCoords : type.TopTexCoords;
+                case VoxelSide.WEST:
+                    return
+                        side == VoxelSide.TOP ? type.EastTexCoords :
+                        side == VoxelSide.BOTTOM ? type.WestTexCoords :
+                        side == VoxelSide.NORTH ? type.NorthTexCoords :
+                        side == VoxelSide.SOUTH ? type.SouthTexCoords :
+                        side == VoxelSide.EAST ? type.TopTexCoords :
+                        side == VoxelSide.WEST ? type.BottomTexCoords : type.TopTexCoords;
+                default:
+                    return type.TopTexCoords;
+            }
         }
 
         //public void GenerateMesh(out List<VertexPositionTextureNormal> vertices, out List<ushort> indices)

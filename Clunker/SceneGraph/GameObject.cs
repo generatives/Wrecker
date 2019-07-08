@@ -22,6 +22,9 @@ namespace Clunker.SceneGraph
 
         private List<IComponentEventListener> _listenersToStop;
 
+        public GameObject Parent { get; internal set; }
+        private List<GameObject> _children;
+
         public GameObject()
         {
             _components = new Dictionary<Type, Component>();
@@ -30,6 +33,8 @@ namespace Clunker.SceneGraph
             _componentListeners = new List<IComponentEventListener>();
             _listenersToStop = new List<IComponentEventListener>();
             AddComponent(new Transform());
+
+            _children = new List<GameObject>();
         }
 
         public void AddComponent(Component component)
@@ -101,6 +106,21 @@ namespace Clunker.SceneGraph
             {
                 return null;
             }
+        }
+
+        public void AddChild(GameObject gameObject)
+        {
+            if(gameObject.Parent != null)
+            {
+                gameObject.Parent.RemoveChild(gameObject);
+            }
+            _children.Add(gameObject);
+            gameObject.Parent = this;
+        }
+
+        public void RemoveChild(GameObject gameObject)
+        {
+            _children.Remove(gameObject);
         }
 
         public bool HasComponent(Type type)

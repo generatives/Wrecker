@@ -2,6 +2,7 @@
 using Clunker.Physics.CharacterController;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentsInterfaces;
+using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -43,6 +44,8 @@ namespace Wrecker
             {
                 UpdateFreeMovement(time);
             }
+
+            DrawCharacterWindow();
         }
 
         public void UpdateCharacterMovement(float time)
@@ -138,6 +141,15 @@ namespace Wrecker
             {
                 GameObject.Transform.RotateBy(-InputTracker.MouseDelta.X * LookSpeed, -InputTracker.MouseDelta.Y * LookSpeed, 0);
             }
+        }
+
+        private void DrawCharacterWindow()
+        {
+            ImGui.Begin("Character");
+            ImGui.Text($"Position: {GameObject.Transform.WorldPosition}");
+            ImGui.Text($"Orientation: {GameObject.Transform.WorldOrientation}");
+            ImGui.Text($"Has Character: {_character.HasCharacter}");
+            ImGui.End();
         }
     }
 }

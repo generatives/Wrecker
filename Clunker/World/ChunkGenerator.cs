@@ -34,7 +34,7 @@ namespace Clunker.World
         {
             //var watch = Stopwatch.StartNew();
             var random = new Random((coordinates.X << 20) ^ (coordinates.Y << 10) ^ (coordinates.Z));
-            var voxelSpaceData = new VoxelSpaceData(_chunkSize, _chunkSize, _chunkSize, _voxelSize);
+            var voxelSpaceData = new VoxelGrid(_chunkSize, _chunkSize, _chunkSize, _voxelSize);
 
             var voxels = GenerateSpheres(random);
             //JoinVoxels(voxels);
@@ -48,7 +48,7 @@ namespace Clunker.World
                         //voxelSpaceData[x, y, z] = new Voxel() { Exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f };
                     }
 
-            var voxelSpace = new VoxelSpace(voxelSpaceData);
+            var voxelSpace = new VoxelSpace(voxelSpaceData, new Dictionary<Vector3i, GameObject>());
             var chunk = new Chunk(coordinates);
             var gameObject = new GameObject();
             gameObject.AddComponent(voxelSpace);

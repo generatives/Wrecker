@@ -11,6 +11,7 @@ namespace Clunker.Voxels
     {
         public bool Exists;
         public ushort BlockType;
+        public VoxelSide Orientation;
     }
 
     public enum VoxelSide

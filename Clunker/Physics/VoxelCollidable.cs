@@ -52,7 +52,7 @@ namespace Clunker.Physics
 
         public VoxelCollidable(VoxelSpace space, BufferPool pool)
         {
-            var data = space.Data;
+            var data = space.Grid;
             var voxelList = new QuickList<Vector3>(data.XLength * data.YLength * data.ZLength, pool);
             foreach (var voxel in data)
             {

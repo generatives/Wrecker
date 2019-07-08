@@ -8,7 +8,7 @@ namespace Clunker.Voxels
 {
     public class MeshGenerator
     {
-        public static void GenerateMesh(VoxelSpaceData space, Action<Voxel, VoxelSide, Quad> vertexProcessor)
+        public static void GenerateMesh(VoxelGrid space, Action<Voxel, VoxelSide, Quad> vertexProcessor)
         {
             space.FindExposedSides((v, x, y, z, side) =>
             {

@@ -65,7 +65,7 @@ namespace Clunker.World
 
         public void Update(float time)
         {
-            var position = _player.Transform.Position;
+            var position = _player.Transform.WorldPosition;
             SetCenterChunk((int)MathF.Floor(position.X / _chunkLength), (int)MathF.Floor(position.Y / _chunkLength), (int)MathF.Floor(position.Z / _chunkLength));
             //SetCenterChunk(0, 0, 0);
 

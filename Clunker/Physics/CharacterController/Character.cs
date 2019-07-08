@@ -30,7 +30,7 @@ namespace Clunker.Physics.CharacterController
             else
             {
                 var physics = CurrentScene.GetSystem<PhysicsSystem>();
-                _controller = physics.CreateCharacter(GameObject.Transform.Position, new Capsule(0.5f, 1), 0.1f, 1.25f, 50, 100, 8, 4, MathF.PI * 0.4f);
+                _controller = physics.CreateCharacter(GameObject.Transform.WorldPosition, new Capsule(0.5f, 1), 0.1f, 1.25f, 50, 100, 8, 4, MathF.PI * 0.4f);
                 HasCharacter = true;
             }
         }
@@ -45,7 +45,7 @@ namespace Clunker.Physics.CharacterController
             {
                 _controller.UpdateCharacterGoals(ForwardMovement, LateralMovement, Sprint, TryJump, GameObject.Transform.Orientation.GetForwardVector(), time);
                 TryJump = false;
-                GameObject.Transform.Position = _controller.Body.Pose.Position + Vector3.UnitY;
+                GameObject.Transform.WorldPosition = _controller.Body.Pose.Position + Vector3.UnitY;
             }
         }
 

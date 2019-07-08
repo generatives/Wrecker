@@ -13,9 +13,11 @@ namespace Clunker.Voxels
     public class DynamicVoxelBody : VoxelBody, IUpdateable
     {
         public BodyReference VoxelBody { get; private set; }
+        private Vector3 _offset;
 
-        protected override void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia)
+        protected override void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia, Vector3 offset)
         {
+            _offset = offset;
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
 
             if(VoxelBody.Exists)
@@ -25,8 +27,9 @@ namespace Clunker.Voxels
             }
             else
             {
+                var transformedOffset = Vector3.Transform(_offset, GameObject.Transform.WorldOrientation);
                 var desc = BodyDescription.CreateDynamic(
-                    new RigidPose(GameObject.Transform.Position, GameObject.Transform.Orientation.ToPhysics()),
+                    new RigidPose(GameObject.Transform.WorldPosition + transformedOffset, GameObject.Transform.WorldOrientation.ToPhysics()),
                     inertia,
                     //new BodyInertia() { InverseMass = 1f / 1.5f },
                     new CollidableDescription(type, speculativeMargin),
@@ -45,8 +48,10 @@ namespace Clunker.Voxels
         {
             if(HasBody)
             {
-                GameObject.Transform.Position = VoxelBody.Pose.Position;
-                GameObject.Transform.Orientation = VoxelBody.Pose.Orientation.ToStandard();
+                var orientation = VoxelBody.Pose.Orientation.ToStandard();
+                var transformedOffset = Vector3.Transform(_offset, orientation);
+                GameObject.Transform.WorldPosition = VoxelBody.Pose.Position - transformedOffset;
+                GameObject.Transform.WorldOrientation = VoxelBody.Pose.Orientation.ToStandard();
             }
         }
     }

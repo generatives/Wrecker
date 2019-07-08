@@ -38,7 +38,7 @@ namespace Clunker.Physics
         //advantage of regular voxel grids' unique properties.)
         public Tree Tree;
 
-        public VoxelSpaceData Voxels;
+        public VoxelGrid Voxels;
 
         /// <summary>
         /// List of the voxels in the voxel set by three dimensional index.
@@ -57,7 +57,7 @@ namespace Clunker.Physics
         public VoxelGridCollidable(Vector3i coordinates, VoxelSpace space, BufferPool pool)
         {
             Coordinates = coordinates;
-            var data = space.Data;
+            var data = space.Grid;
             Voxels = data;
             var voxelList = new QuickList<Vector3>(data.XLength * data.YLength * data.ZLength, pool);
             foreach (var voxel in data)

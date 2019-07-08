@@ -25,6 +25,7 @@ namespace Clunker.Voxels
 
         private BigCompound? _newCollidable;
         private BodyInertia _bodyInertia;
+        private Vector3 _offset;
 
         public bool HasBody { get; private set; }
         private BufferPool _collidablePool;
@@ -45,14 +46,15 @@ namespace Clunker.Voxels
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
             var voxels = GameObject.GetComponent<VoxelSpace>();
             var chunk = GameObject.GetComponent<Chunk>();
-            if (voxels.Data.Any(t => t.Item2.Exists))
+            if (voxels.Grid.Any(t => t.Item2.Exists))
             {
                 lock (_collidablePool)
                 {
                     //_newCollidable = new VoxelCollidable(voxels, _collidablePool);
-                    var (newCollidable, inertia) = CreateCollisionShape(voxels);
+                    var (newCollidable, inertia, offset) = CreateCollisionShape(voxels);
                     _newCollidable = newCollidable;
                     _bodyInertia = inertia;
+                    _offset = offset;
                 }
                 //this.EnqueueFrameJob(AddNewCollidable);
                 AddNewCollidable();
@@ -75,7 +77,7 @@ namespace Clunker.Voxels
             _voxelShape = physicsSystem.AddShape(_newCollidable.Value);
             _collidable = _newCollidable.Value;
             _newCollidable = null;
-            SetBody(_voxelShape, 0.1f, _bodyInertia);
+            SetBody(_voxelShape, 0.1f, _bodyInertia, _offset);
             HasBody = true;
         }
 
@@ -102,13 +104,13 @@ namespace Clunker.Voxels
         }
 
         protected abstract void RemoveBody();
-        protected abstract void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia);
+        protected abstract void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia, Vector3 offset);
 
-        private (BigCompound, BodyInertia) CreateCollisionShape(VoxelSpace space)
+        private (BigCompound, BodyInertia, Vector3) CreateCollisionShape(VoxelSpace space)
         {
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
 
-            var voxels = space.Data;
+            var voxels = space.Grid;
             var size = voxels.VoxelSize;
             var exposedVoxels = new List<Vector3i>(voxels.XLength * voxels.YLength * voxels.ZLength / 6);
             voxels.FindExposedBlocks((v, x, y, z) =>
@@ -131,8 +133,8 @@ namespace Clunker.Voxels
                         compoundBuilder.Add(box, pose, 1);
                     }
 
-                    compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia);
-                    return (new BigCompound(compoundChildren, physicsSystem.Simulation.Shapes, physicsSystem.Pool), compoundInertia);
+                    compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var offset);
+                    return (new BigCompound(compoundChildren, physicsSystem.Simulation.Shapes, physicsSystem.Pool), compoundInertia, offset);
                 }
             }
         }

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Clunker.Voxels
 {
-    public class VoxelSpaceData : IEnumerable<(Vector3, Voxel)>
+    public class VoxelGrid : IEnumerable<(Vector3, Voxel)>
     {
         private Voxel[,,] _voxels;
         public float VoxelSize { get; private set; }
@@ -20,7 +20,7 @@ namespace Clunker.Voxels
         public int ZLength { get; private set; }
         public event Action Changed;
 
-        public VoxelSpaceData(int xLength, int yLength, int zLength, float voxelSize)
+        public VoxelGrid(int xLength, int yLength, int zLength, float voxelSize)
         {
             _voxels = new Voxel[xLength, yLength, zLength];
             XLength = xLength;
@@ -55,6 +55,13 @@ namespace Clunker.Voxels
             }
         }
 
+        public bool Exists(Vector3i index) => Exists(index.X, index.Y, index.Z);
+        public bool Exists(int x, int y, int z)
+        {
+            return WithinBounds(x, y, z) && this[x, y, z].Exists;
+        }
+
+        public bool WithinBounds(Vector3i index) => WithinBounds(index.X, index.Y, index.Z);
         public bool WithinBounds(int x, int y, int z)
         {
             return x >= 0 && x < XLength &&
@@ -62,9 +69,18 @@ namespace Clunker.Voxels
                 z >= 0 && z < ZLength;
         }
 
-        public Voxel Get(int x, int y, int z)
+        public bool SetVoxel(int x, int y, int z, Voxel voxel) => SetVoxel(new Vector3i(x, y, z), voxel);
+        public bool SetVoxel(Vector3i index, Voxel voxel)
         {
-            return _voxels[x, y, z];
+            if (WithinBounds(index))
+            {
+                this[index] = voxel;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public void FindExposedSides(Action<Voxel, int, int, int, VoxelSide> sideProcessor)
@@ -76,32 +92,32 @@ namespace Clunker.Voxels
                         Voxel voxel = this[x, y, z];
                         if (voxel.Exists)
                         {
-                            if (!WithinBounds(x, y - 1, z) || !this[x, y - 1, z].Exists)
+                            if (!Exists(x, y - 1, z))
                             {
                                 sideProcessor(voxel, x, y, z, VoxelSide.BOTTOM);
                             }
 
-                            if (!WithinBounds(x + 1, y, z) || !this[x + 1, y, z].Exists)
+                            if (!Exists(x + 1, y, z))
                             {
                                 sideProcessor(voxel, x, y, z, VoxelSide.EAST);
                             }
 
-                            if (!WithinBounds(x - 1, y, z) || !this[x - 1, y, z].Exists)
+                            if (!Exists(x - 1, y, z))
                             {
                                 sideProcessor(voxel, x, y, z, VoxelSide.WEST);
                             }
 
-                            if (!WithinBounds(x, y + 1, z) || !this[x, y + 1, z].Exists)
+                            if (!Exists(x, y + 1, z))
                             {
                                 sideProcessor(voxel, x, y, z, VoxelSide.TOP);
                             }
 
-                            if (!WithinBounds(x, y, z - 1) || !this[x, y, z - 1].Exists)
+                            if (!Exists(x, y, z - 1))
                             {
                                 sideProcessor(voxel, x, y, z, VoxelSide.NORTH);
                             }
 
-                            if (!WithinBounds(x, y, z + 1) || !this[x, y, z + 1].Exists)
+                            if (!Exists(x, y, z + 1))
                             {
                                 sideProcessor(voxel, x, y, z, VoxelSide.SOUTH);
                             }
@@ -118,12 +134,12 @@ namespace Clunker.Voxels
                         Voxel voxel = this[x, y, z];
                         if (voxel.Exists)
                         {
-                            if (!WithinBounds(x, y - 1, z) || !this[x, y - 1, z].Exists ||
-                                !WithinBounds(x + 1, y, z) || !this[x + 1, y, z].Exists ||
-                                !WithinBounds(x - 1, y, z) || !this[x - 1, y, z].Exists ||
-                                !WithinBounds(x, y + 1, z) || !this[x, y + 1, z].Exists ||
-                                !WithinBounds(x, y, z - 1) || !this[x, y, z - 1].Exists ||
-                                !WithinBounds(x, y, z + 1) || !this[x, y, z + 1].Exists)
+                            if (!Exists(x, y - 1, z) ||
+                                !Exists(x + 1, y, z) ||
+                                !Exists(x - 1, y, z) ||
+                                !Exists(x, y + 1, z) ||
+                                !Exists(x, y, z - 1) ||
+                                !Exists(x, y, z + 1))
                             {
                                 blockProcessor(voxel, x, y, z);
                             }

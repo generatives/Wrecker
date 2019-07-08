@@ -12,6 +12,7 @@ using Clunker.World;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Veldrid;
 using Veldrid.StartupUtilities;
@@ -56,7 +57,13 @@ namespace Wrecker
 
             var types = new VoxelTypes(new[]
             {
-                new VoxelType(new Vector2(650, 130), new Vector2(130, 1690), new Vector2(520, 0))
+                new VoxelType(
+                    new Vector2(650, 130),
+                    new Vector2(520, 0),
+                    new Vector2(650, 650),
+                    new Vector2(650, 520),
+                    new Vector2(650, 390),
+                    new Vector2(650, 260))
             });
 
             var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
@@ -79,8 +86,8 @@ namespace Wrecker
 
         private static GameObject CreateShip(VoxelTypes types, MaterialInstance materialInstance)
         {
-            var voxelSpaceData = new VoxelSpaceData(10, 10, 10, 1);
-            int gap = 3;
+            var voxelSpaceData = new VoxelGrid(3, 3, 3, 1);
+            int gap = 1;
             for (int x = gap; x < voxelSpaceData.XLength - gap; x++)
                 for (int y = gap; y < voxelSpaceData.YLength - gap; y++)
                     for (int z = gap; z < voxelSpaceData.ZLength - gap; z++)
@@ -89,7 +96,7 @@ namespace Wrecker
                         voxelSpaceData[x, y, z] = new Voxel() { Exists = true };
                     }
 
-            var voxelSpace = new VoxelSpace(voxelSpaceData);
+            var voxelSpace = new VoxelSpace(voxelSpaceData, new Dictionary<Clunker.Math.Vector3i, GameObject>());
             var construct = new Construct();
             var gameObject = new GameObject();
             gameObject.AddComponent(voxelSpace);

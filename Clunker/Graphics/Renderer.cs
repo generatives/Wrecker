@@ -150,7 +150,7 @@ namespace Clunker.Graphics
 
                     if(meshGeometry.CanRender)
                     {
-                        commandList.UpdateBuffer(_worldBuffer, 0, mesh.GameObject.Transform.Matrix);
+                        commandList.UpdateBuffer(_worldBuffer, 0, mesh.GameObject.Transform.WorldMatrix);
                         materialInstance.Bind(commandList, false);
                         commandList.SetGraphicsResourceSet(0, _projViewSet);
                         meshGeometry.Render(commandList);
@@ -168,7 +168,7 @@ namespace Clunker.Graphics
                     {
                         if (meshGeometry.CanRender)
                         {
-                            commandList.UpdateBuffer(_worldBuffer, 0, mesh.GameObject.Transform.Matrix);
+                            commandList.UpdateBuffer(_worldBuffer, 0, mesh.GameObject.Transform.WorldMatrix);
                             materialInstance.Bind(commandList, true);
                             commandList.SetGraphicsResourceSet(0, _projViewSet);
                             meshGeometry.Render(commandList);

@@ -7,6 +7,7 @@ using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentsInterfaces;
 using Clunker.Voxels;
 using Clunker.World;
+using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -19,11 +20,14 @@ namespace Wrecker
         private PhysicsSystem _physicsSystem;
         private WorldSystem _worldSystem;
 
+        private bool _add;
+        private VoxelSide _orientation;
+
         public void Update(float time)
         {
-            var add = InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left);
-            var remove = InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Right);
-            if (add || remove)
+            DrawToolsWindow();
+
+            if (InputTracker.LockMouse && InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left))
             {
                 if (_physicsSystem == null) _physicsSystem = GameObject.CurrentScene.GetSystem<PhysicsSystem>();
                 if (_worldSystem == null) _worldSystem = GameObject.CurrentScene.GetSystem<WorldSystem>();
@@ -47,45 +51,62 @@ namespace Wrecker
                     {
                         var hitLocation = GameObject.Transform.Position + forward * t;
                         var space = voxels.GameObject.GetComponent<VoxelSpace>();
-                        var index = space.GetVoxelIndex(hitLocation);
-                        if (remove)
+                        var index = space.GetCastVoxelIndex(hitLocation);
+                        if (!_add)
                         {
-                            space.Data[index] = new Voxel() { Exists = false };
+                            space.Grid[index] = new Voxel() { Exists = false };
                         }
                         else
                         {
-                            var size = space.Data.VoxelSize;
+                            var size = space.Grid.VoxelSize;
                             var voxelLocation = index * size;
                             var relativeLocation = space.GameObject.Transform.GetLocal(hitLocation);
 
                             if (NearlyEqual(relativeLocation.X, voxelLocation.X))
                             {
-                                space.Data[new Vector3i(index.X - 1, index.Y, index.Z)] = new Voxel() { Exists = true };
+                                space.Grid.SetVoxel(index.X - 1, index.Y, index.Z, new Voxel() { Exists = true, Orientation = _orientation });
                             }
                             else if (NearlyEqual(relativeLocation.X, voxelLocation.X + size))
                             {
-                                space.Data[new Vector3i(index.X + 1, index.Y, index.Z)] = new Voxel() { Exists = true };
+                                space.Grid.SetVoxel(index.X + 1, index.Y, index.Z, new Voxel() { Exists = true, Orientation = _orientation });
                             }
                             else if (NearlyEqual(relativeLocation.Y, voxelLocation.Y))
                             {
-                                space.Data[new Vector3i(index.X, index.Y - 1, index.Z)] = new Voxel() { Exists = true };
+                                space.Grid.SetVoxel(index.X, index.Y - 1, index.Z, new Voxel() { Exists = true, Orientation = _orientation });
                             }
                             else if (NearlyEqual(relativeLocation.Y, voxelLocation.Y + size))
                             {
-                                space.Data[new Vector3i(index.X, index.Y + 1, index.Z)] = new Voxel() { Exists = true };
+                                space.Grid.SetVoxel(index.X, index.Y + 1, index.Z, new Voxel() { Exists = true, Orientation = _orientation });
                             }
                             else if (NearlyEqual(relativeLocation.Z, voxelLocation.Z))
                             {
-                                space.Data[new Vector3i(index.X, index.Y, index.Z - 1)] = new Voxel() { Exists = true };
+                                space.Grid.SetVoxel(index.X, index.Y, index.Z - 1, new Voxel() { Exists = true, Orientation = _orientation });
                             }
                             else if (NearlyEqual(relativeLocation.Z, voxelLocation.Z + size))
                             {
-                                space.Data[new Vector3i(index.X, index.Y, index.Z + 1)] = new Voxel() { Exists = true };
+                                space.Grid.SetVoxel(index.X, index.Y, index.Z + 1, new Voxel() { Exists = true, Orientation = _orientation });
                             }
                         }
                     }
                 }
             }
+        }
+
+        private void DrawToolsWindow()
+        {
+            ImGui.Begin("Block Tools");
+
+            var modes = new[] { "Add", "Remove" };
+            var selectedMode = _add ? 0 : 1;
+            ImGui.Combo("Mode", ref selectedMode, modes, modes.Length);
+            _add = selectedMode == 0;
+
+            var sides = Enum.GetNames(typeof(VoxelSide));
+            var selectedOrientation = (int)_orientation;
+            ImGui.Combo("Orientation", ref selectedOrientation, sides, sides.Length);
+            _orientation = (VoxelSide)selectedOrientation;
+
+            ImGui.End();
         }
 
         public static bool NearlyEqual(float f1, float f2)
