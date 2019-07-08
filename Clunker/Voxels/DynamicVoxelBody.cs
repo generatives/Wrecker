@@ -14,18 +14,25 @@ namespace Clunker.Voxels
     {
         public BodyReference VoxelBody { get; private set; }
 
-        protected override void CreateBody(CollidableDescription collidable, BodyInertia inertia)
+        protected override void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia)
         {
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
 
-            var desc = BodyDescription.CreateDynamic(
-                new RigidPose(GameObject.Transform.Position, GameObject.Transform.Orientation.ToPhysics()),
-                inertia,
-                //new BodyInertia() { InverseMass = 1f / 1.5f },
-                collidable,
-                new BodyActivityDescription(-1));
-
-            VoxelBody = physicsSystem.AddDynamic(desc);
+            if(VoxelBody.Exists)
+            {
+                physicsSystem.Simulation.Bodies.ChangeShape(VoxelBody.Handle, type);
+                physicsSystem.Simulation.Bodies.ChangeLocalInertia(VoxelBody.Handle, ref inertia);
+            }
+            else
+            {
+                var desc = BodyDescription.CreateDynamic(
+                    new RigidPose(GameObject.Transform.Position, GameObject.Transform.Orientation.ToPhysics()),
+                    inertia,
+                    //new BodyInertia() { InverseMass = 1f / 1.5f },
+                    new CollidableDescription(type, speculativeMargin),
+                    new BodyActivityDescription(-1));
+                VoxelBody = physicsSystem.AddDynamic(desc, this);
+            }
         }
 
         protected override void RemoveBody()

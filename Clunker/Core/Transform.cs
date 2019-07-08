@@ -13,7 +13,12 @@ namespace Clunker.SceneGraph.Core
         public Vector3 Position { get; set; }
         public Quaternion Orientation { get; set; } = Quaternion.Identity;
         public Vector3 Scale { get; set; }
-        public Matrix4x4 Matrix => Matrix4x4.CreateScale(Scale) * Matrix4x4.CreateFromQuaternion(Orientation) * Matrix4x4.CreateTranslation(Position);
+        public Matrix4x4 Matrix => Matrix4x4.CreateScale(Scale) *
+            Matrix4x4.CreateFromQuaternion(Orientation) *
+            Matrix4x4.CreateTranslation(Position);
+        public Matrix4x4 InverseMatrix => Matrix4x4.CreateTranslation(-Position) *
+            Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Orientation)) *
+            Matrix4x4.CreateScale(new Vector3(1f / Scale.X, 1f / Scale.Y, 1f / Scale.Z));
 
         internal Transform()
         {
@@ -37,6 +42,16 @@ namespace Clunker.SceneGraph.Core
         public void RotateBy(float yaw, float pitch, float roll)
         {
             Orientation = Quaternion.Normalize(Orientation * Quaternion.CreateFromYawPitchRoll(yaw, pitch, roll));
+        }
+
+        public Vector3 GetLocal(Vector3 world)
+        {
+            return Vector3.Transform(world, InverseMatrix);
+        }
+
+        public Vector3 GetWorld(Vector3 local)
+        {
+            return Vector3.Transform(local, Matrix);
         }
     }
 }

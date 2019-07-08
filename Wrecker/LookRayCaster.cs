@@ -21,31 +21,76 @@ namespace Wrecker
 
         public void Update(float time)
         {
-            if (InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left))
+            var add = InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left);
+            var remove = InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Right);
+            if (add || remove)
             {
                 if (_physicsSystem == null) _physicsSystem = GameObject.CurrentScene.GetSystem<PhysicsSystem>();
                 if (_worldSystem == null) _worldSystem = GameObject.CurrentScene.GetSystem<WorldSystem>();
 
-                var handler = new FirstHitHandler(CollidableMobility.Static);
+                var handler = new FirstHitHandler(CollidableMobility.Static | CollidableMobility.Dynamic);
                 var forward = GameObject.Transform.Orientation.GetForwardVector();
                 _physicsSystem.Raycast(GameObject.Transform.Position, forward, float.MaxValue, ref handler);
                 if (handler.Hit)
                 {
                     var t = handler.T;
-                    var body = _physicsSystem.GetStaticReference(handler.Collidable.Handle);
-                    if (body.Collidable.Shape.Type == VoxelCollidable.VoxelCollidableTypeId)
+                    object context;
+                    if(handler.Collidable.Mobility == CollidableMobility.Dynamic)
                     {
-                        var context = _physicsSystem.GetStaticContext(body);
-                        if(context is VoxelBody voxels)
+                        context = _physicsSystem.GetDynamicContext(handler.Collidable.Handle);
+                    }
+                    else
+                    {
+                        context = _physicsSystem.GetStaticContext(handler.Collidable.Handle);
+                    }
+                    if (context is VoxelBody voxels)
+                    {
+                        var hitLocation = GameObject.Transform.Position + forward * t;
+                        var space = voxels.GameObject.GetComponent<VoxelSpace>();
+                        var index = space.GetVoxelIndex(hitLocation);
+                        if (remove)
                         {
-                            var hitLocation = GameObject.Transform.Position + forward * t;
-                            var space = voxels.GameObject.GetComponent<VoxelSpace>();
-                            var index = space.GetVoxelIndex(hitLocation);
                             space.Data[index] = new Voxel() { Exists = false };
+                        }
+                        else
+                        {
+                            var size = space.Data.VoxelSize;
+                            var voxelLocation = index * size;
+                            var relativeLocation = space.GameObject.Transform.GetLocal(hitLocation);
+
+                            if (NearlyEqual(relativeLocation.X, voxelLocation.X))
+                            {
+                                space.Data[new Vector3i(index.X - 1, index.Y, index.Z)] = new Voxel() { Exists = true };
+                            }
+                            else if (NearlyEqual(relativeLocation.X, voxelLocation.X + size))
+                            {
+                                space.Data[new Vector3i(index.X + 1, index.Y, index.Z)] = new Voxel() { Exists = true };
+                            }
+                            else if (NearlyEqual(relativeLocation.Y, voxelLocation.Y))
+                            {
+                                space.Data[new Vector3i(index.X, index.Y - 1, index.Z)] = new Voxel() { Exists = true };
+                            }
+                            else if (NearlyEqual(relativeLocation.Y, voxelLocation.Y + size))
+                            {
+                                space.Data[new Vector3i(index.X, index.Y + 1, index.Z)] = new Voxel() { Exists = true };
+                            }
+                            else if (NearlyEqual(relativeLocation.Z, voxelLocation.Z))
+                            {
+                                space.Data[new Vector3i(index.X, index.Y, index.Z - 1)] = new Voxel() { Exists = true };
+                            }
+                            else if (NearlyEqual(relativeLocation.Z, voxelLocation.Z + size))
+                            {
+                                space.Data[new Vector3i(index.X, index.Y, index.Z + 1)] = new Voxel() { Exists = true };
+                            }
                         }
                     }
                 }
             }
+        }
+
+        public static bool NearlyEqual(float f1, float f2)
+        {
+            return Math.Abs(f1 - f2) < 0.1;
         }
     }
 }

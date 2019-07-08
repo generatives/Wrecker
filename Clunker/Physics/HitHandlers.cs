@@ -29,7 +29,7 @@ namespace Clunker.Physics
 
         public bool AllowTest(CollidableReference collidable)
         {
-            return MobilityFilter == collidable.Mobility;
+            return (MobilityFilter | collidable.Mobility) == MobilityFilter;
         }
 
         public void OnRayHit(in RayData ray, ref float maximumT, float t, in Vector3 normal, CollidableReference collidable)

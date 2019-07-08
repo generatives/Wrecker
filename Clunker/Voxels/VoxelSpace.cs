@@ -45,7 +45,7 @@ namespace Clunker.Voxels
 
         public Vector3i GetVoxelIndex(Vector3 worldPosition)
         {
-            var localPosition = worldPosition - GameObject.Transform.Position;
+            var localPosition = GameObject.Transform.GetLocal(worldPosition);
             var voxelPosition = localPosition / Data.VoxelSize;
             return new Vector3i((int)voxelPosition.X, (int)voxelPosition.Y, (int)voxelPosition.Z);
         }

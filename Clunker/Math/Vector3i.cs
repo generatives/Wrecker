@@ -23,6 +23,11 @@ namespace Clunker.Math
             return new Vector3i(v.X * n, v.Y * n, v.Z * n);
         }
 
+        public static Vector3 operator *(Vector3i v, float n)
+        {
+            return new Vector3(v.X * n, v.Y * n, v.Z * n);
+        }
+
         public static implicit operator Vector3(Vector3i v)
         {
             return new Vector3(v.X, v.Y, v.Z);

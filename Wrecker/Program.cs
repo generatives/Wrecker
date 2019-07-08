@@ -52,7 +52,6 @@ namespace Wrecker
             camera.AddComponent(new Character());
             camera.AddComponent(new CharacterInput());
             camera.AddComponent(new LookRayCaster());
-            camera.GetComponent<Transform>().Position = new Vector3(50, 0, 50);
             scene.AddGameObject(camera);
 
             var types = new VoxelTypes(new[]
@@ -80,11 +79,11 @@ namespace Wrecker
 
         private static GameObject CreateShip(VoxelTypes types, MaterialInstance materialInstance)
         {
-            var voxelSpaceData = new VoxelSpaceData(5, 5, 10, 1);
-
-            for (int x = 0; x < voxelSpaceData.XLength; x++)
-                for (int y = 0; y < voxelSpaceData.YLength; y++)
-                    for (int z = 0; z < voxelSpaceData.ZLength; z++)
+            var voxelSpaceData = new VoxelSpaceData(10, 10, 10, 1);
+            int gap = 3;
+            for (int x = gap; x < voxelSpaceData.XLength - gap; x++)
+                for (int y = gap; y < voxelSpaceData.YLength - gap; y++)
+                    for (int z = gap; z < voxelSpaceData.ZLength - gap; z++)
                     {
                         //voxelSpaceData[x, y, z] = new Voxel() { Exists = x == 0 || x == voxelSpaceData.XLength - 1 || y == 0 || y == voxelSpaceData.YLength - 1 || z == 0 || z == voxelSpaceData.ZLength - 1};
                         voxelSpaceData[x, y, z] = new Voxel() { Exists = true };

@@ -68,15 +68,14 @@ namespace Clunker.Voxels
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
             if (HasBody)
             {
-                RemoveBody();
                 physicsSystem.RemoveShape(_voxelShape);
-                _collidable.Dispose(_collidablePool);
+                _collidable.Dispose(physicsSystem.Pool);
             }
 
             _voxelShape = physicsSystem.AddShape(_newCollidable.Value);
             _collidable = _newCollidable.Value;
             _newCollidable = null;
-            CreateBody(new CollidableDescription(_voxelShape, 0.1f), _bodyInertia);
+            SetBody(_voxelShape, 0.1f, _bodyInertia);
             HasBody = true;
         }
 
@@ -103,7 +102,7 @@ namespace Clunker.Voxels
         }
 
         protected abstract void RemoveBody();
-        protected abstract void CreateBody(CollidableDescription collidable, BodyInertia inertia);
+        protected abstract void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia);
 
         private (BigCompound, BodyInertia) CreateCollisionShape(VoxelSpace space)
         {

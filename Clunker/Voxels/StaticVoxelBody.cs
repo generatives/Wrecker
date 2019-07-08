@@ -12,10 +12,11 @@ namespace Clunker.Voxels
     {
         private StaticReference _voxelStatic;
 
-        protected override void CreateBody(CollidableDescription collidable, BodyInertia inertia)
+        protected override void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia)
         {
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
-            _voxelStatic = physicsSystem.AddStatic(new StaticDescription(GameObject.Transform.Position, collidable), this);
+            if(_voxelStatic.Exists) physicsSystem.RemoveStatic(_voxelStatic);
+            _voxelStatic = physicsSystem.AddStatic(new StaticDescription(GameObject.Transform.Position, new CollidableDescription(type, speculativeMargin)), this);
         }
 
         protected override void RemoveBody()
