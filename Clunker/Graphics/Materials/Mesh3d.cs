@@ -62,8 +62,7 @@ void main()
     float diffuse = max(dot(norm, DiffuseLightDirection), 0.0);
 
     vec3 result = (0.4 + diffuse) * objectColour.xyz;
-    //fsout_color = vec4(result, 1.0);
-    fsout_color = objectColour;
+    fsout_color = vec4(result, 1.0);
 }";
     }
 }

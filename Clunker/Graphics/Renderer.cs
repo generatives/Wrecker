@@ -22,6 +22,8 @@ namespace Clunker.Graphics
 
     public class Renderer : IRenderer
     {
+        public int Order => 1;
+
         private List<Mesh> _meshes;
 
         private DeviceBuffer _projectionBuffer;
@@ -106,8 +108,8 @@ namespace Clunker.Graphics
             _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
                 1.0f,
                 (float)width / height,
-                0.5f,
-                500f);
+                0.01f,
+                128f);
             if(GraphicsDevice.IsClipSpaceYInverted)
             {
                 _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);
@@ -117,8 +119,6 @@ namespace Clunker.Graphics
 
         public void Render(Camera camera, GraphicsDevice device, CommandList commandList)
         {
-            commandList.Begin();
-
             if (_projectionMatrixChanged)
             {
                 commandList.UpdateBuffer(_projectionBuffer, 0, _projectionMatrix);
@@ -126,17 +126,13 @@ namespace Clunker.Graphics
 
             commandList.UpdateBuffer(_viewBuffer, 0, camera.GetViewMatrix());
 
-            commandList.SetFramebuffer(GraphicsDevice.MainSwapchain.Framebuffer);
-            commandList.ClearColorTarget(0, new RgbaFloat(25f / 255, 25f / 255, 112f / 255, 1.0f));
-            commandList.ClearDepthStencil(1f);
-
             commandList.UpdateBuffer(_wireframeColourBuffer, 0, RgbaFloat.White);
             commandList.UpdateBuffer(_sceneLightingBuffer, 0, new SceneLighting()
             {
                 AmbientLightColour = RgbaFloat.White,
                 AmbientLightStrength = 0f,
                 DiffuseLightColour = RgbaFloat.Blue,
-                DiffuseLightDirection = new Vector3(1, 10, -1)
+                DiffuseLightDirection = Vector3.Normalize(new Vector3(2, 5, -1))
             });
 
             foreach (var mesh in _meshes)

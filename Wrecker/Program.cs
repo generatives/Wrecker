@@ -32,7 +32,6 @@ namespace Wrecker
                 WindowHeight = 720,
                 WindowTitle = "Tortuga Demo"
             };
-
             GraphicsDeviceOptions options = new GraphicsDeviceOptions(
                 debug: false,
                 swapchainDepthFormat: PixelFormat.R16_UNorm,
@@ -58,12 +57,9 @@ namespace Wrecker
             var types = new VoxelTypes(new[]
             {
                 new VoxelType(
-                    new Vector2(650, 130),
-                    new Vector2(520, 0),
-                    new Vector2(650, 650),
-                    new Vector2(650, 520),
-                    new Vector2(650, 390),
-                    new Vector2(650, 260))
+                    new Vector2(390, 1690),
+                    new Vector2(390, 1690),
+                    new Vector2(390, 1690))
             });
 
             var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
@@ -76,11 +72,22 @@ namespace Wrecker
                 camera,
                 new ChunkStorage(),
                 new ChunkGenerator(types, voxelMaterialInstance, chunkSize, 1),
-                2, chunkSize);
+                4, chunkSize);
             scene.AddSystem(worldSystem);
             scene.AddSystem(new PhysicsSystem());
 
             var app = new ClunkerApp(scene);
+
+            var px = Image.Load("Assets\\skybox_px.png");
+            var nx = Image.Load("Assets\\skybox_nx.png");
+            var py = Image.Load("Assets\\skybox_py.png");
+            var ny = Image.Load("Assets\\skybox_ny.png");
+            var pz = Image.Load("Assets\\skybox_pz.png");
+            var nz = Image.Load("Assets\\skybox_nz.png");
+
+            var skyboxRenderer = new SkyboxRenderer(px, nx, py, ny, pz, nz);
+            app.AddRenderer(skyboxRenderer);
+
             app.Start(wci, options).Wait();
         }
 

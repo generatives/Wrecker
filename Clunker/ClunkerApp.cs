@@ -46,6 +46,7 @@ namespace Clunker
         public void AddRenderer(IRenderer renderer)
         {
             _renderers.Add(renderer);
+            _renderers = _renderers.OrderBy(r => r.Order).ToList();
             if(_graphicsDevice != null && _commandList != null && _window != null)
             {
                 renderer.Initialize(_graphicsDevice, _commandList, _window.Width, _window.Height);
@@ -55,6 +56,7 @@ namespace Clunker
         public void RemoveRenderer(IRenderer renderer)
         {
             _renderers.Remove(renderer);
+            _renderers = _renderers.OrderBy(r => r.Order).ToList();
         }
 
         public T GetRenderer<T>() where T : class, IRenderer
@@ -123,6 +125,13 @@ namespace Clunker
                         StackedTiming.PopFrameTimer();
                         CurrentScene.RenderUpdate(frameTime);
                     }
+
+                    _commandList.Begin();
+
+                    _commandList.SetFramebuffer(_graphicsDevice.MainSwapchain.Framebuffer);
+                    //commandList.ClearColorTarget(0, new RgbaFloat(25f / 255, 25f / 255, 112f / 255, 1.0f));
+                    _commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
+                    _commandList.ClearDepthStencil(1f);
 
                     StackedTiming.PushFrameTimer("Render");
                     if (Camera != null)

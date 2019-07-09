@@ -9,6 +9,7 @@ namespace Clunker.Graphics
 {
     public interface IRenderer
     {
+        int Order { get; }
         void Initialize(GraphicsDevice device, CommandList commandList, int windowWidth, int windowHeight);
         void Render(Camera camera, GraphicsDevice device, CommandList commandList);
         void WindowResized(int width, int height);
