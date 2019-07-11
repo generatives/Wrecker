@@ -19,7 +19,8 @@ namespace Clunker.Construct
                 var body = GameObject.Parent.GetComponent<DynamicVoxelBody>();
                 var localOffset = GameObject.Transform.Position - body.BodyOffset;
                 var worldOffset = Vector3.Transform(localOffset, GameObject.Parent.Transform.WorldOrientation);
-                body.VoxelBody.ApplyImpulse(-Voxel.Orientation.GetDirection() * Force, worldOffset);
+                var direction = -Voxel.Orientation.GetDirection();
+                body.VoxelBody.ApplyImpulse(Vector3.Transform(direction, GameObject.Parent.Transform.WorldOrientation) * Force, worldOffset);
             }
         }
     }
