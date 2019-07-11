@@ -69,7 +69,7 @@ namespace Clunker.Voxels
 
         private Vector2 GetTexCoords(Voxel voxel, VoxelSide side)
         {
-            var type = _types.Types[voxel.BlockType];
+            var type = _types[voxel.BlockType];
             switch(voxel.Orientation)
             {
                 case VoxelSide.TOP:
@@ -92,16 +92,16 @@ namespace Clunker.Voxels
                     return
                         side == VoxelSide.TOP ? type.SouthTexCoords :
                         side == VoxelSide.BOTTOM ? type.NorthTexCoords :
-                        side == VoxelSide.NORTH ? type.BottomTexCoords :
-                        side == VoxelSide.SOUTH ? type.TopTexCoords :
+                        side == VoxelSide.NORTH ? type.TopTexCoords :
+                        side == VoxelSide.SOUTH ? type.BottomTexCoords :
                         side == VoxelSide.EAST ? type.EastTexCoords :
                         side == VoxelSide.WEST ? type.WestTexCoords : type.TopTexCoords;
                 case VoxelSide.SOUTH:
                     return
                         side == VoxelSide.TOP ? type.NorthTexCoords :
                         side == VoxelSide.BOTTOM ? type.SouthTexCoords :
-                        side == VoxelSide.NORTH ? type.TopTexCoords :
-                        side == VoxelSide.SOUTH ? type.BottomTexCoords :
+                        side == VoxelSide.NORTH ? type.BottomTexCoords :
+                        side == VoxelSide.SOUTH ? type.TopTexCoords :
                         side == VoxelSide.EAST ? type.EastTexCoords :
                         side == VoxelSide.WEST ? type.WestTexCoords : type.TopTexCoords;
                 case VoxelSide.EAST:
@@ -110,16 +110,16 @@ namespace Clunker.Voxels
                         side == VoxelSide.BOTTOM ? type.EastTexCoords :
                         side == VoxelSide.NORTH ? type.NorthTexCoords :
                         side == VoxelSide.SOUTH ? type.SouthTexCoords :
-                        side == VoxelSide.EAST ? type.BottomTexCoords :
-                        side == VoxelSide.WEST ? type.TopTexCoords : type.TopTexCoords;
+                        side == VoxelSide.EAST ? type.TopTexCoords :
+                        side == VoxelSide.WEST ? type.BottomTexCoords : type.TopTexCoords;
                 case VoxelSide.WEST:
                     return
                         side == VoxelSide.TOP ? type.EastTexCoords :
                         side == VoxelSide.BOTTOM ? type.WestTexCoords :
                         side == VoxelSide.NORTH ? type.NorthTexCoords :
                         side == VoxelSide.SOUTH ? type.SouthTexCoords :
-                        side == VoxelSide.EAST ? type.TopTexCoords :
-                        side == VoxelSide.WEST ? type.BottomTexCoords : type.TopTexCoords;
+                        side == VoxelSide.EAST ? type.BottomTexCoords :
+                        side == VoxelSide.WEST ? type.TopTexCoords : type.TopTexCoords;
                 default:
                     return type.TopTexCoords;
             }

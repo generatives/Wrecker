@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Veldrid;
 using Veldrid.StartupUtilities;
+using Wrecker.VoxelEditing;
 
 namespace Wrecker
 {
@@ -44,23 +45,39 @@ namespace Wrecker
 #endif
             var scene = new Scene();
 
-            var camera = new GameObject();
-            camera.AddComponent(new Camera());
-            //camera.AddComponent(new CylinderBody());
-            //camera.AddComponent(new PhysicsMovement());
-            //camera.AddComponent(new FreeMovement());
-            camera.AddComponent(new Character());
-            camera.AddComponent(new CharacterInput());
-            camera.AddComponent(new LookRayCaster());
-            scene.AddGameObject(camera);
-
             var types = new VoxelTypes(new[]
             {
                 new VoxelType(
+                    "DarkStone",
                     new Vector2(390, 1690),
                     new Vector2(390, 1690),
-                    new Vector2(390, 1690))
+                    new Vector2(390, 1690)),
+                new VoxelType(
+                    "Metal",
+                    new Vector2(650, 1300),
+                    new Vector2(650, 1300),
+                    new Vector2(650, 1300)),
+                new VoxelType(
+                    "Thruster",
+                    new Vector2(650, 1170),
+                    new Vector2(650, 1300),
+                    new Vector2(650, 1300))
             });
+
+            var tools = new IVoxelEditingTool[]
+            {
+                new RemoveVoxelEditingTool(),
+                new BasicVoxelEditingTool("DarkStone", 0),
+                new BasicVoxelEditingTool("Metal", 1),
+                new ThrusterVoxelEditingTool(2)
+            };
+
+            var camera = new GameObject();
+            camera.AddComponent(new Camera());
+            camera.AddComponent(new Character());
+            camera.AddComponent(new CharacterInput());
+            camera.AddComponent(new VoxelEditor(tools));
+            scene.AddGameObject(camera);
 
             var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
             var voxelMaterialInstance = new MaterialInstance(new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode), voxelTextures);
@@ -72,7 +89,7 @@ namespace Wrecker
                 camera,
                 new ChunkStorage(),
                 new ChunkGenerator(types, voxelMaterialInstance, chunkSize, 1),
-                4, chunkSize);
+                2, chunkSize);
             scene.AddSystem(worldSystem);
             scene.AddSystem(new PhysicsSystem());
 

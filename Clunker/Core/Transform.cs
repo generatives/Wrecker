@@ -36,7 +36,7 @@ namespace Clunker.SceneGraph.Core
         {
             get
             {
-                return IsInheiritingParentTransform ? Orientation + GameObject.Parent.Transform.WorldOrientation : Orientation;
+                return IsInheiritingParentTransform ? Orientation * GameObject.Parent.Transform.WorldOrientation : Orientation;
             }
             set
             {

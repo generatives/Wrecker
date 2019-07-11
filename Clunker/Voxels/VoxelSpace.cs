@@ -99,9 +99,11 @@ namespace Clunker.Voxels
                     }
                     entity.Space = this;
                     entity.Index = index;
+                    entity.Voxel = voxel;
                     var gameObject = new GameObject();
                     gameObject.AddComponent(entity);
-                    gameObject.Transform.Position = index * Grid.VoxelSize;
+                    gameObject.Transform.Position = index * Grid.VoxelSize + Vector3.One * Grid.VoxelSize / 2f;
+                    gameObject.Transform.Orientation = voxel.Orientation.GetQuaternion();
                     GameObject.AddChild(gameObject);
                     GameObject.CurrentScene.AddGameObject(gameObject);
                     _voxelEntities[index] = gameObject;
