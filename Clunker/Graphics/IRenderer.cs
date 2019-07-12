@@ -1,4 +1,5 @@
-﻿using Clunker.SceneGraph.ComponentsInterfaces;
+﻿using Clunker.SceneGraph.ComponentInterfaces;
+using Clunker.SceneGraph.ComponentsInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,7 +12,9 @@ namespace Clunker.Graphics
     {
         int Order { get; }
         void Initialize(GraphicsDevice device, CommandList commandList, int windowWidth, int windowHeight);
-        void Render(Camera camera, GraphicsDevice device, CommandList commandList);
+        void AddRenderable(IRenderable renderable);
+        void RemoveRenderable(IRenderable renderable);
+        void Render(Camera camera, GraphicsDevice device, CommandList commandList, Graphics.RenderWireframes renderWireframes);
         void WindowResized(int width, int height);
     }
 }

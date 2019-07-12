@@ -56,11 +56,19 @@ namespace Clunker.Graphics
             MustUpdateResources = false;
         }
 
-        internal void Render(CommandList cl)
+        internal void Render(GraphicsDevice device, CommandList cl)
         {
-            cl.SetVertexBuffer(0, _vertexBuffer);
-            cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
-            cl.DrawIndexed(_numIndices, 1, 0, 0, 0);
+            if(MustUpdateResources)
+            {
+                UpdateResources(device);
+            }
+
+            if(CanRender)
+            {
+                cl.SetVertexBuffer(0, _vertexBuffer);
+                cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
+                cl.DrawIndexed(_numIndices, 1, 0, 0, 0);
+            }
         }
 
         public void Dispose()

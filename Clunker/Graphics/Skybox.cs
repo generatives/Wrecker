@@ -1,21 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using Clunker.Graphics.Materials;
-using Clunker.SceneGraph.ComponentsInterfaces;
+﻿using Clunker.Graphics.Materials;
+using Clunker.SceneGraph;
+using Clunker.SceneGraph.ComponentInterfaces;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using System.Text;
 using Veldrid;
 using Veldrid.ImageSharp;
 using Veldrid.SPIRV;
 
 namespace Clunker.Graphics
 {
-    public class SkyboxRenderer : IRenderer
+    public class Skybox : Component, IRenderable
     {
-        public int Order => 0;
+        public RenderingPass Pass => RenderingPass.BACKGROUND;
+
+        public bool Transparent => false;
+
+        public Vector3 Position => Vector3.Zero;
 
         private GraphicsDevice _graphicsDevice;
 
@@ -23,25 +27,19 @@ namespace Clunker.Graphics
         private ResourceSet _resourceSet;
         private Pipeline _pipeline;
 
-        private Matrix4x4 _projectionMatrix;
-        private bool _projectionMatrixChanged;
-
-        private DeviceBuffer _projectionBuffer;
-        private DeviceBuffer _viewBuffer;
-
         private DeviceBuffer _vb;
         private DeviceBuffer _ib;
 
         private ImageSharpCubemapTexture _skyboxTexture;
 
-        public SkyboxRenderer(Image<Rgba32> positiveXImage, Image<Rgba32> negativeXImage,
+        public Skybox(Image<Rgba32> positiveXImage, Image<Rgba32> negativeXImage,
             Image<Rgba32> positiveYImage, Image<Rgba32> negativeYImage,
             Image<Rgba32> positiveZImage, Image<Rgba32> negativeZImage)
         {
             _skyboxTexture = new ImageSharpCubemapTexture(positiveXImage, negativeXImage, positiveYImage, negativeYImage, positiveZImage, negativeZImage);
         }
 
-        public void Initialize(GraphicsDevice device, CommandList commandList, int windowWidth, int windowHeight)
+        public void Initialize(GraphicsDevice device, CommandList commandList, RenderableInitialize initialize)
         {
             if (_graphicsDevice != null) return;
 
@@ -51,9 +49,6 @@ namespace Clunker.Graphics
 
             var deviceTexture = _skyboxTexture.CreateDeviceTexture(device, factory);
             TextureView textureView = factory.CreateTextureView(new TextureViewDescription(deviceTexture));
-
-            _projectionBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            _viewBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 
             _vb = factory.CreateBuffer(new BufferDescription(VertexPosition.SizeInBytes * (uint)s_vertices.Length, BufferUsage.VertexBuffer));
             device.UpdateBuffer(_vb, 0, s_vertices);
@@ -82,8 +77,8 @@ namespace Clunker.Graphics
                 new ShaderSetDescription(
                     vertexLayouts,
                     factory.CreateFromSpirv(
-                        new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(Skybox.VertexCode), "main"),
-                        new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(Skybox.FragmentCode), "main"))),
+                        new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(SkyboxShader.VertexCode), "main"),
+                        new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(SkyboxShader.FragmentCode), "main"))),
                 new ResourceLayout[] { _layout },
                 device.SwapchainFramebuffer.OutputDescription);
 
@@ -91,98 +86,29 @@ namespace Clunker.Graphics
 
             _resourceSet = factory.CreateResourceSet(new ResourceSetDescription(
                 _layout,
-                _projectionBuffer,
-                _viewBuffer,
+                initialize.Renderer.ProjectionBuffer,
+                initialize.Renderer.ViewBuffer,
                 textureView,
                 device.Aniso4xSampler));
-
-            WindowResized(windowWidth, windowHeight);
         }
 
-        public void Render(Camera camera, GraphicsDevice device, CommandList commandList)
+        public void Remove(GraphicsDevice device, CommandList commandList)
         {
-            if (_projectionMatrixChanged)
-            {
-                commandList.UpdateBuffer(_projectionBuffer, 0, _projectionMatrix);
-            }
+            _vb.Dispose();
+            _ib.Dispose();
+        }
 
-            commandList.UpdateBuffer(_viewBuffer, 0, camera.GetViewMatrix());
-
+        public void Render(GraphicsDevice device, CommandList commandList, RenderingContext context)
+        {
             commandList.SetPipeline(_pipeline);
             commandList.SetGraphicsResourceSet(0, _resourceSet);
             commandList.SetVertexBuffer(0, _vb);
             commandList.SetIndexBuffer(_ib, IndexFormat.UInt16);
             float depth = device.IsDepthRangeZeroToOne ? 0 : 1;
-            commandList.SetViewport(0, new Viewport(0, 0, _windowWidth, _windowHeight, depth, depth));
+            //commandList.SetViewport(0, new Viewport(0, 0, _windowWidth, _windowHeight, depth, depth));
             commandList.DrawIndexed((uint)s_indices.Length, 1, 0, 0, 0);
-            commandList.SetViewport(0, new Viewport(0, 0, _windowWidth, _windowHeight, 0, 1));
+            //commandList.SetViewport(0, new Viewport(0, 0, _windowWidth, _windowHeight, 0, 1));
         }
-
-        private int _windowWidth;
-        private int _windowHeight;
-
-        public void WindowResized(int width, int height)
-        {
-            _windowWidth = width;
-            _windowHeight = height;
-            _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
-                1.0f,
-                (float)width / height,
-                0.05f,
-                500f);
-            if (_graphicsDevice.IsClipSpaceYInverted)
-            {
-                _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);
-            }
-            _projectionMatrixChanged = true;
-        }
-
-        //private static readonly VertexPosition[] s_vertices = new VertexPosition[]
-        //{
-        //    new VertexPosition(new Vector3(-1.0f, 1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(1.0f, -1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(1.0f, -1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f,  1.0f, -1.0f)),
-
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f,  1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f,  1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f,  1.0f)),
-
-        //    new VertexPosition(new Vector3(1.0f, -1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(1.0f, -1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(1.0f, -1.0f, -1.0f)),
-
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f, -1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f,  1.0f)),
-
-        //    new VertexPosition(new Vector3(-1.0f,  1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f,  1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f,  1.0f, -1.0f)),
-
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f, -1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(1.0f, -1.0f, -1.0f)),
-        //    new VertexPosition(new Vector3(-1.0f, -1.0f,  1.0f)),
-        //    new VertexPosition(new Vector3(1.0f, -1.0f,  1.0f)),
-        //};
-
-        //private static readonly ushort[] s_indices = s_vertices.Select((v, i) => (ushort)i).ToArray();
 
         private static readonly VertexPosition[] s_vertices = new VertexPosition[]
         {

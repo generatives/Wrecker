@@ -16,6 +16,7 @@ using System.Linq;
 using Clunker.Diagnostics;
 using Clunker.Runtime;
 using ImGuiNET;
+using Clunker.SceneGraph.ComponentInterfaces;
 
 namespace Clunker
 {
@@ -63,6 +64,16 @@ namespace Clunker
         {
             var type = typeof(T);
             return _renderers.FirstOrDefault(r => r is T) as T;
+        }
+
+        public void AddRenderable(IRenderable renderable)
+        {
+            _renderers.ForEach(r => r.AddRenderable(renderable));
+        }
+
+        public void RemoveRenderable(IRenderable renderable)
+        {
+            _renderers.ForEach(r => r.RemoveRenderable(renderable));
         }
 
         public Task Start(WindowCreateInfo wci, GraphicsDeviceOptions graphicsDeviceOptions)
@@ -123,7 +134,6 @@ namespace Clunker
                         StackedTiming.PushFrameTimer("Scene Update");
                         CurrentScene.Update(frameTime);
                         StackedTiming.PopFrameTimer();
-                        CurrentScene.RenderUpdate(frameTime);
                     }
 
                     _commandList.Begin();
@@ -136,7 +146,7 @@ namespace Clunker
                     StackedTiming.PushFrameTimer("Render");
                     if (Camera != null)
                     {
-                        _renderers.ForEach(r => r.Render(Camera, _graphicsDevice, _commandList));
+                        _renderers.ForEach(r => r.Render(Camera, _graphicsDevice, _commandList, RenderWireframes.SOLID));
                     }
                     StackedTiming.PopFrameTimer();
 

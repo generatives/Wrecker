@@ -207,13 +207,5 @@ namespace Clunker.SceneGraph
             }
             _toRemove = toRemove;
         }
-
-        internal void RenderUpdate(float time)
-        {
-            for (int i = 0; i < _gameObjects.Count; i++)
-            {
-                _gameObjects[i].RenderUpdate(time);
-            }
-        }
     }
 }

@@ -2,6 +2,7 @@
 using Clunker.Graphics.Materials;
 using Clunker.Math;
 using Clunker.SceneGraph;
+using Clunker.SceneGraph.ComponentInterfaces;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
@@ -12,16 +13,23 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Veldrid;
 
 namespace Clunker.Voxels
 {
-    public class VoxelMesh : Mesh
+    public class VoxelMesh : Component, IRenderable
     {
         private VoxelSpace space;
         private static MaterialInstance _materialInstance;
         private MeshGeometry _meshGeometry;
 
         private VoxelTypes _types;
+
+        public RenderingPass Pass => RenderingPass.SCENE;
+
+        public bool Transparent => false;
+
+        public Vector3 Position => GameObject.Transform.WorldPosition;
 
         public VoxelMesh(VoxelTypes types, MaterialInstance materialInstance)
         {
@@ -31,14 +39,24 @@ namespace Clunker.Voxels
             _meshGeometry = new MeshGeometry();
         }
 
-        public override void ComponentStarted()
+        public void Initialize(GraphicsDevice device, CommandList commandList, RenderableInitialize initialize)
         {
-            base.ComponentStarted();
-
             space = GameObject.GetComponent<VoxelSpace>();
-            Debug.Assert(space != null, "VoxelMesh needs a VoxelSpace component");
             space.VoxelsChanged += GenerateMesh;
             GenerateMesh();
+        }
+
+        public void Render(GraphicsDevice device, CommandList commandList, RenderingContext context)
+        {
+            _materialInstance.Bind(device, commandList, context);
+            commandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, GameObject.Transform.WorldMatrix);
+            _meshGeometry.Render(device, commandList);
+        }
+
+        public void Remove(GraphicsDevice device, CommandList commandList)
+        {
+            _meshGeometry.Dispose();
+            space.VoxelsChanged -= GenerateMesh;
         }
 
         private void GenerateMesh()
@@ -190,17 +208,5 @@ namespace Clunker.Voxels
         //    indices.Add((ushort)vertices.Count);
         //    vertices.Add(new VertexPositionTextureNormal(triangle.C, new System.Numerics.Vector2(0, 0), triangle.Normal));
         //}
-
-        public override (MeshGeometry, MaterialInstance) ProvideMeshAndMaterial()
-        {
-            return (_meshGeometry, _materialInstance);
-        }
-
-        public override void ComponentStopped()
-        {
-            base.ComponentStopped();
-            _meshGeometry.Dispose();
-            space.VoxelsChanged -= GenerateMesh;
-        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Clunker.Graphics;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.ComponentsInterfaces;
 using Clunker.SceneGraph.Core;
 using System;
@@ -17,7 +18,6 @@ namespace Clunker.SceneGraph
 
         private Dictionary<Type, Component> _components;
         private List<IUpdateable> _updateables;
-        private List<IRenderUpdateable> _renderUpdateables;
         private List<IComponentEventListener> _componentListeners;
 
         private List<IComponentEventListener> _listenersToStop;
@@ -29,7 +29,6 @@ namespace Clunker.SceneGraph
         {
             _components = new Dictionary<Type, Component>();
             _updateables = new List<IUpdateable>();
-            _renderUpdateables = new List<IRenderUpdateable>();
             _componentListeners = new List<IComponentEventListener>();
             _listenersToStop = new List<IComponentEventListener>();
             AddComponent(new Transform());
@@ -53,9 +52,12 @@ namespace Clunker.SceneGraph
                 _updateables.Add(updateable);
             }
 
-            if (component is IRenderUpdateable renderUpdateable)
+            if (component is IRenderable renderable)
             {
-                _renderUpdateables.Add(renderUpdateable);
+                if (CurrentScene != null && CurrentScene.IsRunning)
+                {
+                    CurrentScene.App.AddRenderable(renderable);
+                }
             }
 
             if (component is IComponentEventListener componentListener)
@@ -78,9 +80,12 @@ namespace Clunker.SceneGraph
                 _updateables.Remove(updateable);
             }
 
-            if (component is IRenderUpdateable renderUpdateable)
+            if (component is IRenderable renderable)
             {
-                _renderUpdateables.Remove(renderUpdateable);
+                if (CurrentScene != null && CurrentScene.IsRunning)
+                {
+                    CurrentScene.App.RemoveRenderable(renderable);
+                }
             }
 
             if (component is IComponentEventListener componentListener)
@@ -138,6 +143,10 @@ namespace Clunker.SceneGraph
                     component.IsAlive = true;
                 }
                 _componentListeners.ForEach(l => l.ComponentStarted());
+                foreach(var renderable in _components.Values.OfType<IRenderable>())
+                {
+                    CurrentScene.App.AddRenderable(renderable);
+                }
             }
         }
 
@@ -150,6 +159,10 @@ namespace Clunker.SceneGraph
                     component.IsAlive = false;
                 }
                 _componentListeners.ForEach(l => TryTellComponentStop(l));
+                foreach (var renderable in _components.Values.OfType<IRenderable>())
+                {
+                    CurrentScene.App.RemoveRenderable(renderable);
+                }
             }
             CurrentScene = null;
         }
@@ -161,6 +174,10 @@ namespace Clunker.SceneGraph
                 component.IsAlive = true;
             }
             _componentListeners.ForEach(l => l.ComponentStarted());
+            foreach (var renderable in _components.Values.OfType<IRenderable>())
+            {
+                CurrentScene.App.AddRenderable(renderable);
+            }
         }
 
         internal void SceneStopped()
@@ -170,6 +187,10 @@ namespace Clunker.SceneGraph
                 component.IsAlive = false;
             }
             _componentListeners.ForEach(l => TryTellComponentStop(l));
+            foreach (var renderable in _components.Values.OfType<IRenderable>())
+            {
+                CurrentScene.App.RemoveRenderable(renderable);
+            }
         }
 
         private void TryTellComponentStop(IComponentEventListener listener)
@@ -206,14 +227,6 @@ namespace Clunker.SceneGraph
                 }
             }
             _listenersToStop = newList;
-        }
-
-        internal void RenderUpdate(float time)
-        {
-            for (int i = 0; i < _renderUpdateables.Count; i++)
-            {
-                _renderUpdateables[i].RenderUpdate(time);
-            }
         }
     }
 }

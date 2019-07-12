@@ -14,6 +14,8 @@ namespace Clunker.Graphics
         private Pipeline _pipeline;
         private Pipeline _wireframePipeline;
 
+        internal ResourceSet _projViewSet;
+
         private string _vertexShader;
         private string _fragShader;
         public bool MustUpdateResources { get; private set; }
@@ -25,10 +27,9 @@ namespace Clunker.Graphics
             MustUpdateResources = true;
         }
 
-        internal void UpdateResources(Renderer renderer)
+        private void UpdateResources(GraphicsDevice device, RenderingContext context)
         {
-            var graphicsDevice = renderer.GraphicsDevice;
-            var factory = graphicsDevice.ResourceFactory;
+            var factory = device.ResourceFactory;
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new[]
                 {
@@ -41,14 +42,21 @@ namespace Clunker.Graphics
                     new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(_vertexShader), "main"),
                     new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(_fragShader), "main")));
 
+            var projViewLayout = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("ProjectionBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                    new ResourceLayoutElementDescription("ViewBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                    new ResourceLayoutElementDescription("SceneColours", ResourceKind.UniformBuffer, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("SceneLighting", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
+
             _pipeline = factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
                 DepthStencilStateDescription.DepthOnlyLessEqual,
                 RasterizerStateDescription.Default,
                 PrimitiveTopology.TriangleList,
                 shaderSet,
-                new[] { renderer.ProjViewLayout, renderer.ObjectLayout },
-                graphicsDevice.MainSwapchain.Framebuffer.OutputDescription));
+                new[] { projViewLayout, context.Renderer.ObjectLayout },
+                device.MainSwapchain.Framebuffer.OutputDescription));
 
             _wireframePipeline = factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
@@ -56,14 +64,27 @@ namespace Clunker.Graphics
                 new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Wireframe, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 shaderSet,
-                new[] { renderer.ProjViewLayout, renderer.ObjectLayout },
-                graphicsDevice.MainSwapchain.Framebuffer.OutputDescription));
+                new[] { projViewLayout, context.Renderer.ObjectLayout },
+                device.MainSwapchain.Framebuffer.OutputDescription));
+
+            _projViewSet = factory.CreateResourceSet(new ResourceSetDescription(
+                projViewLayout,
+                context.Renderer.ProjectionBuffer,
+                context.Renderer.ViewBuffer,
+                context.Renderer.WireframeColourBuffer,
+                context.Renderer.SceneLightingBuffer));
+
             MustUpdateResources = false;
         }
 
-        internal void Bind(CommandList cl, bool wireframes)
+        public void Bind(GraphicsDevice device, CommandList cl, RenderingContext context)
         {
-            if(!wireframes)
+            if(MustUpdateResources)
+            {
+                UpdateResources(device, context);
+            }
+
+            if (!context.RenderWireframes)
             {
                 cl.SetPipeline(_pipeline);
             }
@@ -71,6 +92,8 @@ namespace Clunker.Graphics
             {
                 cl.SetPipeline(_wireframePipeline);
             }
+
+            cl.SetGraphicsResourceSet(0, _projViewSet);
         }
     }
 }

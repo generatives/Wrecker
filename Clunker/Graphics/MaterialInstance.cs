@@ -27,20 +27,24 @@ namespace Clunker.Graphics
             MustUpdateResources = true;
         }
 
-        internal void UpdateResources(Renderer renderer)
+        private void UpdateResources(GraphicsDevice device, RenderingContext context)
         {
-            var graphicsDevice = renderer.GraphicsDevice;
-            var factory = graphicsDevice.ResourceFactory;
+            var factory = device.ResourceFactory;
             var texture = new ImageSharpTexture(_image, false);
-            var deviceTexture = texture.CreateDeviceTexture(graphicsDevice, factory);
+            var deviceTexture = texture.CreateDeviceTexture(device, factory);
             _textureView = factory.CreateTextureView(new TextureViewDescription(deviceTexture));
-            _worldTextureSet = renderer.MakeTextureViewSet(_textureView);
+            _worldTextureSet = context.Renderer.MakeTextureViewSet(_textureView);
             MustUpdateResources = false;
         }
 
-        internal void Bind(CommandList cl, bool wireframes)
+        public void Bind(GraphicsDevice device, CommandList cl, RenderingContext context)
         {
-            Material.Bind(cl, wireframes);
+            if(MustUpdateResources)
+            {
+                UpdateResources(device, context);
+            }
+            Material.Bind(device, cl, context);
+            cl.UpdateBuffer(context.Renderer.ObjectPropertiesBuffer, 0, Properties);
             cl.SetGraphicsResourceSet(1, _worldTextureSet);
         }
     }

@@ -72,11 +72,19 @@ namespace Wrecker
                 new ThrusterVoxelEditingTool(2)
             };
 
+            var px = Image.Load("Assets\\skybox_px.png");
+            var nx = Image.Load("Assets\\skybox_nx.png");
+            var py = Image.Load("Assets\\skybox_py.png");
+            var ny = Image.Load("Assets\\skybox_ny.png");
+            var pz = Image.Load("Assets\\skybox_pz.png");
+            var nz = Image.Load("Assets\\skybox_nz.png");
+
             var camera = new GameObject();
             camera.AddComponent(new Camera());
             camera.AddComponent(new Character());
             camera.AddComponent(new CharacterInput());
             camera.AddComponent(new ComponentSwitcher(tools));
+            camera.AddComponent(new Skybox(px, nx, py, ny, pz, nz));
             scene.AddGameObject(camera);
 
             var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
@@ -94,16 +102,6 @@ namespace Wrecker
             scene.AddSystem(new PhysicsSystem());
 
             var app = new ClunkerApp(scene);
-
-            var px = Image.Load("Assets\\skybox_px.png");
-            var nx = Image.Load("Assets\\skybox_nx.png");
-            var py = Image.Load("Assets\\skybox_py.png");
-            var ny = Image.Load("Assets\\skybox_ny.png");
-            var pz = Image.Load("Assets\\skybox_pz.png");
-            var nz = Image.Load("Assets\\skybox_nz.png");
-
-            var skyboxRenderer = new SkyboxRenderer(px, nx, py, ny, pz, nz);
-            app.AddRenderer(skyboxRenderer);
 
             app.Start(wci, options).Wait();
         }

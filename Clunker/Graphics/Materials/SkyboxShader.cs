@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Clunker.Graphics.Materials
 {
-    public class Skybox
+    public class SkyboxShader
     {
         public const string VertexCode = @"
 #version 450

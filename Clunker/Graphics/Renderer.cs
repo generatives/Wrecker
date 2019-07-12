@@ -1,9 +1,11 @@
 ﻿using Clunker.Graphics.Materials;
 using Clunker.SceneGraph;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.ComponentsInterfaces;
 using Clunker.SceneGraph.SceneSystemInterfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using Veldrid;
@@ -11,6 +13,11 @@ using Veldrid.SPIRV;
 
 namespace Clunker.Graphics
 {
+    public enum RenderingPass
+    {
+        BACKGROUND, SCENE
+    }
+
     public struct SceneLighting
     {
         public static uint Size = sizeof(float) * (4 + 3 + 4 + 1);
@@ -27,52 +34,46 @@ namespace Clunker.Graphics
 
     public class Renderer : IRenderer
     {
-        public int Order => 1;
+        public int Order => 0;
 
-        private List<Mesh> _meshes;
+        public DeviceBuffer ProjectionBuffer { get; private set; }
+        public DeviceBuffer ViewBuffer { get; private set; }
+        public DeviceBuffer WorldBuffer { get; private set; }
+        public DeviceBuffer WireframeColourBuffer { get; private set; }
+        public DeviceBuffer SceneLightingBuffer { get; private set; }
+        public DeviceBuffer ObjectPropertiesBuffer { get; private set; }
 
-        private DeviceBuffer _projectionBuffer;
-        private DeviceBuffer _viewBuffer;
-        private DeviceBuffer _worldBuffer;
-        private DeviceBuffer _wireframeColourBuffer;
-        private DeviceBuffer _sceneLightingBuffer;
-        private DeviceBuffer _objectPropertiesBuffer;
+        private GraphicsDevice _device;
+        private CommandList _commandList;
 
-        internal ResourceSet _projViewSet;
-
-        internal GraphicsDevice GraphicsDevice;
-        internal ResourceLayout ProjViewLayout;
         internal ResourceLayout ObjectLayout;
 
         private Matrix4x4 _projectionMatrix;
         private bool _projectionMatrixChanged;
 
+        private List<IRenderable> _backgroundRenderables;
+        private List<IRenderable> _sceneRenderables;
+
         public bool RenderWireframes { get; set; }
 
         public Renderer()
         {
-            _meshes = new List<Mesh>();
+            _backgroundRenderables = new List<IRenderable>();
+            _sceneRenderables = new List<IRenderable>();
         }
 
         public void Initialize(GraphicsDevice device, CommandList commandList, int windowWidth, int windowHeight)
         {
-            if (GraphicsDevice != null) return;
+            _device = device;
+            _commandList = commandList;
 
-            GraphicsDevice = device;
-            var factory = GraphicsDevice.ResourceFactory;
-            _projectionBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            _viewBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            _worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            _wireframeColourBuffer = factory.CreateBuffer(new BufferDescription(sizeof(float) * 4, BufferUsage.UniformBuffer));
-            _objectPropertiesBuffer = factory.CreateBuffer(new BufferDescription(ObjectProperties.Size, BufferUsage.UniformBuffer));
-            _sceneLightingBuffer = factory.CreateBuffer(new BufferDescription(SceneLighting.Size, BufferUsage.UniformBuffer));
-
-            ProjViewLayout = factory.CreateResourceLayout(
-                new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("ProjectionBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                    new ResourceLayoutElementDescription("ViewBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                    new ResourceLayoutElementDescription("SceneColours", ResourceKind.UniformBuffer, ShaderStages.Fragment),
-                    new ResourceLayoutElementDescription("SceneLighting", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
+            var factory = _device.ResourceFactory;
+            ProjectionBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            ViewBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            WorldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            WireframeColourBuffer = factory.CreateBuffer(new BufferDescription(sizeof(float) * 4, BufferUsage.UniformBuffer));
+            ObjectPropertiesBuffer = factory.CreateBuffer(new BufferDescription(ObjectProperties.Size, BufferUsage.UniformBuffer));
+            SceneLightingBuffer = factory.CreateBuffer(new BufferDescription(SceneLighting.Size, BufferUsage.UniformBuffer));
 
             ObjectLayout = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
@@ -81,35 +82,18 @@ namespace Clunker.Graphics
                     new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment),
                     new ResourceLayoutElementDescription("ObjectProperties", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
-            _projViewSet = factory.CreateResourceSet(new ResourceSetDescription(
-                ProjViewLayout,
-                _projectionBuffer,
-                _viewBuffer,
-                _wireframeColourBuffer,
-                _sceneLightingBuffer));
-
             WindowResized(windowWidth, windowHeight);
-        }
-
-        public void AddMesh(Mesh mesh)
-        {
-            _meshes.Add(mesh);
-        }
-
-        public void RemoveMesh(Mesh mesh)
-        {
-            _meshes.Remove(mesh);
         }
 
         internal ResourceSet MakeTextureViewSet(TextureView textureView)
         {
-            var factory = GraphicsDevice.ResourceFactory;
+            var factory = _device.ResourceFactory;
             return factory.CreateResourceSet(new ResourceSetDescription(
                 ObjectLayout,
-                _worldBuffer,
+                WorldBuffer,
                 textureView,
-                GraphicsDevice.Aniso4xSampler,
-                _objectPropertiesBuffer));
+                _device.Aniso4xSampler,
+                ObjectPropertiesBuffer));
         }
 
         public void WindowResized(int width, int height)
@@ -119,24 +103,51 @@ namespace Clunker.Graphics
                 (float)width / height,
                 0.05f,
                 128f);
-            if(GraphicsDevice.IsClipSpaceYInverted)
+            if(_device.IsClipSpaceYInverted)
             {
                 _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);
             }
             _projectionMatrixChanged = true;
         }
 
-        public void Render(Camera camera, GraphicsDevice device, CommandList commandList)
+        public void AddRenderable(IRenderable renderable)
+        {
+            renderable.Initialize(_device, _commandList, new RenderableInitialize() { Renderer = this });
+            switch (renderable.Pass)
+            {
+                case RenderingPass.BACKGROUND:
+                    _backgroundRenderables.Add(renderable);
+                    return;
+                case RenderingPass.SCENE:
+                    _backgroundRenderables.Add(renderable);
+                    return;
+            }
+        }
+
+        public void RemoveRenderable(IRenderable renderable)
+        {
+            renderable.Remove(_device, _commandList);
+            switch (renderable.Pass)
+            {
+                case RenderingPass.BACKGROUND:
+                    _backgroundRenderables.Remove(renderable);
+                    return;
+                case RenderingPass.SCENE:
+                    _backgroundRenderables.Remove(renderable);
+                    return;
+            }
+        }
+
+        public void Render(Camera camera, GraphicsDevice device, CommandList commandList, Graphics.RenderWireframes renderWireframes)
         {
             if (_projectionMatrixChanged)
             {
-                commandList.UpdateBuffer(_projectionBuffer, 0, _projectionMatrix);
+                commandList.UpdateBuffer(ProjectionBuffer, 0, _projectionMatrix);
             }
 
-            commandList.UpdateBuffer(_viewBuffer, 0, camera.GetViewMatrix());
+            commandList.UpdateBuffer(ViewBuffer, 0, camera.GetViewMatrix());
 
-            commandList.UpdateBuffer(_wireframeColourBuffer, 0, RgbaFloat.White);
-            commandList.UpdateBuffer(_sceneLightingBuffer, 0, new SceneLighting()
+            commandList.UpdateBuffer(SceneLightingBuffer, 0, new SceneLighting()
             {
                 AmbientLightColour = RgbaFloat.White,
                 AmbientLightStrength = 0f,
@@ -144,42 +155,44 @@ namespace Clunker.Graphics
                 DiffuseLightDirection = Vector3.Normalize(new Vector3(2, 5, -1))
             });
 
-            foreach (var mesh in _meshes)
-            {
-                var (meshGeometry, materialInstance) = mesh.ProvideMeshAndMaterial();
-                if(meshGeometry != null && materialInstance != null)
-                {
-                    if (meshGeometry.MustUpdateResources) meshGeometry.UpdateResources(this.GraphicsDevice);
-                    if (materialInstance.MustUpdateResources) materialInstance.UpdateResources(this);
-                    if (materialInstance.Material.MustUpdateResources) materialInstance.Material.UpdateResources(this);
 
-                    if(meshGeometry.CanRender)
-                    {
-                        commandList.UpdateBuffer(_worldBuffer, 0, mesh.GameObject.Transform.WorldMatrix);
-                        commandList.UpdateBuffer(_objectPropertiesBuffer, 0, materialInstance.Properties);
-                        materialInstance.Bind(commandList, false);
-                        commandList.SetGraphicsResourceSet(0, _projViewSet);
-                        meshGeometry.Render(commandList);
-                    }
+            if(renderWireframes == Graphics.RenderWireframes.SOLID || renderWireframes == Graphics.RenderWireframes.BOTH)
+            {
+                var context = new RenderingContext() { Renderer = this, RenderWireframes = false };
+                commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.White);
+                RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.Position);
+                RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.Position);
+            }
+
+            if (renderWireframes == Graphics.RenderWireframes.WIRE_FRAMES || renderWireframes == Graphics.RenderWireframes.BOTH)
+            {
+                var context = new RenderingContext() { Renderer = this, RenderWireframes = true };
+                commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.Black);
+                RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.Position);
+                RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.Position);
+            }
+        }
+        private void RenderSet(List<IRenderable> renderables, GraphicsDevice device, CommandList commandList, RenderingContext context, Vector3 location)
+        {
+            var transparent = new List<IRenderable>();
+            foreach (var renderable in renderables)
+            {
+                if (renderable.Transparent)
+                {
+                    transparent.Add(renderable);
+                }
+                else
+                {
+                    renderable.Render(device, commandList, context);
                 }
             }
 
-            if (RenderWireframes)
+            if (transparent.Any())
             {
-                commandList.UpdateBuffer(_wireframeColourBuffer, 0, RgbaFloat.Black);
-                foreach (var mesh in _meshes)
+                var sorted = transparent.OrderBy(r => Vector3.DistanceSquared(location, r.Position));
+                foreach (var renderable in sorted)
                 {
-                    var (meshGeometry, materialInstance) = mesh.ProvideMeshAndMaterial();
-                    if (meshGeometry != null && materialInstance != null)
-                    {
-                        if (meshGeometry.CanRender)
-                        {
-                            commandList.UpdateBuffer(_worldBuffer, 0, mesh.GameObject.Transform.WorldMatrix);
-                            materialInstance.Bind(commandList, true);
-                            commandList.SetGraphicsResourceSet(0, _projViewSet);
-                            meshGeometry.Render(commandList);
-                        }
-                    }
+                    renderable.Render(device, commandList, context);
                 }
             }
         }
