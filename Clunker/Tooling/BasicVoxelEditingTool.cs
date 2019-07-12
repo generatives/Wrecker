@@ -5,12 +5,10 @@ using Clunker.Math;
 using Clunker.Voxels;
 using ImGuiNET;
 
-namespace Wrecker.VoxelEditing
+namespace Clunker.Tooling
 {
     public class BasicVoxelEditingTool : VoxelAddingTool
     {
-        public override string Name { get; protected set; }
-
         private VoxelSide _orientation;
         private ushort _voxelType;
 

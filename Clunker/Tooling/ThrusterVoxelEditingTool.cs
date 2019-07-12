@@ -6,12 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Wrecker.VoxelEditing
+namespace Clunker.Tooling
 {
     public class ThrusterVoxelEditingTool : VoxelAddingTool
     {
-        public override string Name { get; protected set; } = "Thruster";
-
         private VoxelSide _orientation;
         private ushort _voxelType;
         private float _force = 1f;

@@ -17,10 +17,13 @@ namespace Clunker.Graphics
         private Image<Rgba32> _image;
         public bool MustUpdateResources { get; private set; }
 
-        public MaterialInstance(Material material, Image<Rgba32> image)
+        public ObjectProperties Properties { get; set; }
+
+        public MaterialInstance(Material material, Image<Rgba32> image, ObjectProperties properties)
         {
             Material = material;
             _image = image;
+            Properties = properties;
             MustUpdateResources = true;
         }
 

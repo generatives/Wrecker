@@ -54,9 +54,13 @@ layout(set = 0, binding = 3) uniform SceneLighting
 };
 layout(set = 1, binding = 1) uniform texture2D SurfaceTexture;
 layout(set = 1, binding = 2) uniform sampler SurfaceSampler;
+layout(set = 1, binding = 3) uniform ObjectProperties
+{
+    vec4 Colour;
+};
 void main()
 {
-    vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * WireframeColour;
+    vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * WireframeColour * Colour;
 
     vec3 norm = normalize(fsin_normal);
     float diffuse = max(dot(norm, DiffuseLightDirection), 0.0);

@@ -7,6 +7,7 @@ using Clunker.Physics.CharacterController;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentsInterfaces;
 using Clunker.SceneGraph.Core;
+using Clunker.Tooling;
 using Clunker.Voxels;
 using Clunker.World;
 using SixLabors.ImageSharp;
@@ -16,7 +17,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using Veldrid;
 using Veldrid.StartupUtilities;
-using Wrecker.VoxelEditing;
 
 namespace Wrecker
 {
@@ -64,7 +64,7 @@ namespace Wrecker
                     new Vector2(650, 1300))
             });
 
-            var tools = new IVoxelEditingTool[]
+            var tools = new Component[]
             {
                 new RemoveVoxelEditingTool(),
                 new BasicVoxelEditingTool("DarkStone", 0),
@@ -76,11 +76,11 @@ namespace Wrecker
             camera.AddComponent(new Camera());
             camera.AddComponent(new Character());
             camera.AddComponent(new CharacterInput());
-            camera.AddComponent(new VoxelEditor(tools));
+            camera.AddComponent(new ComponentSwitcher(tools));
             scene.AddGameObject(camera);
 
             var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
-            var voxelMaterialInstance = new MaterialInstance(new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode), voxelTextures);
+            var voxelMaterialInstance = new MaterialInstance(new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode), voxelTextures, new ObjectProperties() { Colour = RgbaFloat.White });
 
             scene.AddGameObject(CreateShip(types, voxelMaterialInstance));
 
@@ -110,8 +110,8 @@ namespace Wrecker
 
         private static GameObject CreateShip(VoxelTypes types, MaterialInstance materialInstance)
         {
-            var voxelSpaceData = new VoxelGrid(3, 3, 3, 1);
-            int gap = 1;
+            var voxelSpaceData = new VoxelGrid(10, 10, 10, 1);
+            int gap = 2;
             for (int x = gap; x < voxelSpaceData.XLength - gap; x++)
                 for (int y = gap; y < voxelSpaceData.YLength - gap; y++)
                     for (int z = gap; z < voxelSpaceData.ZLength - gap; z++)

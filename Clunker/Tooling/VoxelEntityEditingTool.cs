@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Wrecker.VoxelEditing
+namespace Clunker.Tooling
 {
     //public class VoxelEntityEditingTool : IVoxelEditingTool
     //{

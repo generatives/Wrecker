@@ -5,13 +5,11 @@ using System.Text;
 using Clunker.Math;
 using Clunker.Voxels;
 
-namespace Wrecker.VoxelEditing
+namespace Clunker.Tooling
 {
-    public abstract class VoxelAddingTool : IVoxelEditingTool
+    public abstract class VoxelAddingTool : VoxelEditingTool
     {
-        public abstract string Name { get; protected set; }
-
-        public void DoAction(VoxelSpace space, Vector3 hitLocation, Vector3i index)
+        protected override void DoVoxelAction(VoxelSpace space, Vector3 hitLocation, Vector3i index)
         {
             var size = space.Grid.VoxelSize;
             var voxelLocation = index * size;
@@ -44,11 +42,6 @@ namespace Wrecker.VoxelEditing
 
         public abstract void AddVoxel(VoxelSpace space, Vector3i index);
 
-        public abstract void DrawMenu();
-
-        public static bool NearlyEqual(float f1, float f2)
-        {
-            return Math.Abs(f1 - f2) < 0.1;
-        }
+        public static bool NearlyEqual(float f1, float f2) => System.Math.Abs(f1 - f2) < 0.1;
     }
 }

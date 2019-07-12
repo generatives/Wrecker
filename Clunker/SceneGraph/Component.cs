@@ -9,6 +9,12 @@ namespace Clunker.SceneGraph
 {
     public class Component
     {
+        private string _name;
+        public string Name
+        {
+            get => _name ?? GetType().Name;
+            set => _name = value;
+        }
         public GameObject GameObject { get; internal set; }
         public Scene CurrentScene { get => GameObject?.CurrentScene; }
         internal ConcurrentQueue<Action> WorkerJobs { get; private set; }

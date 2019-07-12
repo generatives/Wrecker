@@ -19,6 +19,11 @@ namespace Clunker.Graphics
         public RgbaFloat AmbientLightColour;
         public float AmbientLightStrength;
     }
+    public struct ObjectProperties
+    {
+        public static uint Size = sizeof(float) * (4);
+        public RgbaFloat Colour;
+    }
 
     public class Renderer : IRenderer
     {
@@ -31,12 +36,13 @@ namespace Clunker.Graphics
         private DeviceBuffer _worldBuffer;
         private DeviceBuffer _wireframeColourBuffer;
         private DeviceBuffer _sceneLightingBuffer;
+        private DeviceBuffer _objectPropertiesBuffer;
 
         internal ResourceSet _projViewSet;
 
         internal GraphicsDevice GraphicsDevice;
         internal ResourceLayout ProjViewLayout;
-        internal ResourceLayout WorldTextureLayout;
+        internal ResourceLayout ObjectLayout;
 
         private Matrix4x4 _projectionMatrix;
         private bool _projectionMatrixChanged;
@@ -58,6 +64,7 @@ namespace Clunker.Graphics
             _viewBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _wireframeColourBuffer = factory.CreateBuffer(new BufferDescription(sizeof(float) * 4, BufferUsage.UniformBuffer));
+            _objectPropertiesBuffer = factory.CreateBuffer(new BufferDescription(ObjectProperties.Size, BufferUsage.UniformBuffer));
             _sceneLightingBuffer = factory.CreateBuffer(new BufferDescription(SceneLighting.Size, BufferUsage.UniformBuffer));
 
             ProjViewLayout = factory.CreateResourceLayout(
@@ -67,11 +74,12 @@ namespace Clunker.Graphics
                     new ResourceLayoutElementDescription("SceneColours", ResourceKind.UniformBuffer, ShaderStages.Fragment),
                     new ResourceLayoutElementDescription("SceneLighting", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
-            WorldTextureLayout = factory.CreateResourceLayout(
+            ObjectLayout = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                     new ResourceLayoutElementDescription("SurfaceTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
-                    new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
+                    new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("ObjectProperties", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
             _projViewSet = factory.CreateResourceSet(new ResourceSetDescription(
                 ProjViewLayout,
@@ -97,10 +105,11 @@ namespace Clunker.Graphics
         {
             var factory = GraphicsDevice.ResourceFactory;
             return factory.CreateResourceSet(new ResourceSetDescription(
-                WorldTextureLayout,
+                ObjectLayout,
                 _worldBuffer,
                 textureView,
-                GraphicsDevice.Aniso4xSampler));
+                GraphicsDevice.Aniso4xSampler,
+                _objectPropertiesBuffer));
         }
 
         public void WindowResized(int width, int height)
@@ -147,6 +156,7 @@ namespace Clunker.Graphics
                     if(meshGeometry.CanRender)
                     {
                         commandList.UpdateBuffer(_worldBuffer, 0, mesh.GameObject.Transform.WorldMatrix);
+                        commandList.UpdateBuffer(_objectPropertiesBuffer, 0, materialInstance.Properties);
                         materialInstance.Bind(commandList, false);
                         commandList.SetGraphicsResourceSet(0, _projViewSet);
                         meshGeometry.Render(commandList);

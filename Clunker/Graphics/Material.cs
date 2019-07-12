@@ -47,7 +47,7 @@ namespace Clunker.Graphics
                 RasterizerStateDescription.Default,
                 PrimitiveTopology.TriangleList,
                 shaderSet,
-                new[] { renderer.ProjViewLayout, renderer.WorldTextureLayout },
+                new[] { renderer.ProjViewLayout, renderer.ObjectLayout },
                 graphicsDevice.MainSwapchain.Framebuffer.OutputDescription));
 
             _wireframePipeline = factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
@@ -56,7 +56,7 @@ namespace Clunker.Graphics
                 new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Wireframe, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 shaderSet,
-                new[] { renderer.ProjViewLayout, renderer.WorldTextureLayout },
+                new[] { renderer.ProjViewLayout, renderer.ObjectLayout },
                 graphicsDevice.MainSwapchain.Framebuffer.OutputDescription));
             MustUpdateResources = false;
         }
