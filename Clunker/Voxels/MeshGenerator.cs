@@ -8,12 +8,27 @@ namespace Clunker.Voxels
 {
     public class MeshGenerator
     {
-        public static void GenerateMesh(VoxelGrid space, Action<Voxel, VoxelSide, Quad> vertexProcessor)
+        public static void GenerateMesh(VoxelGridData space, Action<Voxel, VoxelSide, Quad> vertexProcessor)
         {
             space.FindExposedSides((v, x, y, z, side) =>
             {
                 AddBlock(vertexProcessor, v, x, y, z, side, space.VoxelSize);
             });
+        }
+        public static void GenerateGridMesh(VoxelGridData space, Action<Voxel, VoxelSide, Quad> vertexProcessor)
+        {
+            for (int x = 0; x < space.XLength; x++)
+                for (int y = 0; y < space.YLength; y++)
+                    for (int z = 0; z < space.ZLength; z++)
+                    {
+                        var voxel = space[x, y, z];
+                        AddBlock(vertexProcessor, voxel, x, y, z, VoxelSide.BOTTOM, space.VoxelSize);
+                        AddBlock(vertexProcessor, voxel, x, y, z, VoxelSide.EAST, space.VoxelSize);
+                        AddBlock(vertexProcessor, voxel, x, y, z, VoxelSide.WEST, space.VoxelSize);
+                        AddBlock(vertexProcessor, voxel, x, y, z, VoxelSide.TOP, space.VoxelSize);
+                        AddBlock(vertexProcessor, voxel, x, y, z, VoxelSide.NORTH, space.VoxelSize);
+                        AddBlock(vertexProcessor, voxel, x, y, z, VoxelSide.SOUTH, space.VoxelSize);
+                    }
         }
 
         private static void AddBlock(Action<Voxel, VoxelSide, Quad> vertexProcessor, Voxel voxel, float x, float y, float z, VoxelSide side, float voxelSize)

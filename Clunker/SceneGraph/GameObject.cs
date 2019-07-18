@@ -12,6 +12,8 @@ namespace Clunker.SceneGraph
 {
     public partial class GameObject
     {
+        public string Name { get; set; }
+
         public Scene CurrentScene { get; private set; }
 
         internal bool HasJobs => _components.Any(c => c.Value.HasJobs) || _listenersToStop.Any(c => (c as Component).HasJobs);
@@ -34,6 +36,11 @@ namespace Clunker.SceneGraph
             AddComponent(new Transform());
 
             _children = new List<GameObject>();
+        }
+
+        public GameObject(string name) : this()
+        {
+            Name = name;
         }
 
         public void AddComponent(Component component)
@@ -119,6 +126,14 @@ namespace Clunker.SceneGraph
             {
                 gameObject.Parent.RemoveChild(gameObject);
             }
+            if(gameObject.CurrentScene != CurrentScene)
+            {
+                if(gameObject.CurrentScene != null)
+                {
+                    gameObject.CurrentScene.RemoveGameObject(gameObject);
+                }
+                CurrentScene?.AddGameObject(gameObject);
+            }
             _children.Add(gameObject);
             gameObject.Parent = this;
         }
@@ -136,6 +151,13 @@ namespace Clunker.SceneGraph
         internal void AddedToScene(Scene scene)
         {
             CurrentScene = scene;
+            foreach(var gameObject in _children)
+            {
+                if(gameObject.CurrentScene == null)
+                {
+                    CurrentScene.AddGameObject(gameObject);
+                }
+            }
             if(scene.IsRunning)
             {
                 foreach (var component in _components.Values)
@@ -227,6 +249,11 @@ namespace Clunker.SceneGraph
                 }
             }
             _listenersToStop = newList;
+        }
+
+        public override string ToString()
+        {
+            return Name ?? base.ToString();
         }
     }
 }

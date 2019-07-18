@@ -8,9 +8,9 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace Clunker.Voxels
+namespace Clunker.Physics.Voxels
 {
-    public class DynamicVoxelBody : VoxelBody, IUpdateable
+    public class DynamicVoxelBody : VoxelGridBody, IUpdateable
     {
         public BodyReference VoxelBody { get; private set; }
         public Vector3 BodyOffset { get; private set; }
@@ -31,7 +31,6 @@ namespace Clunker.Voxels
                 var desc = BodyDescription.CreateDynamic(
                     new RigidPose(GameObject.Transform.WorldPosition + RelativeBodyOffset, GameObject.Transform.WorldOrientation.ToPhysics()),
                     inertia,
-                    //new BodyInertia() { InverseMass = 1f / 1.5f },
                     new CollidableDescription(type, speculativeMargin),
                     new BodyActivityDescription(-1));
                 VoxelBody = physicsSystem.AddDynamic(desc, this);

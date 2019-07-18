@@ -50,9 +50,9 @@ namespace Clunker.Physics
 
         public int ChildCount => VoxelIndices.Count;
 
-        public VoxelCollidable(VoxelSpace space, BufferPool pool)
+        public VoxelCollidable(VoxelGrid space, BufferPool pool)
         {
-            var data = space.Grid;
+            var data = space.Data;
             var voxelList = new QuickList<Vector3>(data.XLength * data.YLength * data.ZLength, pool);
             foreach (var voxel in data)
             {

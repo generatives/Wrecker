@@ -119,7 +119,7 @@ namespace Clunker.Graphics
                     _backgroundRenderables.Add(renderable);
                     return;
                 case RenderingPass.SCENE:
-                    _backgroundRenderables.Add(renderable);
+                    _sceneRenderables.Add(renderable);
                     return;
             }
         }
@@ -133,7 +133,7 @@ namespace Clunker.Graphics
                     _backgroundRenderables.Remove(renderable);
                     return;
                 case RenderingPass.SCENE:
-                    _backgroundRenderables.Remove(renderable);
+                    _sceneRenderables.Remove(renderable);
                     return;
             }
         }

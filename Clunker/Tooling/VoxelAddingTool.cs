@@ -11,7 +11,7 @@ namespace Clunker.Tooling
     {
         protected override void DoVoxelAction(VoxelSpace space, Vector3 hitLocation, Vector3i index)
         {
-            var size = space.Grid.VoxelSize;
+            var size = space.VoxelSize;
             var voxelLocation = index * size;
             var relativeLocation = space.GameObject.Transform.GetLocal(hitLocation);
             if (NearlyEqual(relativeLocation.X, voxelLocation.X))

@@ -1,4 +1,5 @@
-﻿using BepuPhysics.Collidables;
+﻿using BepuPhysics;
+using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Trees;
 using System;
@@ -14,6 +15,7 @@ namespace Clunker.Physics
         public float T;
         public Vector3 Normal;
         public bool Hit;
+        public int ChildIndex;
 
         public CollidableMobility MobilityFilter;
 
@@ -23,6 +25,7 @@ namespace Clunker.Physics
             T = float.MaxValue;
             Normal = default;
             Hit = false;
+            ChildIndex = 0;
 
             MobilityFilter = mobilityFilter;
         }
@@ -32,7 +35,12 @@ namespace Clunker.Physics
             return (MobilityFilter | collidable.Mobility) == MobilityFilter;
         }
 
-        public void OnRayHit(in RayData ray, ref float maximumT, float t, in Vector3 normal, CollidableReference collidable)
+        public bool AllowTest(CollidableReference collidable, int childIndex)
+        {
+            return AllowTest(collidable);
+        }
+
+        public void OnRayHit(in RayData ray, ref float maximumT, float t, in Vector3 normal, CollidableReference collidable, int childIndex)
         {
             if (t < maximumT)
                 maximumT = t;
@@ -42,6 +50,7 @@ namespace Clunker.Physics
                 T = t;
                 Normal = normal;
                 Hit = true;
+                ChildIndex = childIndex;
             }
         }
     }

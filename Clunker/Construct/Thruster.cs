@@ -1,4 +1,5 @@
 ﻿using Clunker.Input;
+using Clunker.Physics.Voxels;
 using Clunker.SceneGraph.ComponentsInterfaces;
 using Clunker.Voxels;
 using System;
@@ -16,11 +17,11 @@ namespace Clunker.Construct
         {
             if(InputTracker.IsKeyPressed(Veldrid.Key.T))
             {
-                var body = GameObject.Parent.GetComponent<DynamicVoxelBody>();
-                var localOffset = GameObject.Transform.Position - body.BodyOffset;
-                var worldOffset = Vector3.Transform(localOffset, GameObject.Parent.Transform.WorldOrientation);
+                var voxelSpaceObject = GameObject.Parent.Parent;
+                var body = voxelSpaceObject.GetComponent<DynamicVoxelSpaceBody>();
+                var worldOffset = GameObject.Transform.WorldPosition - body.RelativeBodyOffset;
                 var direction = -Voxel.Orientation.GetDirection();
-                body.VoxelBody.ApplyImpulse(Vector3.Transform(direction, GameObject.Parent.Transform.WorldOrientation) * Force, worldOffset);
+                body.VoxelBody.ApplyImpulse(Vector3.Transform(direction, voxelSpaceObject.Transform.WorldOrientation) * Force, worldOffset);
             }
         }
     }

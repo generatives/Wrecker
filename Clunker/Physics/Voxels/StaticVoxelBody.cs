@@ -7,9 +7,9 @@ using BepuPhysics.Collidables;
 using Clunker.Math;
 using Clunker.Physics;
 
-namespace Clunker.Voxels
+namespace Clunker.Physics.Voxels
 {
-    public class StaticVoxelBody : VoxelBody
+    public class StaticVoxelBody : VoxelGridBody
     {
         private StaticReference _voxelStatic;
 

@@ -1,6 +1,7 @@
 ﻿using BepuPhysics.Collidables;
 using Clunker.Math;
 using Clunker.Physics;
+using Clunker.Physics.Voxels;
 using Clunker.Voxels;
 using Clunker.World;
 using System;
@@ -31,12 +32,32 @@ namespace Clunker.Tooling
                 {
                     context = physicsSystem.GetStaticContext(handler.Collidable.Handle);
                 }
-                if (context is VoxelBody voxels)
+                if (context is VoxelGridBody voxels)
                 {
                     var hitLocation = GameObject.Transform.Position + forward * t;
-                    var space = voxels.GameObject.GetComponent<VoxelSpace>();
-                    var index = space.GetCastVoxelIndex(hitLocation);
-                    DoVoxelAction(space, hitLocation, index);
+                    var space = voxels.GameObject.Parent?.GetComponent<VoxelSpace>();
+                    if(space != null)
+                    {
+                        var grid = voxels.GameObject.GetComponent<VoxelGrid>();
+                        var gridsIndex = space[grid];
+                        if(gridsIndex.HasValue)
+                        {
+                            var gridIndex = voxels.GetVoxelIndex(handler.ChildIndex);
+                            var spaceIndex = gridsIndex.Value * space.GridSize + gridIndex;
+                            DoVoxelAction(space, hitLocation, spaceIndex);
+
+                        }
+                    }
+                }
+                if (context is DynamicVoxelSpaceBody voxelSpaceBody)
+                {
+                    var hitLocation = GameObject.Transform.Position + forward * t;
+                    var space = voxelSpaceBody.GameObject.GetComponent<VoxelSpace>();
+                    if (space != null)
+                    {
+                        var spaceIndex = voxelSpaceBody.GetSpaceIndex(handler.ChildIndex);
+                        DoVoxelAction(space, hitLocation, spaceIndex);
+                    }
                 }
             }
         }

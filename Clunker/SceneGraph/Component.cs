@@ -9,12 +9,7 @@ namespace Clunker.SceneGraph
 {
     public class Component
     {
-        private string _name;
-        public string Name
-        {
-            get => _name ?? GetType().Name;
-            set => _name = value;
-        }
+        public string Name { get; set; }
         public GameObject GameObject { get; internal set; }
         public Scene CurrentScene { get => GameObject?.CurrentScene; }
         internal ConcurrentQueue<Action> WorkerJobs { get; private set; }
@@ -41,6 +36,11 @@ namespace Clunker.SceneGraph
             if (!IsAlive) return;
             JobsSubmitted++;
             GameObject.CurrentScene.FrameQueue.Enqueue(() => { if (IsAlive) { action(); JobsSubmitted--; } });
+        }
+
+        public override string ToString()
+        {
+            return Name ?? base.ToString();
         }
     }
 }

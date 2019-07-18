@@ -1,114 +1,171 @@
-﻿using Clunker.Graphics;
-using Clunker.Graphics.Materials;
-using Clunker.Math;
+﻿using Clunker.Math;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
-using Clunker.Voxels;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Clunker.Voxels
 {
-    public class VoxelSpace : Component
+    public class VoxelSpace : Component, IEnumerable<KeyValuePair<Vector3i, VoxelGrid>>
     {
-        public VoxelGrid Grid { get; private set; }
-        private Dictionary<Vector3i, GameObject> _voxelEntities;
+        private Dictionary<Vector3i, VoxelGrid> _grids;
+        private Dictionary<VoxelGrid, Vector3i> _indices;
 
-        public event Action VoxelsChanged;
-        private bool _requestedVoxelsChanged;
+        public Vector3i GridSize { get; private set; }
+        public float VoxelSize { get; private set; }
+        public event Action<Vector3i, VoxelGrid> VoxelsChanged;
+        public event Action<Vector3i, VoxelGrid> GridAdded;
+        public event Action<Vector3i, VoxelGrid> GridRemoved;
 
-        public VoxelSpace(VoxelGrid voxels, Dictionary<Vector3i, GameObject> voxelEntities)
+        public VoxelGrid this[Vector3i index]
         {
-            Grid = voxels;
-            Grid.Changed += Data_Changed;
-
-            _voxelEntities = voxelEntities;
-        }
-
-        private void Data_Changed()
-        {
-            if (!_requestedVoxelsChanged && VoxelsChanged != null)
+            get
             {
-                this.EnqueueFrameJob(StartVoxelsChanged);
-                _requestedVoxelsChanged = true;
+                return _grids.ContainsKey(index) ? _grids[index] : null;
+            }
+            set
+            {
+                Add(index, value);
             }
         }
 
-        private void StartVoxelsChanged()
+        public Vector3i? this[VoxelGrid grid]
         {
-            VoxelsChanged?.Invoke();
-            _requestedVoxelsChanged = false;
+            get
+            {
+                if(_indices.ContainsKey(grid))
+                {
+                    return _indices[grid];
+                }
+                else
+                {
+                    return null;
+                }
+            }
         }
 
-        public Vector3i GetCastVoxelIndex(Vector3 worldPosition)
+        public VoxelSpace(Vector3i gridSize, float voxelSize)
         {
-            var localPosition = GameObject.Transform.GetLocal(worldPosition);
-            var voxelPosition = localPosition / Grid.VoxelSize;
-            var voxelIndex = new Vector3i((int)voxelPosition.X, (int)voxelPosition.Y, (int)voxelPosition.Z);
+            _grids = new Dictionary<Vector3i, VoxelGrid>();
+            _indices = new Dictionary<VoxelGrid, Vector3i>();
+            GridSize = gridSize;
+            VoxelSize = voxelSize;
+        }
 
-            if(voxelIndex.X == voxelPosition.X)
+        public GameObject Add(Vector3i index, VoxelGrid grid)
+        {
+            var gameObject = new GameObject();
+            gameObject.AddComponent(grid);
+            Add(index, gameObject);
+            return gameObject;
+        }
+
+        public void Add(Vector3i index, GameObject gameObject)
+        {
+            var grid = gameObject.GetComponent<VoxelGrid>();
+            if(grid != null)
             {
-                if(Grid.Exists(voxelIndex.X - 1, voxelIndex.Y, voxelIndex.Z))
-                {
-                    voxelIndex.X = voxelIndex.X - 1;
-                }
+                Remove(index);
+                gameObject.Transform.Position = new Vector3(index.X * GridSize.X * VoxelSize, index.Y * GridSize.Y * VoxelSize, index.Z * GridSize.Z * VoxelSize);
+                GameObject.AddChild(gameObject);
+                _grids[index] = grid;
+                _indices[grid] = index;
+                grid.VoxelsChanged += Grid_VoxelsChanged;
+                GridAdded?.Invoke(index, grid);
             }
+        }
 
-            if (voxelIndex.Y == voxelPosition.Y)
+        private void Grid_VoxelsChanged(VoxelGrid grid)
+        {
+            VoxelsChanged?.Invoke(_indices[grid], grid);
+        }
+
+        public GameObject Remove(Vector3i index)
+        {
+            if(_grids.ContainsKey(index))
             {
-                if (Grid.Exists(voxelIndex.X , voxelIndex.Y - 1, voxelIndex.Z))
-                {
-                    voxelIndex.Y = voxelIndex.Y - 1;
-                }
+                var grid = _grids[index];
+                _grids.Remove(index);
+                _indices.Remove(grid);
+                grid.VoxelsChanged -= Grid_VoxelsChanged;
+                GameObject.RemoveChild(grid.GameObject);
+                GridRemoved?.Invoke(index, grid);
+                return grid.GameObject;
             }
-
-            if (voxelIndex.Z == voxelPosition.Z)
+            else
             {
-                if (Grid.Exists(voxelIndex.X, voxelIndex.Y, voxelIndex.Z - 1))
-                {
-                    voxelIndex.Z = voxelIndex.Z - 1;
-                }
+                return null;
             }
+        }
 
-            return voxelIndex;
+        public Voxel? GetVoxel(Vector3i index)
+        {
+            var gridsIndex = new Vector3i(
+                (int)MathF.Floor((float)index.X / GridSize.X),
+                (int)MathF.Floor((float)index.Y / GridSize.Y),
+                (int)MathF.Floor((float)index.Z / GridSize.Z));
+
+            var voxelIndex = new Vector3i(
+                index.X - gridsIndex.X * GridSize.X,
+                index.Y - gridsIndex.Y * GridSize.Y,
+                index.Z - gridsIndex.Z * GridSize.Z);
+
+            var grid = this[gridsIndex];
+
+            return grid?.Data[voxelIndex];
         }
 
         public void SetVoxel(Vector3i index, Voxel voxel, VoxelEntity entity = null)
         {
-            if(Grid.SetVoxel(index, voxel))
-            {
-                if (_voxelEntities.ContainsKey(index))
-                {
-                    var oldEntity = _voxelEntities[index];
-                    GameObject.RemoveChild(oldEntity);
-                    GameObject.CurrentScene.RemoveGameObject(oldEntity);
-                    _voxelEntities.Remove(index);
-                }
+            var gridsIndex = new Vector3i(
+                (int)MathF.Floor((float)index.X / GridSize.X),
+                (int)MathF.Floor((float)index.Y / GridSize.Y),
+                (int)MathF.Floor((float)index.Z / GridSize.Z));
 
-                if(entity != null)
-                {
-                    if(entity.Space != null)
-                    {
-                        throw new Exception("Tried setting a VoxelEntity which is already in a VoxelSpace");
-                    }
-                    entity.Space = this;
-                    entity.Index = index;
-                    entity.Voxel = voxel;
-                    var gameObject = new GameObject();
-                    gameObject.AddComponent(entity);
-                    gameObject.Transform.Position = index * Grid.VoxelSize + Vector3.One * Grid.VoxelSize / 2f;
-                    gameObject.Transform.Orientation = voxel.Orientation.GetQuaternion();
-                    GameObject.AddChild(gameObject);
-                    GameObject.CurrentScene.AddGameObject(gameObject);
-                    _voxelEntities[index] = gameObject;
-                }
-            }
+            var voxelIndex = new Vector3i(
+                index.X - gridsIndex.X * GridSize.X,
+                index.Y - gridsIndex.Y * GridSize.Y,
+                index.Z - gridsIndex.Z * GridSize.Z);
+
+            var grid = this[gridsIndex];
+
+            grid?.SetVoxel(voxelIndex, voxel, entity);
+        }
+
+        public Vector3i GetGridIndexFromLocalPosition(Vector3 position)
+        {
+            var spaceIndex = new Vector3i(
+                (int)MathF.Floor(position.X / VoxelSize),
+                (int)MathF.Floor(position.Y / VoxelSize),
+                (int)MathF.Floor(position.Z / VoxelSize));
+
+            return new Vector3i(
+                (int)MathF.Floor((float)spaceIndex.X / GridSize.X),
+                (int)MathF.Floor((float)spaceIndex.Y / GridSize.Y),
+                (int)MathF.Floor((float)spaceIndex.Z / GridSize.Z));
+        }
+
+        public Vector3i GetGridIndexFromWorldPosition(Vector3 position)
+        {
+            return GetGridIndexFromLocalPosition(GameObject.Transform.GetLocal(position));
+        }
+
+        public Vector3i GetSpaceIndexFromVoxelIndex(Vector3i gridsIndex, Vector3i voxelIndex)
+        {
+            return gridsIndex * GridSize + voxelIndex;
+        }
+
+        public IEnumerator<KeyValuePair<Vector3i, VoxelGrid>> GetEnumerator()
+        {
+            return _grids.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

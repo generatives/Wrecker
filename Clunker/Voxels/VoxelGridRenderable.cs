@@ -17,9 +17,9 @@ using Veldrid;
 
 namespace Clunker.Voxels
 {
-    public class VoxelMesh : Component, IRenderable
+    public class VoxelGridRenderable : Component, IRenderable
     {
-        private VoxelSpace space;
+        private VoxelGrid grid;
         private static MaterialInstance _materialInstance;
         private MeshGeometry _meshGeometry;
 
@@ -31,7 +31,7 @@ namespace Clunker.Voxels
 
         public Vector3 Position => GameObject.Transform.WorldPosition;
 
-        public VoxelMesh(VoxelTypes types, MaterialInstance materialInstance)
+        public VoxelGridRenderable(VoxelTypes types, MaterialInstance materialInstance)
         {
             _types = types;
             _materialInstance = materialInstance;
@@ -41,33 +41,39 @@ namespace Clunker.Voxels
 
         public void Initialize(GraphicsDevice device, CommandList commandList, RenderableInitialize initialize)
         {
-            space = GameObject.GetComponent<VoxelSpace>();
-            space.VoxelsChanged += GenerateMesh;
-            GenerateMesh();
+            grid = GameObject.GetComponent<VoxelGrid>();
+            grid.VoxelsChanged += GenerateMesh;
+            GenerateMesh(grid);
         }
 
         public void Render(GraphicsDevice device, CommandList commandList, RenderingContext context)
         {
-            _materialInstance.Bind(device, commandList, context);
-            commandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, GameObject.Transform.WorldMatrix);
+            var copy = new RenderingContext()
+            {
+                Renderer = context.Renderer,
+                RenderWireframes = true
+            };
+            _materialInstance.Bind(device, commandList, copy);
+            commandList.UpdateBuffer(copy.Renderer.WorldBuffer, 0, GameObject.Transform.WorldMatrix);
             _meshGeometry.Render(device, commandList);
         }
 
         public void Remove(GraphicsDevice device, CommandList commandList)
         {
             _meshGeometry.Dispose();
-            space.VoxelsChanged -= GenerateMesh;
+            grid.VoxelsChanged -= GenerateMesh;
         }
 
-        private void GenerateMesh()
+        private void GenerateMesh(VoxelGrid grid)
         {
             this.EnqueueWorkerJob(() =>
             {
                 //Thread.Sleep(750);
-                var voxels = space.Grid;
+                var voxels = this.grid.Data;
                 var vertices = new List<VertexPositionTextureNormal>(voxels.XLength * voxels.YLength * voxels.ZLength);
                 var indices = new List<ushort>(voxels.XLength * voxels.YLength * voxels.ZLength);
-                MeshGenerator.GenerateMesh(voxels, (voxel, side, quad) =>
+                
+                MeshGenerator.GenerateGridMesh(voxels, (voxel, side, quad) =>
                 {
                     var textureOffset = GetTexCoords(voxel, side);
                     indices.Add((ushort)(vertices.Count + 0));

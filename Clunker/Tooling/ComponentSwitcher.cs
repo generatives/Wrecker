@@ -48,7 +48,7 @@ namespace Clunker.Tooling
             ImGui.Begin("Mouse Editor");
 
             var index = _index;
-            ImGui.Combo("Tool", ref index, _components.Select(t => t.Name).ToArray(), _components.Length);
+            ImGui.Combo("Tool", ref index, _components.Select(t => t.ToString()).ToArray(), _components.Length);
             if(index != _index)
             {
                 SetComponent(index);

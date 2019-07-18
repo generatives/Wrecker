@@ -38,32 +38,6 @@ namespace Clunker.Physics
             //For the purposes of this demo, we just use the default by passing in nothing (which happens to be PositionFirstTimestepper at the time of writing).
             Simulation = Simulation.Create(Pool, new CharacterNarrowphaseCallbacks(_characters), new PoseIntegratorCallbacks(new Vector3(0, 0, 0)));
 
-            //The narrow phase must be notified about the existence of the new collidable type. For every pair type we want to support, a collision task must be registered.
-            //All of the default engine types are registered upon simulation creation by a call to DefaultTypes.CreateDefaultCollisionTaskRegistry.
-            Simulation.NarrowPhase.CollisionTaskRegistry.Register(new ConvexCompoundCollisionTask<Sphere, VoxelCollidable, ConvexCompoundOverlapFinder<Sphere, SphereWide, VoxelCollidable>, ConvexVoxelsContinuations, NonconvexReduction>());
-            Simulation.NarrowPhase.CollisionTaskRegistry.Register(new ConvexCompoundCollisionTask<Capsule, VoxelCollidable, ConvexCompoundOverlapFinder<Capsule, CapsuleWide, VoxelCollidable>, ConvexVoxelsContinuations, NonconvexReduction>());
-            Simulation.NarrowPhase.CollisionTaskRegistry.Register(new ConvexCompoundCollisionTask<Box, VoxelCollidable, ConvexCompoundOverlapFinder<Box, BoxWide, VoxelCollidable>, ConvexVoxelsContinuations, NonconvexReduction>());
-            Simulation.NarrowPhase.CollisionTaskRegistry.Register(new ConvexCompoundCollisionTask<Cylinder, VoxelCollidable, ConvexCompoundOverlapFinder<Cylinder, CylinderWide, VoxelCollidable>, ConvexVoxelsContinuations, NonconvexReduction>());
-            Simulation.NarrowPhase.CollisionTaskRegistry.Register(new ConvexCompoundCollisionTask<Triangle, VoxelCollidable, ConvexCompoundOverlapFinder<Triangle, TriangleWide, VoxelCollidable>, ConvexVoxelsContinuations, NonconvexReduction>());
-
-            Simulation.NarrowPhase.CollisionTaskRegistry.Register(new CompoundPairCollisionTask<Compound, VoxelCollidable, CompoundPairOverlapFinder<Compound, VoxelCollidable>, CompoundVoxelsContinuations<Compound>, NonconvexReduction>());
-            Simulation.NarrowPhase.CollisionTaskRegistry.Register(new CompoundPairCollisionTask<BigCompound, VoxelCollidable, CompoundPairOverlapFinder<BigCompound, VoxelCollidable>, CompoundVoxelsContinuations<BigCompound>, NonconvexReduction>());
-
-            //Note that this demo excludes mesh-voxels and voxels-voxels pairs. Those get a little more complicated since there's some gaps in the pre-built helpers.
-            //If you wanted to make your own, look into the various types related to meshes. They're a good starting point, although I'm not exactly happy with the complexity of the
-            //current design. They might receive some significant changes- keep that in mind if you create anything which depends heavily on their current implementation.
-
-            //To support sweep tests, we must also register sweep tasks. No extra work is required to support these; the interface implementation on the shape is good enough.
-            Simulation.NarrowPhase.SweepTaskRegistry.Register(new ConvexHomogeneousCompoundSweepTask<Sphere, SphereWide, VoxelCollidable, Box, BoxWide, ConvexCompoundSweepOverlapFinder<Sphere, VoxelCollidable>>());
-            Simulation.NarrowPhase.SweepTaskRegistry.Register(new ConvexHomogeneousCompoundSweepTask<Capsule, CapsuleWide, VoxelCollidable, Box, BoxWide, ConvexCompoundSweepOverlapFinder<Capsule, VoxelCollidable>>());
-            Simulation.NarrowPhase.SweepTaskRegistry.Register(new ConvexHomogeneousCompoundSweepTask<Box, BoxWide, VoxelCollidable, Box, BoxWide, ConvexCompoundSweepOverlapFinder<Box, VoxelCollidable>>());
-            Simulation.NarrowPhase.SweepTaskRegistry.Register(new ConvexHomogeneousCompoundSweepTask<Cylinder, CylinderWide, VoxelCollidable, Box, BoxWide, ConvexCompoundSweepOverlapFinder<Cylinder, VoxelCollidable>>());
-            Simulation.NarrowPhase.SweepTaskRegistry.Register(new ConvexHomogeneousCompoundSweepTask<Triangle, TriangleWide, VoxelCollidable, Box, BoxWide, ConvexCompoundSweepOverlapFinder<Triangle, VoxelCollidable>>());
-
-            Simulation.NarrowPhase.SweepTaskRegistry.Register(new CompoundHomogeneousCompoundSweepTask<Compound, VoxelCollidable, Box, BoxWide, CompoundPairSweepOverlapFinder<Compound, VoxelCollidable>>());
-            Simulation.NarrowPhase.SweepTaskRegistry.Register(new CompoundHomogeneousCompoundSweepTask<BigCompound, VoxelCollidable, Box, BoxWide, CompoundPairSweepOverlapFinder<BigCompound, VoxelCollidable>>());
-            //Supporting voxels-mesh and voxels-voxels would again require a bit more effort, though a bit less than the collision task equivalents would.
-
             //Drop a ball on a big static box.
             var sphere = new Sphere(1);
             sphere.ComputeInertia(1, out var sphereInertia);

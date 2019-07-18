@@ -9,6 +9,7 @@ using Clunker.SceneGraph.SceneSystemInterfaces;
 using Clunker.Diagnostics;
 using System.Diagnostics;
 using System.Collections.Concurrent;
+using Clunker.Voxels;
 
 namespace Clunker.World
 {
@@ -41,18 +42,21 @@ namespace Clunker.World
         }
 
         private GameObject _player;
+        private VoxelSpace _worldSpace;
         private ChunkStorage _storage;
         private ChunkGenerator _generator;
         private int _chunkLength;
         public Vector3i CenterChunk { get; private set; }
         public int LoadRadius { get; set; }
 
+        private Vector3i? _chunkBeingLoaded;
         private ConcurrentQueue<Vector3i> _chunksToLoad;
         private ConcurrentQueue<Chunk> _chunksToAdd;
 
-        public WorldSystem(GameObject player, ChunkStorage storage, ChunkGenerator generator, int loadRadius, int chunkLength)
+        public WorldSystem(GameObject player, VoxelSpace worldSpace, ChunkStorage storage, ChunkGenerator generator, int loadRadius, int chunkLength)
         {
             _player = player;
+            _worldSpace = worldSpace;
             _storage = storage;
             _generator = generator;
             LoadRadius = loadRadius;
@@ -72,24 +76,22 @@ namespace Clunker.World
             while (_chunksToAdd.TryDequeue(out Chunk chunk))
             {
                 _chunkMap[chunk.Coordinates] = chunk;
-                CurrentScene.AddGameObject(chunk.GameObject);
+                _worldSpace.Add(chunk.Coordinates, chunk.GameObject);
             }
         }
 
         public void SetCenterChunk(int x, int y, int z)
         {
-            if (_chunkMap.Count == 0 || x != CenterChunk.X || y != CenterChunk.Y || z != CenterChunk.Z)
+            if ((_chunkMap.Count == 0 && _chunksToLoad.Count == 0 && _chunksToAdd.Count == 0 && _chunkBeingLoaded == null) ||
+                x != CenterChunk.X || y != CenterChunk.Y || z != CenterChunk.Z)
             {
                 var watch = Stopwatch.StartNew();
                 CenterChunk = new Vector3i(x, y, z);
-                _chunksToLoad.Clear();
 
-                int removed = 0;
                 foreach (var chunk in new List<Chunk>(this))
                 {
                     if (!AreaContainsChunk(chunk))
                     {
-                        removed++;
                         UnloadChunk(chunk);
                     }
                 }
@@ -103,7 +105,8 @@ namespace Clunker.World
                             if ((xOffset * xOffset + yOffset * yOffset + zOffset * zOffset) <= LoadRadius * LoadRadius)
                             {
                                 var coordinates = new Vector3i(x + xOffset, y + yOffset, z + zOffset);
-                                if (!_chunkMap.ContainsKey(coordinates))
+                                if (!_chunkMap.ContainsKey(coordinates) && !_chunksToLoad.Contains(coordinates) &&
+                                    !_chunksToAdd.Any(c => c.Coordinates == coordinates) && _chunkBeingLoaded != coordinates)
                                 {
                                     _chunksToLoad.Enqueue(coordinates);
                                     if(_chunksToLoad.Count == 1)
@@ -130,6 +133,7 @@ namespace Clunker.World
         {
             while (_chunksToLoad.TryDequeue(out Vector3i coordinates))
             {
+                _chunkBeingLoaded = coordinates;
                 Chunk chunk;
                 if (_storage.ChunkExists(coordinates))
                 {
@@ -141,6 +145,7 @@ namespace Clunker.World
                 }
                 _chunksToAdd.Enqueue(chunk);
             }
+            _chunkBeingLoaded = null;
         }
 
         public bool AreaContainsChunk(Chunk chunk)

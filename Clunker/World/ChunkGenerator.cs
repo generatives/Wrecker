@@ -1,6 +1,7 @@
 ﻿using Clunker.Diagnostics;
 using Clunker.Graphics;
 using Clunker.Math;
+using Clunker.Physics.Voxels;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentsInterfaces;
 using Clunker.SceneGraph.Core;
@@ -32,9 +33,8 @@ namespace Clunker.World
 
         public Chunk GenerateChunk(Vector3i coordinates)
         {
-            //var watch = Stopwatch.StartNew();
             var random = new Random((coordinates.X << 20) ^ (coordinates.Y << 10) ^ (coordinates.Z));
-            var voxelSpaceData = new VoxelGrid(_chunkSize, _chunkSize, _chunkSize, _voxelSize);
+            var voxelSpaceData = new VoxelGridData(_chunkSize, _chunkSize, _chunkSize, _voxelSize);
 
             var voxels = GenerateSpheres(random);
             //JoinVoxels(voxels);
@@ -48,16 +48,14 @@ namespace Clunker.World
                         //voxelSpaceData[x, y, z] = new Voxel() { Exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f };
                     }
 
-            var voxelSpace = new VoxelSpace(voxelSpaceData, new Dictionary<Vector3i, GameObject>());
+            var voxelSpace = new VoxelGrid(voxelSpaceData, new Dictionary<Vector3i, GameObject>());
             var chunk = new Chunk(coordinates);
-            var gameObject = new GameObject();
+            var gameObject = new GameObject($"Chunk {coordinates}");
             gameObject.AddComponent(voxelSpace);
             gameObject.AddComponent(chunk);
+            gameObject.AddComponent(new VoxelShape());
             gameObject.AddComponent(new StaticVoxelBody());
-            gameObject.AddComponent(new VoxelMesh(_types, _materialInstance));
-            
-            gameObject.GetComponent<Transform>().Position = coordinates * _chunkSize * _voxelSize;
-            //Console.WriteLine($"Chunk gen: {watch.Elapsed.TotalMilliseconds}");
+            gameObject.AddComponent(new VoxelMeshRenderable(_types, _materialInstance));
 
             return chunk;
         }

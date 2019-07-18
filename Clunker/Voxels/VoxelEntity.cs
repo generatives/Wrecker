@@ -9,7 +9,7 @@ namespace Clunker.Voxels
     public class VoxelEntity : Component
     {
         public Vector3i Index { get; internal set; }
-        public VoxelSpace Space { get; internal set; }
+        public VoxelGrid Space { get; internal set; }
         public Voxel Voxel { get; internal set; }
     }
 }
