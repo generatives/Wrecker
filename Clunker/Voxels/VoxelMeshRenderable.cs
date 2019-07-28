@@ -20,7 +20,7 @@ namespace Clunker.Voxels
     public class VoxelMeshRenderable : Component, IRenderable
     {
         private VoxelGrid grid;
-        private static MaterialInstance _materialInstance;
+        private MaterialInstance _materialInstance;
         private MeshGeometry _meshGeometry;
 
         private VoxelTypes _types;

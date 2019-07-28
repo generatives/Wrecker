@@ -4,7 +4,7 @@ using BepuUtilities.Memory;
 using Clunker.Math;
 using Clunker.Physics;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Voxels;
 using Clunker.World;
 using System;
@@ -40,8 +40,11 @@ namespace Clunker.Physics.Voxels
             var chunk = GameObject.GetComponent<Chunk>();
             if (voxels.Data.Any(t => t.Item2.Exists))
             {
-                ShapeArgs = CreateCollisionShape(voxels);
-                ColliderGenerated?.Invoke(this, ShapeArgs);
+                EnqueueBestEffortFrameJob(() =>
+                {
+                    ShapeArgs = CreateCollisionShape(voxels);
+                    ColliderGenerated?.Invoke(this, ShapeArgs);
+                });
             }
         }
 

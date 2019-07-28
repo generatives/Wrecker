@@ -17,7 +17,7 @@ namespace Clunker.Graphics
         private Image<Rgba32> _image;
         public bool MustUpdateResources { get; private set; }
 
-        public ObjectProperties Properties { get; set; }
+        public ObjectProperties Properties;
 
         public MaterialInstance(Material material, Image<Rgba32> image, ObjectProperties properties)
         {
@@ -44,7 +44,7 @@ namespace Clunker.Graphics
                 UpdateResources(device, context);
             }
             Material.Bind(device, cl, context);
-            cl.UpdateBuffer(context.Renderer.ObjectPropertiesBuffer, 0, Properties);
+            cl.UpdateBuffer(context.Renderer.ObjectPropertiesBuffer, 0, ref Properties);
             cl.SetGraphicsResourceSet(1, _worldTextureSet);
         }
     }

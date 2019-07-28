@@ -74,7 +74,9 @@ namespace Clunker.Graphics
         public void Dispose()
         {
             _vertexBuffer?.Dispose();
+            _vertexBuffer = null;
             _indexBuffer?.Dispose();
+            _indexBuffer = null;
         }
     }
 }

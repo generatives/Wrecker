@@ -5,7 +5,7 @@ using Clunker.Input;
 using Clunker.Math;
 using Clunker.Physics;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Voxels;
 using Clunker.World;
 using ImGuiNET;
@@ -19,10 +19,10 @@ namespace Clunker.Tooling
 {
     public class ComponentSwitcher : Component, IUpdateable, IComponentEventListener
     {
-        private Component[] _components;
+        private Tool[] _components;
         private int _index;
 
-        public ComponentSwitcher(Component[] tools)
+        public ComponentSwitcher(Tool[] tools)
         {
             _components = tools;
             _index = -1;
@@ -53,6 +53,8 @@ namespace Clunker.Tooling
             {
                 SetComponent(index);
             }
+
+            _components[_index].BuildMenu();
 
             ImGui.End();
         }

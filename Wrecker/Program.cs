@@ -7,7 +7,7 @@ using Clunker.Physics;
 using Clunker.Physics.CharacterController;
 using Clunker.Physics.Voxels;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.Core;
 using Clunker.Tooling;
 using Clunker.Voxels;
@@ -66,12 +66,18 @@ namespace Wrecker
                     new Vector2(650, 1300))
             });
 
-            var tools = new Component[]
+            var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
+            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
+            var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTextures, new ObjectProperties() { Colour = RgbaFloat.White });
+
+            var voxelChangeMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTextures, new ObjectProperties() { Colour = RgbaFloat.Blue });
+
+            var tools = new Tool[]
             {
-                new RemoveVoxelEditingTool(),
-                new BasicVoxelEditingTool("DarkStone", 0),
-                new BasicVoxelEditingTool("Metal", 1),
-                new ThrusterVoxelEditingTool(2)
+                new RemoveVoxelEditingTool() { Name = "Remove" },
+                new BasicVoxelAddingTool("DarkStone", 0, types, voxelChangeMaterialInstance),
+                new BasicVoxelAddingTool("Metal", 1, types, voxelChangeMaterialInstance),
+                new ThrusterVoxelEditingTool(2, types, voxelChangeMaterialInstance) { Name = "Thruster" }
             };
 
             var px = Image.Load("Assets\\skybox_px.png");
@@ -88,9 +94,6 @@ namespace Wrecker
             camera.AddComponent(new ComponentSwitcher(tools));
             camera.AddComponent(new Skybox(px, nx, py, ny, pz, nz));
             scene.AddGameObject(camera);
-
-            var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
-            var voxelMaterialInstance = new MaterialInstance(new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode), voxelTextures, new ObjectProperties() { Colour = RgbaFloat.White });
 
             scene.AddGameObject(CreateShip(types, voxelMaterialInstance));
 

@@ -1,7 +1,7 @@
 ﻿using Clunker.Graphics.Materials;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.SceneSystemInterfaces;
 using System;
 using System.Collections.Generic;
@@ -150,8 +150,8 @@ namespace Clunker.Graphics
             commandList.UpdateBuffer(SceneLightingBuffer, 0, new SceneLighting()
             {
                 AmbientLightColour = RgbaFloat.White,
-                AmbientLightStrength = 0f,
-                DiffuseLightColour = RgbaFloat.Blue,
+                AmbientLightStrength = 0.4f,
+                DiffuseLightColour = RgbaFloat.White,
                 DiffuseLightDirection = Vector3.Normalize(new Vector3(2, 5, -1))
             });
 
@@ -177,13 +177,16 @@ namespace Clunker.Graphics
             var transparent = new List<IRenderable>();
             foreach (var renderable in renderables)
             {
-                if (renderable.Transparent)
+                if(renderable.IsActive)
                 {
-                    transparent.Add(renderable);
-                }
-                else
-                {
-                    renderable.Render(device, commandList, context);
+                    if (renderable.Transparent)
+                    {
+                        transparent.Add(renderable);
+                    }
+                    else
+                    {
+                        renderable.Render(device, commandList, context);
+                    }
                 }
             }
 

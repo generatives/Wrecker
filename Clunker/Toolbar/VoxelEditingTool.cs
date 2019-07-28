@@ -8,13 +8,20 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using Clunker.SceneGraph.ComponentInterfaces;
+using Clunker.Input;
 
 namespace Clunker.Tooling
 {
-    public abstract class VoxelEditingTool : ClickEditingTool
+    public abstract class VoxelEditingTool : Tool, IUpdateable
     {
-        public override void DoAction()
+
+        public void Update(float time)
         {
+            VoxelSpace space = default;
+            Vector3 hitLocation = default;
+            Vector3i spaceIndex = default;
+
             var physicsSystem = GameObject.CurrentScene.GetSystem<PhysicsSystem>();
 
             var handler = new FirstHitHandler(CollidableMobility.Static | CollidableMobility.Dynamic);
@@ -34,34 +41,40 @@ namespace Clunker.Tooling
                 }
                 if (context is VoxelGridBody voxels)
                 {
-                    var hitLocation = GameObject.Transform.Position + forward * t;
-                    var space = voxels.GameObject.Parent?.GetComponent<VoxelSpace>();
-                    if(space != null)
+                    hitLocation = GameObject.Transform.Position + forward * t;
+                    space = voxels.GameObject.Parent?.GetComponent<VoxelSpace>();
+                    if (space != null)
                     {
                         var grid = voxels.GameObject.GetComponent<VoxelGrid>();
                         var gridsIndex = space[grid];
-                        if(gridsIndex.HasValue)
+                        if (gridsIndex.HasValue)
                         {
                             var gridIndex = voxels.GetVoxelIndex(handler.ChildIndex);
-                            var spaceIndex = gridsIndex.Value * space.GridSize + gridIndex;
-                            DoVoxelAction(space, hitLocation, spaceIndex);
+                            spaceIndex = gridsIndex.Value * space.GridSize + gridIndex;
 
                         }
                     }
                 }
                 if (context is DynamicVoxelSpaceBody voxelSpaceBody)
                 {
-                    var hitLocation = GameObject.Transform.Position + forward * t;
-                    var space = voxelSpaceBody.GameObject.GetComponent<VoxelSpace>();
+                    hitLocation = GameObject.Transform.Position + forward * t;
+                    space = voxelSpaceBody.GameObject.GetComponent<VoxelSpace>();
                     if (space != null)
                     {
-                        var spaceIndex = voxelSpaceBody.GetSpaceIndex(handler.ChildIndex);
-                        DoVoxelAction(space, hitLocation, spaceIndex);
+                        spaceIndex = voxelSpaceBody.GetSpaceIndex(handler.ChildIndex);
                     }
                 }
+            }
+
+            DrawVoxelChange(space, hitLocation, spaceIndex);
+
+            if (space != null && InputTracker.LockMouse && InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left))
+            {
+                DoVoxelAction(space, hitLocation, spaceIndex);
             }
         }
 
         protected abstract void DoVoxelAction(VoxelSpace space, Vector3 hitLocation, Vector3i index);
+        protected abstract void DrawVoxelChange(VoxelSpace space, Vector3 hitLocation, Vector3i index);
     }
 }

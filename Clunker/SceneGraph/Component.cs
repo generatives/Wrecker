@@ -7,21 +7,20 @@ using System.Threading.Tasks;
 
 namespace Clunker.SceneGraph
 {
-    public class Component
+    public class Component : IComponent
     {
         public string Name { get; set; }
         public GameObject GameObject { get; internal set; }
         public Scene CurrentScene { get => GameObject?.CurrentScene; }
-        internal ConcurrentQueue<Action> WorkerJobs { get; private set; }
-        internal ConcurrentQueue<Action> FrameJobs { get; private set; }
         internal int JobsSubmitted { get; private set; }
         internal bool HasJobs => JobsSubmitted != 0;
         public bool IsAlive { get; internal set; }
 
-        public Component()
+        private bool _isActive = true;
+        public bool IsActive
         {
-            WorkerJobs = new ConcurrentQueue<Action>();
-            FrameJobs = new ConcurrentQueue<Action>();
+            get => _isActive && GameObject.IsActive;
+            set => _isActive = value;
         }
 
         protected void EnqueueWorkerJob(Action action)
@@ -36,6 +35,13 @@ namespace Clunker.SceneGraph
             if (!IsAlive) return;
             JobsSubmitted++;
             GameObject.CurrentScene.FrameQueue.Enqueue(() => { if (IsAlive) { action(); JobsSubmitted--; } });
+        }
+
+        protected void EnqueueBestEffortFrameJob(Action action)
+        {
+            if (!IsAlive) return;
+            JobsSubmitted++;
+            GameObject.CurrentScene.App.BestEffortFrameQueue.Enqueue(() => { if (IsAlive) { action(); JobsSubmitted--; } });
         }
 
         public override string ToString()

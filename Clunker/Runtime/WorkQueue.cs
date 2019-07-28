@@ -23,20 +23,22 @@ namespace Clunker.Runtime
             Queue.Enqueue(action);
         }
 
-        protected void ConsumeActions()
+        protected bool ConsumeSomeActions(int numActions = -1)
         {
-            while (Queue.TryDequeue(out Action action))
+            int numConsumed = 0;
+            while ((numActions < 0 || numConsumed < numActions) && Queue.TryDequeue(out Action action))
             {
                 action();
             }
+            return Queue.Count != 0;
         }
     }
 
     public class DrivenWorkQueue : WorkQueue
     {
-        public void ConsumeAllActions()
+        public bool ConsumeActions(int numActions = -1)
         {
-            ConsumeActions();
+            return ConsumeSomeActions();
         }
     }
 
@@ -58,7 +60,7 @@ namespace Clunker.Runtime
         {
             while (_itemAdded.WaitOne())
             {
-                ConsumeActions();
+                ConsumeSomeActions();
             }
         }
 

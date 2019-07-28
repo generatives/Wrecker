@@ -14,7 +14,11 @@ namespace Clunker.Tooling
             space.SetVoxel(index, new Voxel() { Exists = false });
         }
 
-        public override void DrawMenu()
+        public override void BuildMenu()
+        {
+        }
+
+        protected override void DrawVoxelChange(VoxelSpace space, Vector3 hitLocation, Vector3i index)
         {
         }
     }

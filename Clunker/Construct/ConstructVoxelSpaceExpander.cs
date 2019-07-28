@@ -1,7 +1,7 @@
 ﻿using Clunker.Graphics;
 using Clunker.Math;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;

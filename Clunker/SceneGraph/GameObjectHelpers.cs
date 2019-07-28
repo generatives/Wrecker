@@ -1,4 +1,4 @@
-﻿using Clunker.SceneGraph.ComponentsInterfaces;
+﻿using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.Core;
 using System;
 using System.Collections.Generic;

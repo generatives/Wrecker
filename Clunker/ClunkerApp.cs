@@ -1,7 +1,7 @@
 ﻿using Clunker.Graphics;
 using Clunker.Input;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.SceneSystemInterfaces;
 using System;
 using System.Collections.Generic;
@@ -33,6 +33,7 @@ namespace Clunker
         private List<IRenderer> _renderers;
 
         public RoundRobinWorkQueue WorkQueue { get; private set; }
+        public DrivenWorkQueue BestEffortFrameQueue { get; private set; }
 
         public event Action Started;
         public event Action Tick;
@@ -42,6 +43,7 @@ namespace Clunker
             NextScene = initialScene;
             _renderers = new List<IRenderer>();
             WorkQueue = new RoundRobinWorkQueue(new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue());
+            BestEffortFrameQueue = new DrivenWorkQueue();
         }
 
         public void AddRenderer(IRenderer renderer)
@@ -93,6 +95,7 @@ namespace Clunker
 
                 Started?.Invoke();
                 var frameWatch = Stopwatch.StartNew();
+                var targetFrameTime = 0.13f;
                 while (_window.Exists)
                 {
                     var inputSnapshot = _window.PumpEvents();
@@ -153,17 +156,18 @@ namespace Clunker
                     StackedTiming.Render(frameTime);
                     Timing.Render(frameTime);
 
-                    ImGui.Begin("Queues");
-                    ImGui.Text($"{WorkQueue.NumJobs} Worker Jobs");
-                    ImGui.Text($"{CurrentScene.FrameQueue.NumJobs} Frame Jobs");
-                    ImGui.End();
-
                     imGuiRenderer.Render(_graphicsDevice, _commandList);
 
                     _commandList.End();
                     _graphicsDevice.SubmitCommands(_commandList);
                     _graphicsDevice.SwapBuffers(_graphicsDevice.MainSwapchain);
                     _graphicsDevice.WaitForIdle();
+
+                    bool jobsRemain = true;
+                    while (jobsRemain && frameWatch.Elapsed.TotalSeconds < targetFrameTime)
+                    {
+                        jobsRemain = BestEffortFrameQueue.ConsumeActions(1);
+                    }
                 }
             }, TaskCreationOptions.LongRunning);
         }

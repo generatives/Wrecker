@@ -1,5 +1,5 @@
 ﻿using Clunker.Graphics;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -8,7 +8,7 @@ using Veldrid;
 
 namespace Clunker.SceneGraph.ComponentInterfaces
 {
-    public interface IRenderable
+    public interface IRenderable : IComponent
     {
         RenderingPass Pass { get; }
         bool Transparent { get; }

@@ -2,7 +2,7 @@
 using BepuPhysics.Collidables;
 using Clunker.Math;
 using Clunker.Physics;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Numerics;

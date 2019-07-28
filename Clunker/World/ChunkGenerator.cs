@@ -3,7 +3,7 @@ using Clunker.Graphics;
 using Clunker.Math;
 using Clunker.Physics.Voxels;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.Core;
 using Clunker.Voxels;
 using System;

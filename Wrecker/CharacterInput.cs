@@ -1,7 +1,7 @@
 ﻿using Clunker.Input;
 using Clunker.Physics.CharacterController;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;

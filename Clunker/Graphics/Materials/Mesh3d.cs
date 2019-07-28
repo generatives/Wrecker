@@ -63,10 +63,10 @@ void main()
     vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * WireframeColour * Colour;
 
     vec3 norm = normalize(fsin_normal);
-    float diffuse = max(dot(norm, DiffuseLightDirection), 0.0);
+    float diff = max(dot(norm, DiffuseLightDirection), 0.0) + 0.4;
+    vec4 diffuse = diff * DiffuseLightColour;
 
-    vec3 result = (0.4 + diffuse) * objectColour.xyz;
-    fsout_color = vec4(result, 1.0);
+    fsout_color = diffuse * objectColour;
 }";
     }
 }

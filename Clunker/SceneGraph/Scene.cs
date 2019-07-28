@@ -1,4 +1,4 @@
-﻿using Clunker.SceneGraph.ComponentsInterfaces;
+﻿using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Graphics;
 using System;
 using System.Collections.Generic;
@@ -153,11 +153,14 @@ namespace Clunker.SceneGraph
 
         public void AddGameObject(GameObject gameObject)
         {
-            if(gameObject.CurrentScene != this)
+            if(gameObject.CurrentScene == null)
             {
-                if (gameObject.CurrentScene != null) gameObject.CurrentScene.RemoveGameObject(gameObject);
                 _gameObjects.Add(gameObject);
                 gameObject.AddedToScene(this);
+            }
+            else
+            {
+                throw new Exception("Tried adding a GameObject which already had a scene");
             }
         }
 
@@ -182,10 +185,10 @@ namespace Clunker.SceneGraph
         {
             for (int i = 0; i < _gameObjects.Count; i++)
             {
-                _gameObjects[i].Update(time);
+                if(_gameObjects[i].IsActive) _gameObjects[i].Update(time);
             }
 
-            FrameQueue.ConsumeAllActions();
+            FrameQueue.ConsumeActions();
 
             for (int i = 0; i < _updatables.Count; i++)
             {

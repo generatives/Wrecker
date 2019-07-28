@@ -10,7 +10,7 @@ namespace Clunker.SceneGraph.Core
 {
     public class Transform : Component
     {
-        public bool InheiritParentTransform { get; private set; } = true;
+        public bool InheiritParentTransform { get; set; } = true;
         public bool IsInheiritingParentTransform => InheiritParentTransform && GameObject.Parent != null;
         public Vector3 Position { get; set; }
         public Vector3 WorldPosition

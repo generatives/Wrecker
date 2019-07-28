@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Veldrid.Sdl2;
 
-namespace Clunker.SceneGraph.ComponentsInterfaces
+namespace Clunker.SceneGraph.ComponentInterfaces
 {
     public class Camera : Component, IComponentEventListener
     {

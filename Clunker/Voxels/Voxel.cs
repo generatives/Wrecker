@@ -13,6 +13,28 @@ namespace Clunker.Voxels
         public bool Exists;
         public ushort BlockType;
         public VoxelSide Orientation;
+
+        public static bool operator ==(Voxel v, Voxel v1)
+        {
+            return v.Exists == v1.Exists &&
+                   v.BlockType == v1.BlockType &&
+                   v.Orientation == v1.Orientation;
+        }
+
+        public static bool operator !=(Voxel v, Voxel v1)
+        {
+            return !(v == v1);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Voxel voxel && this == voxel;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Exists, BlockType, Orientation);
+        }
     }
 
     public enum VoxelSide

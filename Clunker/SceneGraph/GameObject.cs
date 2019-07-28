@@ -1,6 +1,5 @@
 ﻿using Clunker.Graphics;
 using Clunker.SceneGraph.ComponentInterfaces;
-using Clunker.SceneGraph.ComponentsInterfaces;
 using Clunker.SceneGraph.Core;
 using System;
 using System.Collections.Generic;
@@ -26,6 +25,8 @@ namespace Clunker.SceneGraph
 
         public GameObject Parent { get; internal set; }
         private List<GameObject> _children;
+
+        public bool IsActive { get; set; } = true;
 
         public GameObject()
         {
@@ -122,25 +123,24 @@ namespace Clunker.SceneGraph
 
         public void AddChild(GameObject gameObject)
         {
-            if(gameObject.Parent != null)
+            if(gameObject.CurrentScene != null)
             {
-                gameObject.Parent.RemoveChild(gameObject);
+                throw new Exception("Tried adding a GameObject which already had a scene");
             }
-            if(gameObject.CurrentScene != CurrentScene)
+            if (gameObject.Parent != null)
             {
-                if(gameObject.CurrentScene != null)
-                {
-                    gameObject.CurrentScene.RemoveGameObject(gameObject);
-                }
-                CurrentScene?.AddGameObject(gameObject);
+                throw new Exception("Tried adding a GameObject which already had a parent");
             }
             _children.Add(gameObject);
             gameObject.Parent = this;
+            if(CurrentScene != null) gameObject.AddedToScene(CurrentScene);
         }
 
         public void RemoveChild(GameObject gameObject)
         {
             _children.Remove(gameObject);
+            gameObject.Parent = null;
+            if (gameObject.CurrentScene != null) gameObject.RemovedFromCurrentScene();
         }
 
         public bool HasComponent(Type type)
@@ -153,10 +153,7 @@ namespace Clunker.SceneGraph
             CurrentScene = scene;
             foreach(var gameObject in _children)
             {
-                if(gameObject.CurrentScene == null)
-                {
-                    CurrentScene.AddGameObject(gameObject);
-                }
+                gameObject.AddedToScene(CurrentScene);
             }
             if(scene.IsRunning)
             {
@@ -186,6 +183,10 @@ namespace Clunker.SceneGraph
                     CurrentScene.App.RemoveRenderable(renderable);
                 }
             }
+            foreach (var gameObject in _children)
+            {
+                gameObject.RemovedFromCurrentScene();
+            }
             CurrentScene = null;
         }
 
@@ -200,6 +201,10 @@ namespace Clunker.SceneGraph
             {
                 CurrentScene.App.AddRenderable(renderable);
             }
+            foreach (var gameObject in _children)
+            {
+                gameObject.SceneStarted();
+            }
         }
 
         internal void SceneStopped()
@@ -212,6 +217,10 @@ namespace Clunker.SceneGraph
             foreach (var renderable in _components.Values.OfType<IRenderable>())
             {
                 CurrentScene.App.RemoveRenderable(renderable);
+            }
+            foreach (var gameObject in _children)
+            {
+                gameObject.SceneStopped();
             }
         }
 
@@ -232,7 +241,7 @@ namespace Clunker.SceneGraph
         {
             for(int i = 0; i < _updateables.Count; i++)
             {
-                _updateables[i].Update(time);
+                if(_updateables[i].IsActive) _updateables[i].Update(time);
             }
 
             List<IComponentEventListener> newList = new List<IComponentEventListener>();
@@ -249,6 +258,11 @@ namespace Clunker.SceneGraph
                 }
             }
             _listenersToStop = newList;
+
+            foreach (var gameObject in _children)
+            {
+                gameObject.Update(time);
+            }
         }
 
         public override string ToString()

@@ -2,7 +2,7 @@
 using Clunker.Graphics.Materials;
 using Clunker.Math;
 using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentsInterfaces;
+using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Voxels;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -46,6 +46,11 @@ namespace Clunker.Voxels
             _requestedVoxelsChanged = false;
         }
 
+        public Voxel GetVoxel(Vector3i index)
+        {
+            return Data[index];
+        }
+
         public void SetVoxel(Vector3i index, Voxel voxel, VoxelEntity entity = null)
         {
             if(Data.SetVoxel(index, voxel))
@@ -72,7 +77,6 @@ namespace Clunker.Voxels
                     gameObject.Transform.Position = index * Data.VoxelSize + Vector3.One * Data.VoxelSize / 2f;
                     gameObject.Transform.Orientation = voxel.Orientation.GetQuaternion();
                     GameObject.AddChild(gameObject);
-                    GameObject.CurrentScene.AddGameObject(gameObject);
                     _voxelEntities[index] = gameObject;
                 }
             }
