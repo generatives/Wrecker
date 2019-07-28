@@ -6,16 +6,19 @@ using Clunker.Math;
 using Clunker.Physics;
 using Clunker.Physics.CharacterController;
 using Clunker.Physics.Voxels;
+using Clunker.Resources;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.Core;
 using Clunker.Tooling;
 using Clunker.Voxels;
 using Clunker.World;
+using Hyperion;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using Veldrid;
 using Veldrid.StartupUtilities;
@@ -66,11 +69,15 @@ namespace Wrecker
                     new Vector2(650, 1300))
             });
 
-            var voxelTextures = Image.Load("Assets\\spritesheet_tiles.png");
-            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
-            var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTextures, new ObjectProperties() { Colour = RgbaFloat.White });
+            var images = new Dictionary<string, Resource<Image<Rgba32>>>();
 
-            var voxelChangeMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTextures, new ObjectProperties() { Colour = RgbaFloat.White });
+            var resourceLoader = new ResourceLoader();
+            var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
+
+            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
+            var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
+
+            var voxelChangeMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
 
             var tools = new Tool[]
             {
@@ -95,7 +102,9 @@ namespace Wrecker
             camera.AddComponent(new Skybox(px, nx, py, ny, pz, nz));
             scene.AddGameObject(camera);
 
-            scene.AddGameObject(CreateShip(types, voxelMaterialInstance));
+            var ship = CreateShip(types, voxelMaterialInstance);
+
+            scene.AddGameObject(ship);
 
             var chunkSize = 32;
 
@@ -114,7 +123,7 @@ namespace Wrecker
             scene.AddSystem(worldSystem);
             scene.AddSystem(new PhysicsSystem());
 
-            var app = new ClunkerApp(scene);
+            var app = new ClunkerApp(resourceLoader, scene);
 
             app.Start(wci, options).Wait();
         }

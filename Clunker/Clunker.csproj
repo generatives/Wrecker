@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.0.123-beta" />
+    <PackageReference Include="Hyperion" Version="0.9.8" />
     <PackageReference Include="Veldrid" Version="4.6.1" />
     <PackageReference Include="Veldrid.ImageSharp" Version="4.6.1" />
     <PackageReference Include="Veldrid.ImGui" Version="5.69.0" />

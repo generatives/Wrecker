@@ -7,6 +7,7 @@ using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Voxels;
 using Clunker.World;
+using Hyperion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +20,9 @@ namespace Clunker.Physics.Voxels
     {
         public event EventHandler<NewVoxelShapeArgs> ColliderGenerated;
 
-        public NewVoxelShapeArgs ShapeArgs { get; private set; }
+        [Ignore]
+        private NewVoxelShapeArgs _shapeArgs;
+        public NewVoxelShapeArgs ShapeArgs { get => _shapeArgs; set => _shapeArgs = value; }
 
         public void ComponentStarted()
         {

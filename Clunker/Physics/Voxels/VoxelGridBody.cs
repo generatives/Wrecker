@@ -8,6 +8,7 @@ using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Voxels;
 using Clunker.World;
+using Hyperion;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,10 +22,14 @@ namespace Clunker.Physics.Voxels
 {
     public abstract class VoxelGridBody : Component, IComponentEventListener
     {
+        [Ignore]
         private TypedIndex _voxelShape;
 
-        public bool HasBody { get; private set; }
+        [Ignore]
+        private bool _hasBody;
+        public bool HasBody { get => _hasBody; set => _hasBody = value; }
 
+        [Ignore]
         private Vector3i[] _voxelIndicesByChildIndex;
 
         public Vector3i GetVoxelIndex(int childIndex)

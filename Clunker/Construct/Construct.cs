@@ -1,10 +1,14 @@
-﻿using Clunker.Input;
+﻿using Clunker.Graphics;
+using Clunker.Input;
 using Clunker.Physics.Voxels;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
+using Clunker.SceneGraph.Core;
 using Clunker.Voxels;
+using Hyperion;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using System.Text;
 using Veldrid;
@@ -56,6 +60,17 @@ namespace Clunker.Construct
 
                 force = Vector3.Transform(force, GameObject.Transform.WorldOrientation);
                 body.VoxelBody.ApplyLinearImpulse(force);
+            }
+
+
+            if (InputTracker.WasKeyDowned(Key.M))
+            {
+                using(var memoryStream = new MemoryStream())
+                {
+                    CurrentScene.App.Serializer.Serialize(GameObject, memoryStream);
+                    CurrentScene.App.ShipBin = memoryStream.ToArray();
+                }
+                CurrentScene.RemoveGameObject(GameObject);
             }
         }
     }

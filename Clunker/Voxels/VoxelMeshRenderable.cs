@@ -3,6 +3,7 @@ using Clunker.Graphics.Materials;
 using Clunker.Math;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
+using Hyperion;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
@@ -19,8 +20,12 @@ namespace Clunker.Voxels
 {
     public class VoxelMeshRenderable : Component, IRenderable
     {
+        [Ignore]
         private VoxelGrid grid;
+
         private MaterialInstance _materialInstance;
+
+        [Ignore]
         private MeshGeometry _meshGeometry;
 
         private VoxelTypes _types;
@@ -35,8 +40,6 @@ namespace Clunker.Voxels
         {
             _types = types;
             _materialInstance = materialInstance;
-
-            _meshGeometry = new MeshGeometry();
         }
 
         public void Initialize(GraphicsDevice device, CommandList commandList, RenderableInitialize initialize)
@@ -48,14 +51,17 @@ namespace Clunker.Voxels
 
         public void Render(GraphicsDevice device, CommandList commandList, RenderingContext context)
         {
-            _materialInstance.Bind(device, commandList, context);
-            commandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, GameObject.Transform.WorldMatrix);
-            _meshGeometry.Render(device, commandList);
+            if(_meshGeometry != null)
+            {
+                _materialInstance.Bind(device, commandList, context);
+                commandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, GameObject.Transform.WorldMatrix);
+                _meshGeometry.Render(device, commandList);
+            }
         }
 
         public void Remove(GraphicsDevice device, CommandList commandList)
         {
-            _meshGeometry.Dispose();
+            _meshGeometry?.Dispose();
             grid.VoxelsChanged -= GenerateMesh;
         }
 
@@ -81,6 +87,7 @@ namespace Clunker.Voxels
                     vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / new Vector2(1024, 2048), quad.Normal));
                     vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / new Vector2(1024, 2048), quad.Normal));
                 });
+                if (_meshGeometry == null) _meshGeometry = new MeshGeometry();
                 _meshGeometry.UpdateMesh(vertices.ToArray(), indices.ToArray());
             });
         }

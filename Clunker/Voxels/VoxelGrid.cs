@@ -4,6 +4,7 @@ using Clunker.Math;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Voxels;
+using Hyperion;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
@@ -17,10 +18,13 @@ namespace Clunker.Voxels
 {
     public class VoxelGrid : Component
     {
+        public event Action<VoxelGrid> VoxelsChanged;
+
         public VoxelGridData Data { get; private set; }
+
         private Dictionary<Vector3i, GameObject> _voxelEntities;
 
-        public event Action<VoxelGrid> VoxelsChanged;
+        [Ignore]
         private bool _requestedVoxelsChanged;
 
         public VoxelGrid(VoxelGridData voxels, Dictionary<Vector3i, GameObject> voxelEntities)

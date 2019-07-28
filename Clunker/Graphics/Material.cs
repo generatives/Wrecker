@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp;
+﻿using Hyperion;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
@@ -11,20 +12,25 @@ namespace Clunker.Graphics
 {
     public class Material
     {
+        [Ignore]
         private Pipeline _pipeline;
+
+        [Ignore]
         private Pipeline _wireframePipeline;
 
+        [Ignore]
         internal ResourceSet _projViewSet;
 
         private string _vertexShader;
+
         private string _fragShader;
-        public bool MustUpdateResources { get; private set; }
+
+        public bool MustBuildResources => _pipeline == null || _wireframePipeline == null || _projViewSet == null;
 
         public Material(string vertexShader, string fragShader)
         {
             _vertexShader = vertexShader;
             _fragShader = fragShader;
-            MustUpdateResources = true;
         }
 
         private void UpdateResources(GraphicsDevice device, RenderingContext context)
@@ -73,13 +79,11 @@ namespace Clunker.Graphics
                 context.Renderer.ViewBuffer,
                 context.Renderer.WireframeColourBuffer,
                 context.Renderer.SceneLightingBuffer));
-
-            MustUpdateResources = false;
         }
 
         public void Bind(GraphicsDevice device, CommandList cl, RenderingContext context)
         {
-            if(MustUpdateResources)
+            if(MustBuildResources)
             {
                 UpdateResources(device, context);
             }

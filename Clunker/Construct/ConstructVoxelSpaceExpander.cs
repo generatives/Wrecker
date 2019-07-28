@@ -2,6 +2,7 @@
 using Clunker.Math;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
+using Hyperion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,11 @@ namespace Clunker.Voxels
 {
     public class ConstructVoxelSpaceExpander : Component, IComponentEventListener
     {
+        [Ignore]
         private VoxelSpace _space;
+
         private VoxelTypes _types;
+
         private MaterialInstance _materialInstance;
 
         public ConstructVoxelSpaceExpander(VoxelTypes types, MaterialInstance materialInstance)

@@ -1,7 +1,6 @@
 ﻿using Clunker.Graphics.Materials;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
-using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.SceneSystemInterfaces;
 using System;
 using System.Collections.Generic;

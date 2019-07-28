@@ -1,6 +1,7 @@
 ﻿using Clunker.Graphics;
 using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.Core;
+using Hyperion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,17 +14,22 @@ namespace Clunker.SceneGraph
     {
         public string Name { get; set; }
 
-        public Scene CurrentScene { get; private set; }
+        [Ignore]
+        private Scene _currentScene;
+        public Scene CurrentScene { get => _currentScene; set => _currentScene = value; }
 
         internal bool HasJobs => _components.Any(c => c.Value.HasJobs) || _listenersToStop.Any(c => (c as Component).HasJobs);
 
         private Dictionary<Type, Component> _components;
+
         private List<IUpdateable> _updateables;
+
         private List<IComponentEventListener> _componentListeners;
 
         private List<IComponentEventListener> _listenersToStop;
 
         public GameObject Parent { get; internal set; }
+
         private List<GameObject> _children;
 
         public bool IsActive { get; set; } = true;

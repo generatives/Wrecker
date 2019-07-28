@@ -13,18 +13,18 @@ namespace Clunker.Voxels
 {
     public class VoxelGridData : IEnumerable<(Vector3, Voxel)>
     {
-        private Voxel[,,] _voxels;
+        public event Action Changed;
+
+        private Voxel[] _voxels;
         public float VoxelSize { get; private set; }
         public int XLength { get; private set; }
         public int YLength { get; private set; }
         public int ZLength { get; private set; }
-        public event Action Changed;
-
         public bool HasExistingVoxels => this.Any(v => v.Item2.Exists);
 
         public VoxelGridData(int xLength, int yLength, int zLength, float voxelSize)
         {
-            _voxels = new Voxel[xLength, yLength, zLength];
+            _voxels = new Voxel[xLength * yLength * zLength];
             XLength = xLength;
             YLength = yLength;
             ZLength = zLength;
@@ -48,11 +48,11 @@ namespace Clunker.Voxels
         {
             get
             {
-                return _voxels[x, y, z];
+                return _voxels[x + YLength * (y + ZLength * z)];
             }
             set
             {
-                _voxels[x, y, z] = value;
+                _voxels[x + YLength * (y + ZLength * z)] = value;
                 Changed?.Invoke();
             }
         }
@@ -155,7 +155,7 @@ namespace Clunker.Voxels
                 for (int y = 0; y < YLength; y++)
                     for (int z = 0; z < ZLength; z++)
                     {
-                        yield return (new Vector3(x, y, z), _voxels[x, y, z]);
+                        yield return (new Vector3(x, y, z), this[x, y, z]);
                     }
         }
 

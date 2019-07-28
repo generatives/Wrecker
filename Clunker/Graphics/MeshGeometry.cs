@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hyperion;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -8,13 +9,22 @@ namespace Clunker.Graphics
 {
     public class MeshGeometry : IDisposable
     {
-        public bool MustUpdateResources { get; private set; }
+        private bool _mustUpdateResources;
+
+        public bool MustUpdateResources => !CanRender || _mustUpdateResources;
+
         public bool CanRender => _vertexBuffer != null && _indexBuffer != null;
 
         private VertexPositionTextureNormal[] _vertices;
+
+        [Ignore]
         private DeviceBuffer _vertexBuffer;
+
         private ushort[] _indices;
+
+        [Ignore]
         private DeviceBuffer _indexBuffer;
+
         private uint _numIndices;
 
         public void UpdateMesh(VertexPositionTextureNormal[] vertices, ushort[] indices)
@@ -22,7 +32,7 @@ namespace Clunker.Graphics
             _vertices = vertices;
             _indices = indices;
             _numIndices = (uint)indices.Length;
-            MustUpdateResources = true;
+            _mustUpdateResources = true;
         }
 
         public void UpdateMesh(GraphicsDevice graphicsDevice, VertexPositionTextureNormal[] vertices, ushort[] indices)
@@ -53,7 +63,7 @@ namespace Clunker.Graphics
                 _indexBuffer = factory.CreateBuffer(new BufferDescription(indexBufferSize, BufferUsage.IndexBuffer));
             }
             graphicsDevice.UpdateBuffer(_indexBuffer, 0, _indices);
-            MustUpdateResources = false;
+            _mustUpdateResources = false;
         }
 
         internal void Render(GraphicsDevice device, CommandList cl)

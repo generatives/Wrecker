@@ -3,6 +3,7 @@ using BepuPhysics.Collidables;
 using Clunker.Math;
 using Clunker.Physics;
 using Clunker.SceneGraph.ComponentInterfaces;
+using Hyperion;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -12,8 +13,14 @@ namespace Clunker.Physics.Voxels
 {
     public class DynamicVoxelBody : VoxelGridBody, IUpdateable
     {
-        public BodyReference VoxelBody { get; private set; }
-        public Vector3 BodyOffset { get; private set; }
+        [Ignore]
+        private BodyReference _voxelBody;
+        public BodyReference VoxelBody { get => _voxelBody; private set => _voxelBody = value; }
+
+        [Ignore]
+        private Vector3 _bodyOffset;
+        public Vector3 BodyOffset { get => _bodyOffset; private set => _bodyOffset = value; }
+
         public Vector3 RelativeBodyOffset => Vector3.Transform(BodyOffset, GameObject.Transform.WorldOrientation);
 
         protected override void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia, Vector3 offset)

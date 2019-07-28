@@ -1,24 +1,27 @@
 ﻿using Clunker.Math;
 using Clunker.SceneGraph;
+using Clunker.SceneGraph.ComponentInterfaces;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Clunker.Voxels
 {
-    public class VoxelSpace : Component, IEnumerable<KeyValuePair<Vector3i, VoxelGrid>>
+    public class VoxelSpace : Component, IEnumerable<KeyValuePair<Vector3i, VoxelGrid>>, IComponentEventListener
     {
+        public event Action<Vector3i, VoxelGrid> VoxelsChanged;
+        public event Action<Vector3i, VoxelGrid> GridAdded;
+        public event Action<Vector3i, VoxelGrid> GridRemoved;
+
         private Dictionary<Vector3i, VoxelGrid> _grids;
         private Dictionary<VoxelGrid, Vector3i> _indices;
 
         public Vector3i GridSize { get; private set; }
         public float VoxelSize { get; private set; }
-        public event Action<Vector3i, VoxelGrid> VoxelsChanged;
-        public event Action<Vector3i, VoxelGrid> GridAdded;
-        public event Action<Vector3i, VoxelGrid> GridRemoved;
 
         public VoxelGrid this[Vector3i index]
         {
@@ -73,7 +76,7 @@ namespace Clunker.Voxels
                 GameObject.AddChild(gameObject);
                 _grids[index] = grid;
                 _indices[grid] = index;
-                grid.VoxelsChanged += Grid_VoxelsChanged;
+                if(IsAlive) grid.VoxelsChanged += Grid_VoxelsChanged;
                 GridAdded?.Invoke(index, grid);
             }
         }
@@ -166,6 +169,18 @@ namespace Clunker.Voxels
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public void ComponentStarted()
+        {
+            foreach (var grid in _grids.Values)
+            {
+                grid.VoxelsChanged += Grid_VoxelsChanged;
+            }
+        }
+
+        public void ComponentStopped()
+        {
         }
     }
 }

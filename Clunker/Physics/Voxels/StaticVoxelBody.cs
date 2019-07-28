@@ -6,11 +6,13 @@ using BepuPhysics;
 using BepuPhysics.Collidables;
 using Clunker.Math;
 using Clunker.Physics;
+using Hyperion;
 
 namespace Clunker.Physics.Voxels
 {
     public class StaticVoxelBody : VoxelGridBody
     {
+        [Ignore]
         private StaticReference _voxelStatic;
 
         protected override void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia, Vector3 offset)

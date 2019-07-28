@@ -16,12 +16,19 @@ using System.Linq;
 using Clunker.Diagnostics;
 using Clunker.Runtime;
 using ImGuiNET;
-using Clunker.SceneGraph.ComponentInterfaces;
+using Hyperion;
+using System.IO;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using Clunker.Resources;
 
 namespace Clunker
 {
     public class ClunkerApp
     {
+        public event Action Started;
+        public event Action Tick;
+
         private Sdl2Window _window;
         private bool _windowResized;
         private GraphicsDevice _graphicsDevice;
@@ -35,11 +42,20 @@ namespace Clunker
         public RoundRobinWorkQueue WorkQueue { get; private set; }
         public DrivenWorkQueue BestEffortFrameQueue { get; private set; }
 
-        public event Action Started;
-        public event Action Tick;
+        public ResourceLoader Resources { get; private set; }
 
-        public ClunkerApp(Scene initialScene)
+        public Serializer Serializer { get; private set; }
+
+        public byte[] ShipBin;
+
+        public ClunkerApp(ResourceLoader resourceLoader, Scene initialScene)
         {
+            Resources = resourceLoader;
+            Serializer = new Serializer(new SerializerOptions(false, true,
+                new[]
+                {
+                    Surrogate.Create<Resource<Image<Rgba32>>, ResourceSurrogate<Image<Rgba32>>>(r => new ResourceSurrogate<Image<Rgba32>>() { Id = r.Id }, s => resourceLoader.LoadImage(s.Id))
+                }));
             NextScene = initialScene;
             _renderers = new List<IRenderer>();
             WorkQueue = new RoundRobinWorkQueue(new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue());
@@ -134,6 +150,15 @@ namespace Clunker
                     }
                     if (CurrentScene != null)
                     {
+                        if(InputTracker.WasKeyDowned(Key.N))
+                        {
+                            using (var memoryStream = new MemoryStream(ShipBin))
+                            {
+                                var gameObject = Serializer.Deserialize<GameObject>(memoryStream);
+                                CurrentScene.AddGameObject(gameObject);
+                            }
+                        }
+
                         StackedTiming.PushFrameTimer("Scene Update");
                         CurrentScene.Update(frameTime);
                         StackedTiming.PopFrameTimer();

@@ -4,6 +4,7 @@ using Clunker.Math;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Voxels;
+using Hyperion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,17 +19,28 @@ namespace Clunker.Physics.Voxels
         {
             public VoxelGrid VoxelGrid;
             public Vector3i[] ExposedVoxels;
-            public Action<VoxelGrid> EventHandler;
         }
 
+        [Ignore]
         protected Dictionary<Vector3i, GridBody> _bodies;
 
+        [Ignore]
         private BigCompound _voxelCompound;
+
+        [Ignore]
         private TypedIndex _voxelShape;
-        public BodyReference VoxelBody { get; private set; }
-        public Vector3 BodyOffset { get; private set; }
+
+        [Ignore]
+        private BodyReference _voxelBody;
+        public BodyReference VoxelBody { get => _voxelBody; private set => _voxelBody = value; }
+
+        [Ignore]
+        private Vector3 _bodyOffset;
+        public Vector3 BodyOffset { get => _bodyOffset; private set => _bodyOffset = value; }
+
         public Vector3 RelativeBodyOffset => Vector3.Transform(BodyOffset, GameObject.Transform.WorldOrientation);
 
+        [Ignore]
         private List<Vector3i> _spaceIndicesByChildIndex;
 
         public DynamicVoxelSpaceBody()
@@ -53,9 +65,18 @@ namespace Clunker.Physics.Voxels
 
         public void ComponentStarted()
         {
+            if(_bodies == null)
+            {
+                _bodies = new Dictionary<Vector3i, GridBody>();
+            }
+            if(_spaceIndicesByChildIndex == null)
+            {
+                _spaceIndicesByChildIndex = new List<Vector3i>();
+            }
             var space = GameObject.GetComponent<VoxelSpace>();
             space.GridAdded += Space_GridAdded;
             space.GridRemoved += Space_GridRemoved;
+            space.VoxelsChanged += AddNewShape;
             foreach(var kvp in space)
             {
                 Space_GridAdded(kvp.Key, kvp.Value);
@@ -64,16 +85,10 @@ namespace Clunker.Physics.Voxels
 
         private void Space_GridAdded(Vector3i index, VoxelGrid grid)
         {
-            Action<VoxelGrid> eventHandler = (VoxelGrid e) =>
-            {
-                AddNewShape(index, e);
-            };
             _bodies[index] = new GridBody()
             {
-                VoxelGrid = grid,
-                EventHandler = eventHandler
+                VoxelGrid = grid
             };
-            grid.VoxelsChanged += eventHandler;
             AddNewShape(index, grid);
         }
 
@@ -142,8 +157,6 @@ namespace Clunker.Physics.Voxels
 
         private void Space_GridRemoved(Vector3i index, VoxelGrid grid)
         {
-            var eventHandler = _bodies[index].EventHandler;
-            grid.VoxelsChanged -= eventHandler;
             _bodies.Remove(index);
         }
 
