@@ -53,9 +53,9 @@ namespace Clunker.Voxels
                         if(index != addSurrounding && _space[index] == null)
                         {
                             var voxelGridObj = new GameObject("Spaceship Voxel Grid");
-                            voxelGridObj.AddComponent(new VoxelGrid(new VoxelGridData(8, 8, 8, 1), new Dictionary<Vector3i, GameObject>()));
+                            voxelGridObj.AddComponent(new VoxelGrid(new VoxelGridData(4, 4, 4, 1), new Dictionary<Vector3i, GameObject>()));
                             voxelGridObj.AddComponent(new VoxelMeshRenderable(_types, _materialInstance));
-                            voxelGridObj.AddComponent(new VoxelGridRenderable(_types, _materialInstance));
+                            //voxelGridObj.AddComponent(new VoxelGridRenderable(_types, _materialInstance));
 
                             _space.Add(index, voxelGridObj);
                         }
@@ -69,30 +69,27 @@ namespace Clunker.Voxels
                     for (int z = -1; z <= 1; z++)
                     {
                         var index = new Vector3i(removeSurrounding.X + x, removeSurrounding.Y + y, removeSurrounding.Z + z);
-                        if (index != removeSurrounding && !ShouldStayExcept(index, removeSurrounding))
+                        if (index != removeSurrounding && !ShouldStay(index))
                         {
                             _space.Remove(index);
                         }
                     }
         }
 
-        private bool ShouldStayExcept(Vector3i check, Vector3i except)
+        private bool ShouldStay(Vector3i check)
         {
             for(int x = -1; x <= 1; x++)
                 for (int y = -1; y <= 1; y++)
                     for (int z = -1; z <= 1; z++)
                     {
                         var index = new Vector3i(check.X + x, check.Y + y, check.Z + z);
-                        if(index != except)
+                        var grid = _space[index];
+                        if (grid != null && grid.Data.HasExistingVoxels)
                         {
-                            var grid = _space[index];
-                            if (grid != null && grid.Data.HasExistingVoxels)
-                            {
-                                return false;
-                            }
+                            return true;
                         }
                     }
-            return true;
+            return false;
         }
 
         public void ComponentStopped()

@@ -118,10 +118,10 @@ namespace Wrecker
 
         private static GameObject CreateShip(VoxelTypes types, MaterialInstance materialInstance)
         {
-            var gridLength = 8;
+            var gridLength = 4;
             var voxelSize = 1;
             var voxelSpaceData = new VoxelGridData(gridLength, gridLength, gridLength, voxelSize);
-            int gap = 2;
+            int gap = 0;
             for (int x = gap; x < voxelSpaceData.XLength - gap; x++)
                 for (int y = gap; y < voxelSpaceData.YLength - gap; y++)
                     for (int z = gap; z < voxelSpaceData.ZLength - gap; z++)

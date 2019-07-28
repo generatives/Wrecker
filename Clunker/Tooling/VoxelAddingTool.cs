@@ -42,6 +42,6 @@ namespace Clunker.Tooling
 
         public abstract void AddVoxel(VoxelSpace space, Vector3i index);
 
-        public static bool NearlyEqual(float f1, float f2) => System.Math.Abs(f1 - f2) < 0.1;
+        public static bool NearlyEqual(float f1, float f2) => System.Math.Abs(f1 - f2) < 0.01;
     }
 }
