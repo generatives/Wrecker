@@ -70,7 +70,7 @@ namespace Wrecker
             var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
             var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTextures, new ObjectProperties() { Colour = RgbaFloat.White });
 
-            var voxelChangeMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTextures, new ObjectProperties() { Colour = RgbaFloat.Blue });
+            var voxelChangeMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTextures, new ObjectProperties() { Colour = RgbaFloat.White });
 
             var tools = new Tool[]
             {
