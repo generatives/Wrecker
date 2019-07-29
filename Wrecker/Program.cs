@@ -1,5 +1,6 @@
 ﻿using Clunker;
 using Clunker.Construct;
+using Clunker.Editor;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
 using Clunker.Math;
@@ -99,6 +100,7 @@ namespace Wrecker
             camera.AddComponent(new Character());
             camera.AddComponent(new CharacterInput());
             camera.AddComponent(new ComponentSwitcher(tools));
+            camera.AddComponent(new EditorMenu());
             camera.AddComponent(new Skybox(px, nx, py, ny, pz, nz));
             scene.AddGameObject(camera);
 

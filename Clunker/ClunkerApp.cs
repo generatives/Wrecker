@@ -135,7 +135,7 @@ namespace Clunker
                     var frameTime = (float)frameWatch.Elapsed.TotalSeconds;
                     frameWatch.Restart();
 
-                    imGuiRenderer.Update(frameTime, InputTracker.FrameSnapshot);
+                    if(!InputTracker.LockMouse) imGuiRenderer.Update(frameTime, InputTracker.FrameSnapshot);
 
                     Tick?.Invoke();
                     if(NextScene != null)
