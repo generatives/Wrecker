@@ -11,8 +11,15 @@ namespace Clunker.Editor
 {
     public class EditorMenu : Component, IUpdateable
     {
-        public string Path = AppContext.BaseDirectory;
+        public string Path = "C:\\Clunker\\Constructs\\";
         public string LoadFrom = "";
+
+        private FilePicker _loadFilePicker;
+
+        public EditorMenu()
+        {
+            _loadFilePicker = new FilePicker(Path);
+        }
 
         public void Update(float time)
         {
@@ -26,21 +33,31 @@ namespace Clunker.Editor
                 if (ImGui.Button($"Save {i}"))
                 {
                     var data = CurrentScene.App.Serializer.Serialize(obj);
+
+                    if (!Directory.Exists(Path)) Directory.CreateDirectory(Path);
                     File.WriteAllBytes(Path + obj.Name + ".vspace", data);
-                    LoadFrom = obj.Name;
                 }
                 ImGui.Separator();
                 i++;
             }
 
-            ImGui.InputText("Load From", ref LoadFrom, 100);
-            if(ImGui.Button("Load"))
+            if(_loadFilePicker.Draw(ref LoadFrom))
             {
-                var data = File.ReadAllBytes(Path + LoadFrom + ".vspace");
+                var data = File.ReadAllBytes(LoadFrom);
                 var obj = CurrentScene.App.Serializer.Deserialize<GameObject>(data);
                 obj.Transform.WorldPosition = GameObject.Transform.WorldPosition;
                 CurrentScene.AddGameObject(obj);
             }
+
+            //ImGui.InputText("Load From", ref LoadFrom, 100);
+            //if(ImGui.Button("Load"))
+            //{
+            //    var data = File.ReadAllBytes(Path + LoadFrom + ".vspace");
+            //    var obj = CurrentScene.App.Serializer.Deserialize<GameObject>(data);
+            //    obj.Name = LoadFrom;
+            //    obj.Transform.WorldPosition = GameObject.Transform.WorldPosition;
+            //    CurrentScene.AddGameObject(obj);
+            //}
         }
     }
 }

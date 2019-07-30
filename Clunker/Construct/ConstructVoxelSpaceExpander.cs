@@ -56,7 +56,7 @@ namespace Clunker.Voxels
                         var index = new Vector3i(addSurrounding.X + x, addSurrounding.Y + y, addSurrounding.Z + z);
                         if(index != addSurrounding && _space[index] == null)
                         {
-                            var voxelGridObj = new GameObject("Spaceship Voxel Grid");
+                            var voxelGridObj = new GameObject($"{GameObject.Name} Voxel Grid");
                             voxelGridObj.AddComponent(new VoxelGrid(new VoxelGridData(4, 4, 4, 1), new Dictionary<Vector3i, GameObject>()));
                             voxelGridObj.AddComponent(new VoxelMeshRenderable(_types, _materialInstance));
                             //voxelGridObj.AddComponent(new VoxelGridRenderable(_types, _materialInstance));

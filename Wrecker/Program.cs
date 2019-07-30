@@ -135,22 +135,16 @@ namespace Wrecker
             var gridLength = 4;
             var voxelSize = 1;
             var voxelSpaceData = new VoxelGridData(gridLength, gridLength, gridLength, voxelSize);
-            int gap = 0;
-            for (int x = gap; x < voxelSpaceData.XLength - gap; x++)
-                for (int y = gap; y < voxelSpaceData.YLength - gap; y++)
-                    for (int z = gap; z < voxelSpaceData.ZLength - gap; z++)
-                    {
-                        voxelSpaceData[x, y, z] = new Voxel() { Exists = true };
-                    }
+            voxelSpaceData[0, 0, 0] = new Voxel() { Exists = true };
 
             var voxelSpace = new VoxelSpace(new Vector3i(gridLength, gridLength, gridLength), voxelSize);
-            var spaceShip = new GameObject("Space Ship");
+            var spaceShip = new GameObject("Single Block");
             spaceShip.AddComponent(voxelSpace);
             spaceShip.AddComponent(new DynamicVoxelSpaceBody());
             spaceShip.AddComponent(new Construct());
             spaceShip.AddComponent(new ConstructVoxelSpaceExpander(types, materialInstance));
 
-            var voxelGridObj = new GameObject("Spaceship Voxel Grid");
+            var voxelGridObj = new GameObject($"{spaceShip.Name} Voxel Grid");
             voxelGridObj.AddComponent(new VoxelGrid(voxelSpaceData, new Dictionary<Vector3i, GameObject>()));
             voxelGridObj.AddComponent(new VoxelMeshRenderable(types, materialInstance));
             //voxelGridObj.AddComponent(new VoxelGridRenderable(types, materialInstance));

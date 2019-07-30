@@ -61,17 +61,6 @@ namespace Clunker.Construct
                 force = Vector3.Transform(force, GameObject.Transform.WorldOrientation);
                 body.VoxelBody.ApplyLinearImpulse(force);
             }
-
-
-            if (GameInputTracker.WasKeyDowned(Key.M))
-            {
-                using(var memoryStream = new MemoryStream())
-                {
-                    CurrentScene.App.Serializer.Serialize(GameObject, memoryStream);
-                    CurrentScene.App.ShipBin = memoryStream.ToArray();
-                }
-                CurrentScene.RemoveGameObject(GameObject);
-            }
         }
     }
 }

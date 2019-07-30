@@ -150,15 +150,6 @@ namespace Clunker
                     }
                     if (CurrentScene != null)
                     {
-                        if(InputTracker.WasKeyDowned(Key.N))
-                        {
-                            using (var memoryStream = new MemoryStream(ShipBin))
-                            {
-                                var gameObject = Serializer.Deserialize<GameObject>(memoryStream);
-                                CurrentScene.AddGameObject(gameObject);
-                            }
-                        }
-
                         StackedTiming.PushFrameTimer("Scene Update");
                         CurrentScene.Update(frameTime);
                         StackedTiming.PopFrameTimer();
