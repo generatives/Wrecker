@@ -16,7 +16,7 @@ namespace Clunker.Construct
 
         public void Update(float time)
         {
-            if(InputTracker.IsKeyPressed(Veldrid.Key.T))
+            if(GameInputTracker.IsKeyPressed(Veldrid.Key.T))
             {
                 var voxelSpaceObject = GameObject.Parent.Parent;
                 var body = voxelSpaceObject.GetComponent<DynamicVoxelSpaceBody>();

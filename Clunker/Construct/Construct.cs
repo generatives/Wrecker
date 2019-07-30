@@ -21,39 +21,39 @@ namespace Clunker.Construct
 
         public void Update(float time)
         {
-            MoveForce += InputTracker.WheelDelta;
+            MoveForce += GameInputTracker.WheelDelta;
             var body = GameObject.GetComponent<DynamicVoxelSpaceBody>();
 
             if (body.VoxelBody.Exists)
             {
                 var force = Vector3.Zero;
 
-                if (InputTracker.IsKeyPressed(Key.Right))
+                if (GameInputTracker.IsKeyPressed(Key.Right))
                 {
                     force += new Vector3(MoveForce, 0, 0);
                 }
 
-                if (InputTracker.IsKeyPressed(Key.Up))
+                if (GameInputTracker.IsKeyPressed(Key.Up))
                 {
                     force += new Vector3(0, 0, -MoveForce);
                 }
 
-                if (InputTracker.IsKeyPressed(Key.Left))
+                if (GameInputTracker.IsKeyPressed(Key.Left))
                 {
                     force += new Vector3(-MoveForce, 0, 0);
                 }
 
-                if (InputTracker.IsKeyPressed(Key.Down))
+                if (GameInputTracker.IsKeyPressed(Key.Down))
                 {
                     force += new Vector3(0, 0, MoveForce);
                 }
 
-                if (InputTracker.IsKeyPressed(Key.P))
+                if (GameInputTracker.IsKeyPressed(Key.P))
                 {
                     force += new Vector3(0, MoveForce, 0);
                 }
 
-                if (InputTracker.IsKeyPressed(Key.L))
+                if (GameInputTracker.IsKeyPressed(Key.L))
                 {
                     force += new Vector3(0, -MoveForce, 0);
                 }
@@ -63,7 +63,7 @@ namespace Clunker.Construct
             }
 
 
-            if (InputTracker.WasKeyDowned(Key.M))
+            if (GameInputTracker.WasKeyDowned(Key.M))
             {
                 using(var memoryStream = new MemoryStream())
                 {

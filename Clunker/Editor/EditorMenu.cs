@@ -38,7 +38,7 @@ namespace Clunker.Editor
             {
                 var data = File.ReadAllBytes(Path + LoadFrom + ".vspace");
                 var obj = CurrentScene.App.Serializer.Deserialize<GameObject>(data);
-                obj.Transform.WorldPosition = GameObject.Transform.Position;
+                obj.Transform.WorldPosition = GameObject.Transform.WorldPosition;
                 CurrentScene.AddGameObject(obj);
             }
         }

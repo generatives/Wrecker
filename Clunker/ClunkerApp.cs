@@ -121,7 +121,7 @@ namespace Clunker
                     InputTracker.UpdateFrameInput(_window, inputSnapshot);
 
                     if (InputTracker.WasKeyDowned(Key.Escape)) break;
-                    if (InputTracker.WasKeyDowned(Key.Tab)) InputTracker.LockMouse = !InputTracker.LockMouse;
+                    if (InputTracker.WasKeyDowned(Key.Tilde)) InputTracker.LockMouse = !InputTracker.LockMouse;
                     if (InputTracker.WasKeyDowned(Key.T)) { StackedTiming.Enabled = !StackedTiming.Enabled; Timing.Enabled = !Timing.Enabled; }
 
                     if (_windowResized)
@@ -135,7 +135,7 @@ namespace Clunker
                     var frameTime = (float)frameWatch.Elapsed.TotalSeconds;
                     frameWatch.Restart();
 
-                    if(!InputTracker.LockMouse) imGuiRenderer.Update(frameTime, InputTracker.FrameSnapshot);
+                    imGuiRenderer.Update(frameTime, InputTracker.LockMouse ? new EmptyInputSnapshot() : InputTracker.FrameSnapshot );
 
                     Tick?.Invoke();
                     if(NextScene != null)

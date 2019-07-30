@@ -159,16 +159,16 @@ namespace Clunker.Graphics
             {
                 var context = new RenderingContext() { Renderer = this, RenderWireframes = false };
                 commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.White);
-                RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.Position);
-                RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.Position);
+                RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
+                RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
             }
 
             if (renderWireframes == Graphics.RenderWireframes.WIRE_FRAMES || renderWireframes == Graphics.RenderWireframes.BOTH)
             {
                 var context = new RenderingContext() { Renderer = this, RenderWireframes = true };
                 commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.Black);
-                RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.Position);
-                RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.Position);
+                RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
+                RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
             }
         }
         private void RenderSet(List<IRenderable> renderables, GraphicsDevice device, CommandList commandList, RenderingContext context, Vector3 location)

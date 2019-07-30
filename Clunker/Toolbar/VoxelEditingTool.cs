@@ -26,7 +26,7 @@ namespace Clunker.Tooling
 
             var handler = new FirstHitHandler(CollidableMobility.Static | CollidableMobility.Dynamic);
             var forward = GameObject.Transform.Orientation.GetForwardVector();
-            physicsSystem.Raycast(GameObject.Transform.Position, forward, float.MaxValue, ref handler);
+            physicsSystem.Raycast(GameObject.Transform.WorldPosition, forward, float.MaxValue, ref handler);
             if (handler.Hit)
             {
                 var t = handler.T;
@@ -41,7 +41,7 @@ namespace Clunker.Tooling
                 }
                 if (context is VoxelGridBody voxels)
                 {
-                    hitLocation = GameObject.Transform.Position + forward * t;
+                    hitLocation = GameObject.Transform.WorldPosition + forward * t;
                     space = voxels.GameObject.Parent?.GetComponent<VoxelSpace>();
                     if (space != null)
                     {
