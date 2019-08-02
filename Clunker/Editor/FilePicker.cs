@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using Veldrid;
+using System.Linq;
 
 // Based on https://github.com/mellinoe/synthapp/blob/master/src/synthapp/Widgets/FilePicker.cs#L58
 
@@ -12,15 +13,17 @@ namespace Clunker.Editor
     public class FilePicker
     {
         private const string FilePickerID = "###FilePicker";
-        private static readonly Dictionary<object, FilePicker> s_filePickers = new Dictionary<object, FilePicker>();
         private static readonly Vector2 DefaultFilePickerSize = new Vector2(600, 400);
 
         public string CurrentFolder { get; set; }
         public string SelectedFile { get; set; }
 
-        public FilePicker(string currentFolder)
+        public string[] Extensions { get; set; }
+
+        public FilePicker(string currentFolder, string[] extensions = null)
         {
             CurrentFolder = currentFolder;
+            Extensions = extensions;
         }
 
         public bool Draw(ref string selected)
@@ -59,7 +62,7 @@ namespace Clunker.Editor
             ImGui.Text("Current Folder: " + CurrentFolder);
             bool result = false;
 
-            if (ImGui.BeginChildFrame(1, new Vector2(0, 600), ImGuiWindowFlags.ChildMenu))
+            if (ImGui.BeginChildFrame(1, DefaultFilePickerSize, ImGuiWindowFlags.ChildMenu))
             {
                 DirectoryInfo di = new DirectoryInfo(CurrentFolder);
                 if (di.Exists)
@@ -87,22 +90,26 @@ namespace Clunker.Editor
                         }
                         else
                         {
-                            string name = Path.GetFileName(fse);
-                            bool isSelected = SelectedFile == fse;
-                            if (ImGui.Selectable(name, isSelected, ImGuiSelectableFlags.DontClosePopups))
+                            var ext = Path.GetExtension(fse);
+                            if(Extensions == null || Extensions.Contains(ext))
                             {
-                                SelectedFile = fse;
-                                if (returnOnSelection)
+                                var name = Path.GetFileName(fse);
+                                bool isSelected = SelectedFile == fse;
+                                if (ImGui.Selectable(name, isSelected, ImGuiSelectableFlags.DontClosePopups))
+                                {
+                                    SelectedFile = fse;
+                                    if (returnOnSelection)
+                                    {
+                                        result = true;
+                                        selected = SelectedFile;
+                                    }
+                                }
+                                if (ImGui.IsMouseDoubleClicked(0))
                                 {
                                     result = true;
                                     selected = SelectedFile;
+                                    ImGui.CloseCurrentPopup();
                                 }
-                            }
-                            if (ImGui.IsMouseDoubleClicked(0))
-                            {
-                                result = true;
-                                selected = SelectedFile;
-                                ImGui.CloseCurrentPopup();
                             }
                         }
                     }

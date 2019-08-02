@@ -5,6 +5,7 @@ using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Clunker.Editor
@@ -18,14 +19,15 @@ namespace Clunker.Editor
 
         public EditorMenu()
         {
-            _loadFilePicker = new FilePicker(Path);
+            _loadFilePicker = new FilePicker(Path, new[] { ".vspace" });
         }
 
         public void Update(float time)
         {
             ImGui.Begin("Editor");
             int i = 0;
-            foreach (var obj in CurrentScene.GameObjects)
+            var gameObjectCopy = CurrentScene.GameObjects.ToList();
+            foreach (var obj in gameObjectCopy)
             {
                 var name = obj.Name;
                 ImGui.InputText($"Name {i}", ref name, 100);
@@ -36,6 +38,10 @@ namespace Clunker.Editor
 
                     if (!Directory.Exists(Path)) Directory.CreateDirectory(Path);
                     File.WriteAllBytes(Path + obj.Name + ".vspace", data);
+                }
+                if(ImGui.Button($"Remove {i}"))
+                {
+                    CurrentScene.RemoveGameObject(obj);
                 }
                 ImGui.Separator();
                 i++;
