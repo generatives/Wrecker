@@ -12,14 +12,17 @@ namespace Clunker.Editor
 {
     public class EditorMenu : Component, IUpdateable
     {
-        public string Path = "C:\\Clunker\\Constructs\\";
+        public static readonly string Path = "C:\\Clunker\\Constructs\\";
+        public string SaveTo = Path;
         public string LoadFrom = "";
 
         private FilePicker _loadFilePicker;
+        private FilePicker _saveFilePicker;
 
         public EditorMenu()
         {
-            _loadFilePicker = new FilePicker(Path, new[] { ".vspace" });
+            _loadFilePicker = new FilePicker("Load", Path, false, new[] { ".vspace" });
+            _saveFilePicker = new FilePicker("Save", Path, true);
         }
 
         public void Update(float time)
@@ -36,9 +39,10 @@ namespace Clunker.Editor
                 {
                     var data = CurrentScene.App.Serializer.Serialize(obj);
 
-                    if (!Directory.Exists(Path)) Directory.CreateDirectory(Path);
-                    File.WriteAllBytes(Path + obj.Name + ".vspace", data);
+                    if (!Directory.Exists(SaveTo)) Directory.CreateDirectory(SaveTo);
+                    File.WriteAllBytes(SaveTo + "\\" + obj.Name + ".vspace", data);
                 }
+                ImGui.SameLine();
                 if(ImGui.Button($"Remove {i}"))
                 {
                     CurrentScene.RemoveGameObject(obj);
@@ -46,6 +50,8 @@ namespace Clunker.Editor
                 ImGui.Separator();
                 i++;
             }
+
+            _saveFilePicker.Draw(ref SaveTo);
 
             if(_loadFilePicker.Draw(ref LoadFrom))
             {

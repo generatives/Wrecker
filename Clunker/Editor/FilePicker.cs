@@ -15,14 +15,17 @@ namespace Clunker.Editor
         private const string FilePickerID = "###FilePicker";
         private static readonly Vector2 DefaultFilePickerSize = new Vector2(600, 400);
 
+        public string Id { get; set; }
         public string CurrentFolder { get; set; }
         public string SelectedFile { get; set; }
-
         public string[] Extensions { get; set; }
+        public bool PickDirectory { get; set; }
 
-        public FilePicker(string currentFolder, string[] extensions = null)
+        public FilePicker(string id, string currentFolder, bool pickDirectory, string[] extensions = null)
         {
+            Id = id;
             CurrentFolder = currentFolder;
+            PickDirectory = pickDirectory;
             Extensions = extensions;
         }
 
@@ -34,21 +37,21 @@ namespace Clunker.Editor
                 try
                 {
                     var info = new FileInfo(selected);
-                    label = info.Name;
+                    label = PickDirectory ? info.FullName : info.Name;
                 }
                 catch (Exception)
                 {
-                    label = "<Select File>";
+                    label = "<Select>";
                 }
             }
-            if (ImGui.Button(label))
+            if (ImGui.Button($"{Id}: {label}"))
             {
-                ImGui.OpenPopup(FilePickerID);
+                ImGui.OpenPopup(Id);
             }
 
             bool result = false;
             bool p_open = true;
-            if (ImGui.BeginPopupModal(FilePickerID, ref p_open, ImGuiWindowFlags.NoTitleBar))
+            if (ImGui.BeginPopupModal(Id, ref p_open, ImGuiWindowFlags.NoTitleBar))
             {
                 result = DrawFolder(ref selected, true);
                 ImGui.EndPopup();
@@ -88,7 +91,7 @@ namespace Clunker.Editor
                             }
                             ImGui.PopStyleColor();
                         }
-                        else
+                        else if(!PickDirectory)
                         {
                             var ext = Path.GetExtension(fse);
                             if(Extensions == null || Extensions.Contains(ext))
@@ -104,12 +107,6 @@ namespace Clunker.Editor
                                         selected = SelectedFile;
                                     }
                                 }
-                                if (ImGui.IsMouseDoubleClicked(0))
-                                {
-                                    result = true;
-                                    selected = SelectedFile;
-                                    ImGui.CloseCurrentPopup();
-                                }
                             }
                         }
                     }
@@ -119,20 +116,32 @@ namespace Clunker.Editor
             ImGui.EndChildFrame();
 
 
-            if (ImGui.Button("Cancel"))
+            if(PickDirectory)
             {
-                result = false;
-                ImGui.CloseCurrentPopup();
-            }
-
-            if (SelectedFile != null)
-            {
-                ImGui.SameLine();
-                if (ImGui.Button("Open"))
+                if (ImGui.Button("Select"))
                 {
                     result = true;
-                    selected = SelectedFile;
+                    selected = CurrentFolder;
                     ImGui.CloseCurrentPopup();
+                }
+            }
+            else
+            {
+                if (ImGui.Button("Cancel"))
+                {
+                    result = false;
+                    ImGui.CloseCurrentPopup();
+                }
+
+                if (SelectedFile != null)
+                {
+                    ImGui.SameLine();
+                    if (ImGui.Button("Open"))
+                    {
+                        result = true;
+                        selected = SelectedFile;
+                        ImGui.CloseCurrentPopup();
+                    }
                 }
             }
 
