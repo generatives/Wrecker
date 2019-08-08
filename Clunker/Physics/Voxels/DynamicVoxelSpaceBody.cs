@@ -21,6 +21,8 @@ namespace Clunker.Physics.Voxels
             public Vector3i[] ExposedVoxels;
         }
 
+        public event Action NewShapeGenerated;
+
         [Ignore]
         protected Dictionary<Vector3i, GridBody> _bodies;
 
@@ -36,9 +38,9 @@ namespace Clunker.Physics.Voxels
 
         [Ignore]
         private Vector3 _bodyOffset;
-        public Vector3 BodyOffset { get => _bodyOffset; private set => _bodyOffset = value; }
+        public Vector3 LocalBodyOffset { get => _bodyOffset; private set => _bodyOffset = value; }
 
-        public Vector3 RelativeBodyOffset => Vector3.Transform(BodyOffset, GameObject.Transform.WorldOrientation);
+        public Vector3 WorldBodyOffset => Vector3.Transform(LocalBodyOffset, GameObject.Transform.WorldOrientation);
 
         [Ignore]
         private List<Vector3i> _spaceIndicesByChildIndex;
@@ -59,7 +61,7 @@ namespace Clunker.Physics.Voxels
             if (VoxelBody.Exists)
             {
                 GameObject.Transform.WorldOrientation = VoxelBody.Pose.Orientation.ToStandard();
-                GameObject.Transform.WorldPosition = VoxelBody.Pose.Position - RelativeBodyOffset;
+                GameObject.Transform.WorldPosition = VoxelBody.Pose.Position - WorldBodyOffset;
             }
         }
 
@@ -134,23 +136,26 @@ namespace Clunker.Physics.Voxels
                     compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var offset);
                     _voxelCompound = new BigCompound(compoundChildren, physicsSystem.Simulation.Shapes, physicsSystem.Pool);
                     _voxelShape = physicsSystem.AddShape(_voxelCompound, this);
-                    BodyOffset = offset;
+                    var offsetDiff = offset - LocalBodyOffset;
+                    LocalBodyOffset = offset;
 
                     if (VoxelBody.Exists)
                     {
                         physicsSystem.Simulation.Bodies.ChangeShape(VoxelBody.Handle, _voxelShape);
                         physicsSystem.Simulation.Bodies.ChangeLocalInertia(VoxelBody.Handle, ref compoundInertia);
+                        VoxelBody.Pose.Position += offsetDiff;
                     }
                     else
                     {
                         var desc = BodyDescription.CreateDynamic(
-                            new RigidPose(GameObject.Transform.WorldPosition + RelativeBodyOffset, GameObject.Transform.WorldOrientation.ToPhysics()),
+                            new RigidPose(GameObject.Transform.WorldPosition + WorldBodyOffset, GameObject.Transform.WorldOrientation.ToPhysics()),
                             compoundInertia,
                             new CollidableDescription(_voxelShape, 0.1f),
                             new BodyActivityDescription(-1));
                         VoxelBody = physicsSystem.AddDynamic(desc, this);
                     }
 
+                    NewShapeGenerated?.Invoke();
                 }
             }
         }

@@ -50,6 +50,8 @@ namespace Clunker.Voxels
             }
         }
 
+        public IEnumerable<GameObject> VoxelEntities => _grids.Values.SelectMany(g => g.VoxelEntities);
+
         public VoxelSpace(Vector3i gridSize, float voxelSize)
         {
             _grids = new Dictionary<Vector3i, VoxelGrid>();

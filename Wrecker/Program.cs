@@ -142,6 +142,7 @@ namespace Wrecker
             spaceShip.AddComponent(voxelSpace);
             spaceShip.AddComponent(new DynamicVoxelSpaceBody());
             spaceShip.AddComponent(new Construct());
+            spaceShip.AddComponent(new ConstructFlightControl());
             spaceShip.AddComponent(new ConstructVoxelSpaceExpander(types, materialInstance));
 
             var voxelGridObj = new GameObject($"{spaceShip.Name} Voxel Grid");

@@ -1,12 +1,8 @@
-﻿using Clunker.Graphics;
-using Clunker.Graphics.Materials;
-using Clunker.Math;
+﻿using Clunker.Math;
 using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.Voxels;
 using Hyperion;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,6 +19,7 @@ namespace Clunker.Voxels
         public VoxelGridData Data { get; private set; }
 
         private Dictionary<Vector3i, GameObject> _voxelEntities;
+        public IEnumerable<GameObject> VoxelEntities => _voxelEntities.Values;
 
         [Ignore]
         private bool _requestedVoxelsChanged;

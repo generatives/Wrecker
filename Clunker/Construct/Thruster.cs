@@ -13,14 +13,15 @@ namespace Clunker.Construct
     public class Thruster : VoxelEntity, IUpdateable
     {
         public float Force { get; set; }
+        public bool IsFiring { get; set; }
 
         public void Update(float time)
         {
-            if(GameInputTracker.IsKeyPressed(Veldrid.Key.T))
+            if(IsFiring)
             {
                 var voxelSpaceObject = GameObject.Parent.Parent;
                 var body = voxelSpaceObject.GetComponent<DynamicVoxelSpaceBody>();
-                var worldOffset = GameObject.Transform.WorldPosition - voxelSpaceObject.Transform.WorldPosition - body.RelativeBodyOffset;
+                var worldOffset = GameObject.Transform.WorldPosition - voxelSpaceObject.Transform.WorldPosition - body.WorldBodyOffset;
                 var direction = -Voxel.Orientation.GetDirection();
                 body.VoxelBody.ApplyImpulse(Vector3.Transform(direction, voxelSpaceObject.Transform.WorldOrientation) * Force, worldOffset);
             }
