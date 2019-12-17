@@ -42,7 +42,7 @@ namespace Clunker.SceneGraph.Core
             {
                 if (IsInheiritingParentTransform)
                 {
-                    Orientation = value - GameObject.Parent.Transform.WorldOrientation;
+                    Orientation = value * Quaternion.Inverse(GameObject.Parent.Transform.WorldOrientation);
                 }
                 else
                 {
@@ -72,15 +72,20 @@ namespace Clunker.SceneGraph.Core
         public Matrix4x4 Matrix => Matrix4x4.CreateScale(Scale) *
             Matrix4x4.CreateFromQuaternion(Orientation) *
             Matrix4x4.CreateTranslation(Position);
-        public Matrix4x4 WorldMatrix => Matrix4x4.CreateScale(WorldScale) *
-            Matrix4x4.CreateFromQuaternion(WorldOrientation) *
-            Matrix4x4.CreateTranslation(WorldPosition);
+
+        public Matrix4x4 WorldMatrix => IsInheiritingParentTransform ? GameObject.Parent.Transform.GetWorldMatrix(Matrix) : Matrix;
+
         public Matrix4x4 InverseMatrix => Matrix4x4.CreateTranslation(-Position) *
             Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Orientation)) *
             Matrix4x4.CreateScale(new Vector3(1f / Scale.X, 1f / Scale.Y, 1f / Scale.Z));
-        public Matrix4x4 WorldInverseMatrix => Matrix4x4.CreateTranslation(-WorldPosition) *
-            Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(WorldOrientation)) *
-            Matrix4x4.CreateScale(new Vector3(1f / WorldScale.X, 1f / WorldScale.Y, 1f / WorldScale.Z));
+
+        public Matrix4x4 WorldInverseMatrix => IsInheiritingParentTransform ? GameObject.Parent.Transform.WorldInverseMatrix * InverseMatrix : InverseMatrix;
+
+        private Matrix4x4 GetWorldMatrix(Matrix4x4 matrix4X4)
+        {
+            var transformed = matrix4X4 * Matrix;
+            return IsInheiritingParentTransform ? GameObject.Parent.Transform.GetWorldMatrix(transformed) : transformed;
+        }
 
         internal Transform()
         {

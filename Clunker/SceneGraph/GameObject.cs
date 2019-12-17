@@ -20,6 +20,7 @@ namespace Clunker.SceneGraph
 
         internal bool HasJobs => _components.Any(c => c.Value.HasJobs) || _listenersToStop.Any(c => (c as Component).HasJobs);
 
+        public IEnumerable<Component> Components => _components.Values;
         private Dictionary<Type, Component> _components;
 
         private List<IUpdateable> _updateables;
@@ -32,7 +33,15 @@ namespace Clunker.SceneGraph
 
         private List<GameObject> _children;
 
-        public bool IsActive { get; set; } = true;
+        public IEnumerable<GameObject> Children => _children;
+        public IEnumerable<GameObject> Descendents => _children.Concat(_children.SelectMany(c => c.Descendents));
+
+        private bool _isActive = true;
+        public bool IsActive
+        {
+            get => _isActive && (Parent?.IsActive ?? true);
+            set => _isActive = value;
+        }
 
         public GameObject()
         {

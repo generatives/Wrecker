@@ -46,7 +46,24 @@ namespace Clunker.Voxels
     {
         public static Quaternion GetQuaternion(this VoxelSide side)
         {
-            return new Quaternion(GetDirection(side), 1);
+            //return new Quaternion(GetDirection(side), 0);
+            switch (side)
+            {
+                case VoxelSide.TOP:
+                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitX, MathF.PI / 2f);
+                case VoxelSide.BOTTOM:
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
+                case VoxelSide.NORTH:
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+                case VoxelSide.SOUTH:
+                    return Quaternion.Identity;
+                case VoxelSide.EAST:
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2f);
+                case VoxelSide.WEST:
+                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitY, MathF.PI / 2f);
+                default:
+                    return Quaternion.Identity;
+            }
         }
         public static Vector3 GetDirection(this VoxelSide side)
         {

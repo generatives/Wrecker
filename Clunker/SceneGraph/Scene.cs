@@ -18,7 +18,8 @@ namespace Clunker.SceneGraph
     {
         private List<GameObject> _gameObjects;
         private List<GameObject> _toRemove;
-        public IEnumerable<GameObject> GameObjects { get => _gameObjects; }
+        public IEnumerable<GameObject> RootGameObjects => _gameObjects;
+        public IEnumerable<GameObject> GameObjects => _gameObjects.Concat(_gameObjects.SelectMany(c => c.Descendents));
 
         private List<IUpdatableSystem> _updatables;
         private List<ISystemEventProcessor> _eventProcessors;
@@ -43,7 +44,6 @@ namespace Clunker.SceneGraph
         internal void SceneStarted(ClunkerApp app)
         {
             App = app;
-            IsRunning = true;
             for (int i = 0; i < _gameObjects.Count; i++)
             {
                 _gameObjects[i].SceneStarted();
@@ -52,6 +52,7 @@ namespace Clunker.SceneGraph
             {
                 _eventProcessors[i].SystemStarted();
             }
+            IsRunning = true;
         }
 
         internal void SceneStopped()

@@ -1,7 +1,9 @@
 ﻿using Clunker;
 using Clunker.Construct;
 using Clunker.Editor;
+using Clunker.Editor.Inspector;
 using Clunker.Graphics;
+using Clunker.Graphics.Factories;
 using Clunker.Graphics.Materials;
 using Clunker.Math;
 using Clunker.Physics;
@@ -78,14 +80,19 @@ namespace Wrecker
             var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
             var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
 
-            var voxelChangeMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
+            var noCullingMaterial = new Material(Mesh3d.VertexCode, Mesh3d.UnlitFragmentCode, true);
+            var noCullingVoxelMaterial = new MaterialInstance(noCullingMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
+
+            //var cross = QuadCrossFactory.Build(new Rectangle(390, 130, 128, 128), true, noCullingVoxelMaterial);
+            //cross.Name = "Cross";
+            //scene.AddGameObject(cross);
 
             var tools = new Tool[]
             {
                 new RemoveVoxelEditingTool() { Name = "Remove" },
-                new BasicVoxelAddingTool("DarkStone", 0, types, voxelChangeMaterialInstance),
-                new BasicVoxelAddingTool("Metal", 1, types, voxelChangeMaterialInstance),
-                new ThrusterVoxelEditingTool(2, types, voxelChangeMaterialInstance) { Name = "Thruster" }
+                new BasicVoxelAddingTool("DarkStone", 0, types, voxelMaterialInstance),
+                new BasicVoxelAddingTool("Metal", 1, types, voxelMaterialInstance),
+                new ThrusterVoxelEditingTool(new Rectangle(390, 130, 128, 128), noCullingVoxelMaterial, 2, types, voxelMaterialInstance) { Name = "Thruster" }
             };
 
             var px = Image.Load("Assets\\skybox_px.png");
@@ -96,11 +103,13 @@ namespace Wrecker
             var nz = Image.Load("Assets\\skybox_nz.png");
 
             var camera = new GameObject("Player");
+            camera.Transform.Position = new Vector3(0, 0, 3);
             camera.AddComponent(new Camera());
             camera.AddComponent(new Character());
             camera.AddComponent(new CharacterInput());
             camera.AddComponent(new ComponentSwitcher(tools));
-            camera.AddComponent(new EditorMenu());
+            //camera.AddComponent(new EditorMenu());
+            camera.AddComponent(new Inspector());
             camera.AddComponent(new Skybox(px, nx, py, ny, pz, nz));
             scene.AddGameObject(camera);
 
@@ -141,7 +150,7 @@ namespace Wrecker
             var spaceShip = new GameObject("Single Block");
             spaceShip.AddComponent(voxelSpace);
             spaceShip.AddComponent(new DynamicVoxelSpaceBody());
-            spaceShip.AddComponent(new Construct());
+            //spaceShip.AddComponent(new Construct());
             spaceShip.AddComponent(new ConstructFlightControl());
             spaceShip.AddComponent(new ConstructVoxelSpaceExpander(types, materialInstance));
 

@@ -18,6 +18,9 @@ using Veldrid;
 
 namespace Clunker.Voxels
 {
+    /// <summary>
+    /// Renders a wireframe grid of all blocks
+    /// </summary>
     public class VoxelGridRenderable : Component, IRenderable
     {
         [Ignore]

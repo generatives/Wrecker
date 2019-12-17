@@ -123,7 +123,7 @@ namespace Clunker.Voxels
             return grid?.Data[voxelIndex];
         }
 
-        public void SetVoxel(Vector3i index, Voxel voxel, VoxelEntity entity = null)
+        public void SetVoxel(Vector3i index, Voxel voxel, params VoxelEntity[] entities)
         {
             var gridsIndex = new Vector3i(
                 (int)MathF.Floor((float)index.X / GridSize.X),
@@ -137,7 +137,7 @@ namespace Clunker.Voxels
 
             var grid = this[gridsIndex];
 
-            grid?.SetVoxel(voxelIndex, voxel, entity);
+            grid?.SetVoxel(voxelIndex, voxel, entities);
         }
 
         public Vector3i GetGridIndexFromLocalPosition(Vector3 position)

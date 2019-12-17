@@ -16,6 +16,9 @@ namespace Clunker.Graphics
 
         private Resource<Image<Rgba32>> _image;
 
+        public int ImageWidth => _image.Data.Width;
+        public int ImageHeight => _image.Data.Height;
+
         [Ignore]
         private TextureView _textureView;
 

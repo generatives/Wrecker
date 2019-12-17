@@ -22,15 +22,16 @@ namespace Clunker.Graphics
         internal ResourceSet _projViewSet;
 
         private string _vertexShader;
-
         private string _fragShader;
+        private bool _noCulling;
 
         public bool MustBuildResources => _pipeline == null || _wireframePipeline == null || _projViewSet == null;
 
-        public Material(string vertexShader, string fragShader)
+        public Material(string vertexShader, string fragShader, bool noCulling = false)
         {
             _vertexShader = vertexShader;
             _fragShader = fragShader;
+            _noCulling = noCulling;
         }
 
         private void UpdateResources(GraphicsDevice device, RenderingContext context)
@@ -56,9 +57,9 @@ namespace Clunker.Graphics
                     new ResourceLayoutElementDescription("SceneLighting", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
             _pipeline = factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
-                BlendStateDescription.SingleOverrideBlend,
+                BlendStateDescription.SingleAlphaBlend,
                 DepthStencilStateDescription.DepthOnlyLessEqual,
-                RasterizerStateDescription.Default,
+                _noCulling ? RasterizerStateDescription.CullNone : RasterizerStateDescription.Default,
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { projViewLayout, context.Renderer.ObjectLayout },

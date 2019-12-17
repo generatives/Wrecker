@@ -65,8 +65,37 @@ void main()
     vec3 norm = normalize(fsin_normal);
     float diff = max(dot(norm, DiffuseLightDirection), 0.0) + 0.4;
     vec4 diffuse = diff * DiffuseLightColour;
+    vec4 litColour = diffuse * objectColour;
+    fsout_color = vec4(litColour.xyz, objectColour.w);
+}";
 
-    fsout_color = diffuse * objectColour;
+        public const string UnlitFragmentCode = @"
+#version 450
+layout(location = 0) in vec2 fsin_texCoords;
+layout(location = 1) in vec3 fsin_normal;
+layout(location = 0) out vec4 fsout_color;
+layout(set = 0, binding = 2) uniform SceneColours
+{
+    vec4 WireframeColour;
+};
+layout(set = 0, binding = 3) uniform SceneLighting
+{
+    vec4 DiffuseLightColour;
+    vec3 DiffuseLightDirection;
+    vec4 AmbientLightColour;
+    float AmbientLightStrength;
+};
+layout(set = 1, binding = 1) uniform texture2D SurfaceTexture;
+layout(set = 1, binding = 2) uniform sampler SurfaceSampler;
+layout(set = 1, binding = 3) uniform ObjectProperties
+{
+    vec4 Colour;
+};
+void main()
+{
+    vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * WireframeColour * Colour;
+
+    fsout_color = objectColour;
 }";
     }
 }

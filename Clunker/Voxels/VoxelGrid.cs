@@ -6,6 +6,7 @@ using Hyperion;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -52,7 +53,7 @@ namespace Clunker.Voxels
             return Data[index];
         }
 
-        public void SetVoxel(Vector3i index, Voxel voxel, VoxelEntity entity = null)
+        public void SetVoxel(Vector3i index, Voxel voxel, params VoxelEntity[] entities)
         {
             if(Data.SetVoxel(index, voxel))
             {
@@ -64,19 +65,22 @@ namespace Clunker.Voxels
                     _voxelEntities.Remove(index);
                 }
 
-                if(entity != null)
+                if(entities.Any())
                 {
-                    if(entity.Space != null)
-                    {
-                        throw new Exception("Tried setting a VoxelEntity which is already in a VoxelSpace");
-                    }
-                    entity.Space = this;
-                    entity.Index = index;
-                    entity.Voxel = voxel;
                     var gameObject = new GameObject();
-                    gameObject.AddComponent(entity);
                     gameObject.Transform.Position = index * Data.VoxelSize + Vector3.One * Data.VoxelSize / 2f;
                     gameObject.Transform.Orientation = voxel.Orientation.GetQuaternion();
+                    foreach (var entity in entities)
+                    {
+                        if (entity.Space != null)
+                        {
+                            throw new Exception("Tried setting a VoxelEntity which is already in a VoxelSpace");
+                        }
+                        entity.Space = this;
+                        entity.Index = index;
+                        entity.Voxel = voxel;
+                        gameObject.AddComponent(entity);
+                    }
                     GameObject.AddChild(gameObject);
                     _voxelEntities[index] = gameObject;
                 }

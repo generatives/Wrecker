@@ -29,7 +29,7 @@ namespace Clunker.Editor
         {
             ImGui.Begin("Editor");
             int i = 0;
-            var gameObjectCopy = CurrentScene.GameObjects.ToList();
+            var gameObjectCopy = CurrentScene.RootGameObjects.ToList();
             foreach (var obj in gameObjectCopy)
             {
                 var name = obj.Name;
