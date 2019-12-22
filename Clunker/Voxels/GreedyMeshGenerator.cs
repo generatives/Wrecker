@@ -33,7 +33,8 @@ namespace Clunker.Voxels
                 {
                     for (int y = 0; y < yLength; y++)
                     {
-                        plane[x, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = false };
+                        var open = z + 1 == zLength || !voxels[x, y, z + 1].Exists;
+                        plane[x, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
                     }
                 }
                 var zPos = (z + 1);
@@ -63,7 +64,8 @@ namespace Clunker.Voxels
                 {
                     for (int y = 0; y < yLength; y++)
                     {
-                        plane[x, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = false };
+                        var open = z == 0 || !voxels[x, y, z - 1].Exists;
+                        plane[x, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
                     }
                 }
                 var zPos = z;
@@ -93,7 +95,8 @@ namespace Clunker.Voxels
                 {
                     for (int y = 0; y < yLength; y++)
                     {
-                        plane[z, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = false };
+                        var open = x + 1 == xLength || !voxels[x + 1, y, z].Exists;
+                        plane[z, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
                     }
                 }
                 var xPos = (x + 1);
@@ -123,7 +126,8 @@ namespace Clunker.Voxels
                 {
                     for (int y = 0; y < yLength; y++)
                     {
-                        plane[z, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = false };
+                        var open = x == 0 || !voxels[x - 1, y, z].Exists;
+                        plane[z, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
                     }
                 }
                 var xPos = x;
@@ -145,7 +149,7 @@ namespace Clunker.Voxels
             var xLength = voxels.XLength;
             var yLength = voxels.YLength;
             var zLength = voxels.ZLength;
-            var plane = new VoxelPoint[zLength, yLength];
+            var plane = new VoxelPoint[xLength, zLength];
 
             for (int y = 0; y < yLength; y++)
             {
@@ -153,7 +157,8 @@ namespace Clunker.Voxels
                 {
                     for (int z = 0; z < zLength; z++)
                     {
-                        plane[x, z] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = false };
+                        var open = y + 1 == yLength || !voxels[x, y + 1, z].Exists;
+                        plane[x, z] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
                     }
                 }
                 var yPos = (y + 1);
@@ -175,7 +180,7 @@ namespace Clunker.Voxels
             var xLength = voxels.XLength;
             var yLength = voxels.YLength;
             var zLength = voxels.ZLength;
-            var plane = new VoxelPoint[zLength, yLength];
+            var plane = new VoxelPoint[xLength, zLength];
 
             for (int y = 0; y < yLength; y++)
             {
@@ -183,7 +188,8 @@ namespace Clunker.Voxels
                 {
                     for (int z = 0; z < zLength; z++)
                     {
-                        plane[x, z] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = false };
+                        var open = y == 0 || !voxels[x, y - 1, z].Exists;
+                        plane[x, z] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
                     }
                 }
                 var yPos = y;
@@ -221,11 +227,6 @@ namespace Clunker.Voxels
 
         private static (int, ushort, VoxelSide, Rectangle) FindRectangle(VoxelPoint[,] plane, int xLength, int yLength, int startX, int startY)
         {
-            if(startX == 3)
-            {
-
-            }
-
             var type = plane[startX, startY].Voxel.BlockType;
             var orientation = plane[startX, startY].Voxel.Orientation;
             var rect = new Rectangle(startX, startY, 1, 1);
@@ -243,7 +244,7 @@ namespace Clunker.Voxels
             while(y < yLength)
             {
                 x = startX;
-                while (x < endX && plane[x, y].Voxel.Exists && plane[x, y].Voxel.BlockType == type && plane[x, y].Voxel.Orientation == orientation)
+                while (x < endX && plane[x, y].Voxel.Exists && !plane[x, y].Processed && plane[x, y].Voxel.BlockType == type && plane[x, y].Voxel.Orientation == orientation)
                 {
                     x++;
                 }

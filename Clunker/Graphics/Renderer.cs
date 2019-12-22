@@ -99,7 +99,7 @@ namespace Clunker.Graphics
                 1.0f,
                 (float)width / height,
                 0.05f,
-                128f);
+                512f);
             if(_device.IsClipSpaceYInverted)
             {
                 _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);
@@ -164,7 +164,7 @@ namespace Clunker.Graphics
             if (renderWireframes == Graphics.RenderWireframes.WIRE_FRAMES || renderWireframes == Graphics.RenderWireframes.BOTH)
             {
                 var context = new RenderingContext() { Renderer = this, RenderWireframes = true };
-                commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.White);
+                commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.Black);
                 RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
                 RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
             }
