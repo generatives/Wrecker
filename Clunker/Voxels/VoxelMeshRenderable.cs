@@ -56,9 +56,25 @@ namespace Clunker.Voxels
                 var vertices = new List<VertexPositionTextureNormal>(voxels.XLength * voxels.YLength * voxels.ZLength);
                 var indices = new List<ushort>(voxels.XLength * voxels.YLength * voxels.ZLength);
                 var imageSize = new Vector2(MaterialInstance.ImageWidth, MaterialInstance.ImageHeight);
-                MeshGenerator.GenerateMesh(voxels, (voxel, side, quad) =>
+                //MeshGenerator.GenerateMesh(voxels, (voxel, side, quad) =>
+                //{
+                //    var type = _types[voxel.BlockType];
+                //    var textureOffset = GetTexCoords(type, voxel.Orientation, side);
+                //    indices.Add((ushort)(vertices.Count + 0));
+                //    indices.Add((ushort)(vertices.Count + 1));
+                //    indices.Add((ushort)(vertices.Count + 3));
+                //    indices.Add((ushort)(vertices.Count + 1));
+                //    indices.Add((ushort)(vertices.Count + 2));
+                //    indices.Add((ushort)(vertices.Count + 3));
+                //    vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / imageSize, quad.Normal));
+                //    vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
+                //    vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
+                //    vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
+                //});
+                GreedyMeshGenerator.GenerateMesh(voxels, (typeNum, orientation, side, quad, size) =>
                 {
-                    var textureOffset = GetTexCoords(voxel, side);
+                    var type = _types[typeNum];
+                    var textureOffset = GetTexCoords(type, orientation, side);
                     indices.Add((ushort)(vertices.Count + 0));
                     indices.Add((ushort)(vertices.Count + 1));
                     indices.Add((ushort)(vertices.Count + 3));
@@ -74,10 +90,9 @@ namespace Clunker.Voxels
             });
         }
 
-        private Vector2 GetTexCoords(Voxel voxel, VoxelSide side)
+        private Vector2 GetTexCoords(VoxelType type, VoxelSide orientation, VoxelSide side)
         {
-            var type = _types[voxel.BlockType];
-            switch(voxel.Orientation)
+            switch(orientation)
             {
                 case VoxelSide.TOP:
                     return

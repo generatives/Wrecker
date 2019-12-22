@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Clunker.SceneGraph.SceneSystemInterfaces;
-using Clunker.Diagnostics;
+using Clunker.Utilities.Diagnostics;
 using System.Diagnostics;
 using System.Collections.Concurrent;
 using Clunker.Voxels;

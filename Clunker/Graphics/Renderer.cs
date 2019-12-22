@@ -53,8 +53,6 @@ namespace Clunker.Graphics
         private List<IRenderable> _backgroundRenderables;
         private List<IRenderable> _sceneRenderables;
 
-        public bool RenderWireframes { get; set; }
-
         public Renderer()
         {
             _backgroundRenderables = new List<IRenderable>();
@@ -166,7 +164,7 @@ namespace Clunker.Graphics
             if (renderWireframes == Graphics.RenderWireframes.WIRE_FRAMES || renderWireframes == Graphics.RenderWireframes.BOTH)
             {
                 var context = new RenderingContext() { Renderer = this, RenderWireframes = true };
-                commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.Black);
+                commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.White);
                 RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
                 RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
             }

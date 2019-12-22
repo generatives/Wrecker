@@ -37,6 +37,11 @@ namespace Clunker.Graphics
         {
             if (_meshGeometry != null)
             {
+                //var copy = new RenderingContext()
+                //{
+                //    Renderer = context.Renderer,
+                //    RenderWireframes = true
+                //};
                 MaterialInstance.Bind(device, commandList, context);
                 commandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, GameObject.Transform.WorldMatrix);
                 _meshGeometry.Render(device, commandList);

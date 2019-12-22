@@ -45,7 +45,7 @@ namespace Wrecker
                 UpdateFreeMovement(time);
             }
 
-            DrawCharacterWindow();
+            DrawCharacterWindow(time);
         }
 
         public void UpdateCharacterMovement(float time)
@@ -137,12 +137,13 @@ namespace Wrecker
             GameObject.Transform.RotateBy(-GameInputTracker.MouseDelta.X * LookSpeed, -GameInputTracker.MouseDelta.Y * LookSpeed, 0);
         }
 
-        private void DrawCharacterWindow()
+        private void DrawCharacterWindow(float time)
         {
             ImGui.Begin("Character");
             ImGui.Text($"Position: {GameObject.Transform.WorldPosition}");
             ImGui.Text($"Orientation: {GameObject.Transform.WorldOrientation}");
             ImGui.Text($"Has Character: {_character.HasCharacter}");
+            ImGui.Text($"FPS: {MathF.Round(1f / time, 2)}");
             ImGui.End();
         }
     }

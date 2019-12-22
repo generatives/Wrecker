@@ -1,4 +1,4 @@
-﻿using Clunker.Diagnostics;
+﻿using Clunker.Utilities.Diagnostics;
 using Clunker.Graphics;
 using Clunker.Math;
 using Clunker.Physics.Voxels;
@@ -56,6 +56,7 @@ namespace Clunker.World
             gameObject.AddComponent(new VoxelShape());
             gameObject.AddComponent(new StaticVoxelBody());
             gameObject.AddComponent(new VoxelMeshRenderable(_types, _materialInstance));
+            //gameObject.AddComponent(new VoxelGridRenderable(_types, _materialInstance));
 
             return chunk;
         }

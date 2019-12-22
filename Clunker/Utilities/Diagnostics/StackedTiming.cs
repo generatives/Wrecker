@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace Clunker.Diagnostics
+namespace Clunker.Utilities.Diagnostics
 {
     public class StackedTiming
     {

@@ -13,7 +13,7 @@ using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 using System.Linq;
-using Clunker.Diagnostics;
+using Clunker.Utilities.Diagnostics;
 using Clunker.Runtime;
 using ImGuiNET;
 using Hyperion;
@@ -98,7 +98,7 @@ namespace Clunker
         {
             return Task.Factory.StartNew(() =>
             {
-                AddRenderer(new Renderer() { RenderWireframes = false });
+                AddRenderer(new Renderer());
 
                 _window = VeldridStartup.CreateWindow(ref wci);
                 //Window.CursorVisible = false;
@@ -122,7 +122,7 @@ namespace Clunker
 
                     if (InputTracker.WasKeyDowned(Key.Escape)) break;
                     if (InputTracker.WasKeyDowned(Key.Tilde)) InputTracker.LockMouse = !InputTracker.LockMouse;
-                    if (InputTracker.WasKeyDowned(Key.T)) { StackedTiming.Enabled = !StackedTiming.Enabled; Timing.Enabled = !Timing.Enabled; }
+                    //if (InputTracker.WasKeyDowned(Key.T)) { StackedTiming.Enabled = !StackedTiming.Enabled; Timing.Enabled = !Timing.Enabled; }
 
                     if (_windowResized)
                     {

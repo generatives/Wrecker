@@ -14,6 +14,7 @@ using Clunker.SceneGraph;
 using Clunker.SceneGraph.ComponentInterfaces;
 using Clunker.SceneGraph.Core;
 using Clunker.Tooling;
+using Clunker.UtilityComponents;
 using Clunker.Voxels;
 using Clunker.World;
 using Hyperion;
@@ -109,13 +110,16 @@ namespace Wrecker
             camera.AddComponent(new CharacterInput());
             camera.AddComponent(new ComponentSwitcher(tools));
             //camera.AddComponent(new EditorMenu());
-            camera.AddComponent(new Inspector());
+            //camera.AddComponent(new Inspector());
+            //camera.AddComponent(new Clunker.Editor.Console.Console());
             camera.AddComponent(new Skybox(px, nx, py, ny, pz, nz));
             scene.AddGameObject(camera);
 
             var ship = CreateShip(types, voxelMaterialInstance);
 
             scene.AddGameObject(ship);
+
+            //camera.AddComponent(new ObjectFollower() { ToFollow = ship, Distance = new Vector3(0.5f, 1, 6) });
 
             var chunkSize = 32;
 
@@ -129,7 +133,7 @@ namespace Wrecker
                 worldSpace,
                 new ChunkStorage(),
                 new ChunkGenerator(types, voxelMaterialInstance, chunkSize, 1),
-                2, chunkSize);
+                8, chunkSize);
 
             scene.AddSystem(worldSystem);
             scene.AddSystem(new PhysicsSystem());
@@ -141,17 +145,27 @@ namespace Wrecker
 
         private static GameObject CreateShip(VoxelTypes types, MaterialInstance materialInstance)
         {
-            var gridLength = 4;
+            var gridLength = 8;
+            var padding = 2;
             var voxelSize = 1;
             var voxelSpaceData = new VoxelGridData(gridLength, gridLength, gridLength, voxelSize);
-            voxelSpaceData[0, 0, 0] = new Voxel() { Exists = true };
+            for(var x = padding; x < gridLength - padding; x++ )
+            {
+                for (var y = padding; y < gridLength - padding; y++)
+                {
+                    for (var z = padding; z < gridLength - padding; z++)
+                    {
+                        voxelSpaceData[x, y, z] = new Voxel() { Exists = true };
+                    }
+                }
+            }
 
             var voxelSpace = new VoxelSpace(new Vector3i(gridLength, gridLength, gridLength), voxelSize);
             var spaceShip = new GameObject("Single Block");
             spaceShip.AddComponent(voxelSpace);
             spaceShip.AddComponent(new DynamicVoxelSpaceBody());
             //spaceShip.AddComponent(new Construct());
-            spaceShip.AddComponent(new ConstructFlightControl());
+            //spaceShip.AddComponent(new ConstructFlightControl());
             spaceShip.AddComponent(new ConstructVoxelSpaceExpander(types, materialInstance));
 
             var voxelGridObj = new GameObject($"{spaceShip.Name} Voxel Grid");

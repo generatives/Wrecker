@@ -128,7 +128,7 @@ namespace Clunker.Physics.Voxels
                             var box = new Box(size, size, size);
                             var position = grid.GameObject.Transform.Position + new Vector3(voxelIndex.X * size + size / 2, voxelIndex.Y * size + size / 2, voxelIndex.Z * size + size / 2);
                             var pose = new RigidPose(position);
-                            compoundBuilder.Add(box, pose, 1);
+                            compoundBuilder.Add(box, pose, 10);
                             _spaceIndicesByChildIndex.Add(space.GetSpaceIndexFromVoxelIndex(gridsIndex, voxelIndex));
                         }
                     }
