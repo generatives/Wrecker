@@ -5,11 +5,16 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using Veldrid;
+using Veldrid.Utilities;
 
 namespace Clunker.Graphics
 {
     public class QuadRenderable : MeshRenderable
     {
+        public override BoundingBox BoundingBox => new BoundingBox(
+            GameObject.Transform.WorldPosition,
+            GameObject.Transform.GetWorld(new Vector3(1, 1, 0)));
+
         public QuadRenderable(Rectangle source, bool transparent, MaterialInstance materialInstance) : base(materialInstance)
         {
             Transparent = transparent;

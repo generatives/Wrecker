@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Numerics;
 
 namespace Clunker.World
 {
@@ -21,11 +22,14 @@ namespace Clunker.World
         private int _voxelSize;
         private FastNoise _noise;
 
+        private byte[,,] _voxelBuffer;
+
         public ChunkGenerator(VoxelTypes types, MaterialInstance materialInstance, int chunkSize, int voxelSize)
         {
             _types = types;
             _materialInstance = materialInstance;
             _chunkSize = chunkSize;
+            _voxelBuffer = new byte[_chunkSize, _chunkSize, _chunkSize];
             _voxelSize = voxelSize;
             _noise = new FastNoise(DateTime.Now.Second);
             _noise.SetFrequency(0.08f);
@@ -44,6 +48,11 @@ namespace Clunker.World
                 for (int y = 0; y < _chunkSize; y++)
                     for (int z = 0; z < _chunkSize; z++)
                     {
+                        //var planetPosition = new Vector3(0, 0, -1000);
+                        //var planetSize = 750;
+                        //var voxelPosition = new Vector3(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z);
+                        //voxelSpaceData[x, y, z] = new Voxel() { Exists = Vector3.Distance(planetPosition, voxelPosition) < planetSize };
+
                         voxelSpaceData[x, y, z] = new Voxel() { Exists = voxels[x, y, z] != 0 };
                         //voxelSpaceData[x, y, z] = new Voxel() { Exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f };
                     }
@@ -63,7 +72,6 @@ namespace Clunker.World
 
         public byte[,,] GenerateSpheres(Random random)
         {
-            var voxels = new byte[_chunkSize, _chunkSize, _chunkSize];
             var numAstroids = random.Next(3, 10);
             var locations = new (Vector3i, int)[numAstroids];
             for (byte a = 0; a < numAstroids; a++)
@@ -94,13 +102,10 @@ namespace Clunker.World
                                 strength += (float)(radius * radius) / rSq;
                             }
                         }
-                        if(strength > 0.5f)
-                        {
-                            voxels[x, y, z] = 1;
-                        }
+                        _voxelBuffer[x, y, z] = strength > 0.5f ? (byte)1 : (byte)0;
                     }
 
-            return voxels;
+            return _voxelBuffer;
         }
 
         public void SplatterHoles(byte[,,] voxels, Random random)

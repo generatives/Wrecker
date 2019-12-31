@@ -27,6 +27,7 @@
     <PackageReference Include="Veldrid.ImGui" Version="5.72.0" />
     <PackageReference Include="Veldrid.SPIRV" Version="1.0.12" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="4.7.0" />
+    <PackageReference Include="Veldrid.Utilities" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

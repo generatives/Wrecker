@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Text;
 using Veldrid;
 using Veldrid.SPIRV;
+using Veldrid.Utilities;
 
 namespace Clunker.Graphics
 {
@@ -99,7 +100,7 @@ namespace Clunker.Graphics
                 1.0f,
                 (float)width / height,
                 0.05f,
-                512f);
+                1024f);
             if(_device.IsClipSpaceYInverted)
             {
                 _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);
@@ -142,7 +143,8 @@ namespace Clunker.Graphics
                 commandList.UpdateBuffer(ProjectionBuffer, 0, _projectionMatrix);
             }
 
-            commandList.UpdateBuffer(ViewBuffer, 0, camera.GetViewMatrix());
+            var viewMatrix = camera.GetViewMatrix();
+            commandList.UpdateBuffer(ViewBuffer, 0, viewMatrix);
 
             commandList.UpdateBuffer(SceneLightingBuffer, 0, new SceneLighting()
             {
@@ -152,29 +154,31 @@ namespace Clunker.Graphics
                 DiffuseLightDirection = Vector3.Normalize(new Vector3(2, 5, -1))
             });
 
+            var cameraLocation = camera.GameObject.Transform.WorldPosition;
+            var frustrum = new BoundingFrustum(viewMatrix * _projectionMatrix);
 
-            if(renderWireframes == Graphics.RenderWireframes.SOLID || renderWireframes == Graphics.RenderWireframes.BOTH)
+            if (renderWireframes == RenderWireframes.SOLID || renderWireframes == RenderWireframes.BOTH)
             {
                 var context = new RenderingContext() { Renderer = this, RenderWireframes = false };
                 commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.White);
-                RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
-                RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
+                RenderSet(_backgroundRenderables, _device, _commandList, context, cameraLocation, frustrum);
+                RenderSet(_sceneRenderables, _device, _commandList, context, cameraLocation, frustrum);
             }
 
-            if (renderWireframes == Graphics.RenderWireframes.WIRE_FRAMES || renderWireframes == Graphics.RenderWireframes.BOTH)
+            if (renderWireframes == RenderWireframes.WIRE_FRAMES || renderWireframes == RenderWireframes.BOTH)
             {
                 var context = new RenderingContext() { Renderer = this, RenderWireframes = true };
                 commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.Black);
-                RenderSet(_backgroundRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
-                RenderSet(_sceneRenderables, _device, _commandList, context, camera.GameObject.Transform.WorldPosition);
+                RenderSet(_backgroundRenderables, _device, _commandList, context, cameraLocation, frustrum);
+                RenderSet(_sceneRenderables, _device, _commandList, context, cameraLocation, frustrum);
             }
         }
-        private void RenderSet(List<IRenderable> renderables, GraphicsDevice device, CommandList commandList, RenderingContext context, Vector3 location)
+        private void RenderSet(List<IRenderable> renderables, GraphicsDevice device, CommandList commandList, RenderingContext context, Vector3 location, BoundingFrustum frustum)
         {
             var transparent = new List<IRenderable>();
             foreach (var renderable in renderables)
             {
-                if(renderable.IsActive)
+                if(renderable.IsActive && renderable.IsVisible(frustum))
                 {
                     if (renderable.Transparent)
                     {

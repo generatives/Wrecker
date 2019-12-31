@@ -38,7 +38,7 @@ namespace Clunker.Runtime
     {
         public bool ConsumeActions(int numActions = -1)
         {
-            return ConsumeSomeActions();
+            return ConsumeSomeActions(numActions);
         }
     }
 

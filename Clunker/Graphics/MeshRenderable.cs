@@ -6,10 +6,11 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using Veldrid;
+using Veldrid.Utilities;
 
 namespace Clunker.Graphics
 {
-    public class MeshRenderable : Component, IRenderable
+    public abstract class MeshRenderable : Component, IRenderable
     {
         protected MaterialInstance MaterialInstance { get; private set; }
 
@@ -22,6 +23,8 @@ namespace Clunker.Graphics
 
         public Vector3 Position => GameObject.Transform.WorldPosition;
 
+        public abstract BoundingBox BoundingBox { get; }
+
         public MeshRenderable(MaterialInstance materialInstance)
         {
             MaterialInstance = materialInstance;
@@ -31,6 +34,12 @@ namespace Clunker.Graphics
         public virtual void Initialize(GraphicsDevice device, CommandList commandList, RenderableInitialize initialize)
         {
 
+        }
+
+        public bool IsVisible(BoundingFrustum frustrum)
+        {
+            var containment = frustrum.Contains(BoundingBox);
+            return containment != ContainmentType.Disjoint;
         }
 
         public void Render(GraphicsDevice device, CommandList commandList, RenderingContext context)

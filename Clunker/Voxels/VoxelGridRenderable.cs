@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Veldrid;
+using Veldrid.Utilities;
 
 namespace Clunker.Voxels
 {
@@ -50,6 +51,11 @@ namespace Clunker.Voxels
             grid = GameObject.GetComponent<VoxelGrid>();
             grid.VoxelsChanged += GenerateMesh;
             GenerateMesh(grid);
+        }
+
+        public bool IsVisible(BoundingFrustum frustrum)
+        {
+            return true;
         }
 
         public void Render(GraphicsDevice device, CommandList commandList, RenderingContext context)

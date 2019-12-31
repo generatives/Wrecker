@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Veldrid;
+using Veldrid.Utilities;
 
 namespace Clunker.Voxels
 {
@@ -32,6 +33,10 @@ namespace Clunker.Voxels
         {
             _types = types;
         }
+
+        public override BoundingBox BoundingBox => new BoundingBox(
+            GameObject.Transform.WorldPosition,
+            GameObject.Transform.GetWorld(new Vector3(grid.Data.XLength, grid.Data.YLength, grid.Data.ZLength) * grid.Data.VoxelSize));
 
         public override void Initialize(GraphicsDevice device, CommandList commandList, RenderableInitialize initialize)
         {

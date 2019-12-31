@@ -133,7 +133,7 @@ namespace Wrecker
                 worldSpace,
                 new ChunkStorage(),
                 new ChunkGenerator(types, voxelMaterialInstance, chunkSize, 1),
-                8, chunkSize);
+                4, chunkSize);
 
             scene.AddSystem(worldSystem);
             scene.AddSystem(new PhysicsSystem());

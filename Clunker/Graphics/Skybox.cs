@@ -10,6 +10,7 @@ using System.Text;
 using Veldrid;
 using Veldrid.ImageSharp;
 using Veldrid.SPIRV;
+using Veldrid.Utilities;
 
 namespace Clunker.Graphics
 {
@@ -108,6 +109,11 @@ namespace Clunker.Graphics
             //commandList.SetViewport(0, new Viewport(0, 0, _windowWidth, _windowHeight, depth, depth));
             commandList.DrawIndexed((uint)s_indices.Length, 1, 0, 0, 0);
             //commandList.SetViewport(0, new Viewport(0, 0, _windowWidth, _windowHeight, 0, 1));
+        }
+
+        public bool IsVisible(BoundingFrustum frustrum)
+        {
+            return true;
         }
 
         private static readonly VertexPosition[] s_vertices = new VertexPosition[]
