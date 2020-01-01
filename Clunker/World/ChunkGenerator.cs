@@ -40,20 +40,20 @@ namespace Clunker.World
             var random = new Random((coordinates.X << 20) ^ (coordinates.Y << 10) ^ (coordinates.Z));
             var voxelSpaceData = new VoxelGridData(_chunkSize, _chunkSize, _chunkSize, _voxelSize);
 
-            var voxels = GenerateSpheres(random);
+            //var voxels = GenerateSpheres(random);
             //JoinVoxels(voxels);
-            SplatterHoles(voxels, random);
+            //SplatterHoles(voxels, random);
 
             for (int x = 0; x < _chunkSize; x++)
                 for (int y = 0; y < _chunkSize; y++)
                     for (int z = 0; z < _chunkSize; z++)
                     {
-                        //var planetPosition = new Vector3(0, 0, -1000);
-                        //var planetSize = 750;
-                        //var voxelPosition = new Vector3(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z);
-                        //voxelSpaceData[x, y, z] = new Voxel() { Exists = Vector3.Distance(planetPosition, voxelPosition) < planetSize };
+                        var planetPosition = new Vector3(0, 0, -1000);
+                        var planetSize = 750;
+                        var voxelPosition = new Vector3(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z);
+                        voxelSpaceData[x, y, z] = new Voxel() { Exists = Vector3.Distance(planetPosition, voxelPosition) < planetSize };
 
-                        voxelSpaceData[x, y, z] = new Voxel() { Exists = voxels[x, y, z] != 0 };
+                        //voxelSpaceData[x, y, z] = new Voxel() { Exists = voxels[x, y, z] != 0 };
                         //voxelSpaceData[x, y, z] = new Voxel() { Exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f };
                     }
 
@@ -62,8 +62,8 @@ namespace Clunker.World
             var gameObject = new GameObject($"Chunk {coordinates}");
             gameObject.AddComponent(voxelSpace);
             gameObject.AddComponent(chunk);
-            gameObject.AddComponent(new VoxelShape());
-            gameObject.AddComponent(new StaticVoxelBody());
+            //gameObject.AddComponent(new VoxelShape());
+            //gameObject.AddComponent(new StaticVoxelBody());
             gameObject.AddComponent(new VoxelMeshRenderable(_types, _materialInstance));
             //gameObject.AddComponent(new VoxelGridRenderable(_types, _materialInstance));
 

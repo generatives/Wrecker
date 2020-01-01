@@ -259,20 +259,23 @@ namespace Clunker.SceneGraph
                 if(_updateables[i].IsActive) _updateables[i].Update(time);
             }
 
-            List<IComponentEventListener> newList = new List<IComponentEventListener>();
-            for (int i = 0; i < _listenersToStop.Count; i++)
+            if(_listenersToStop.Any())
             {
-                var listener = _listenersToStop[i];
-                if(!(listener as Component).HasJobs)
+                List<IComponentEventListener> newList = new List<IComponentEventListener>();
+                for (int i = 0; i < _listenersToStop.Count; i++)
                 {
-                    listener.ComponentStopped();
+                    var listener = _listenersToStop[i];
+                    if (!(listener as Component).HasJobs)
+                    {
+                        listener.ComponentStopped();
+                    }
+                    else
+                    {
+                        newList.Add(listener);
+                    }
                 }
-                else
-                {
-                    newList.Add(listener);
-                }
+                _listenersToStop = newList;
             }
-            _listenersToStop = newList;
 
             foreach (var gameObject in _children)
             {

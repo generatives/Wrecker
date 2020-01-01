@@ -124,8 +124,8 @@ namespace Clunker.World
 
         private void UnloadChunk(Chunk chunk)
         {
+            _worldSpace.Remove(chunk.Coordinates);
             _chunkMap.Remove(chunk.Coordinates);
-            CurrentScene.RemoveGameObject(chunk.GameObject);
             _storage.StoreChunk(chunk);
         }
 

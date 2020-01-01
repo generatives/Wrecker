@@ -10,9 +10,16 @@ namespace Clunker.Voxels
 {
     public struct Voxel
     {
-        public bool Exists;
-        public ushort BlockType;
-        public VoxelSide Orientation;
+        // 1 Bit Exists
+        // 12 Bits VoxelType
+        // 3 Bits Orientation
+        // 16 Bits Unused
+
+        public uint Data;
+        public bool Exists { get => (1 & Data) == 1; set => Data = Data | (uint)(value ? 1 : 0); }
+        public ushort BlockType { get => (ushort)((Data >> 1) & 0xFFF); set => Data = Data | (uint)(value << 1); }
+        public VoxelSide Orientation { get => (VoxelSide)((Data >> 13) & 0x7); set => Data = Data | ((uint)value << 13); }
+
 
         public static bool operator ==(Voxel v, Voxel v1)
         {

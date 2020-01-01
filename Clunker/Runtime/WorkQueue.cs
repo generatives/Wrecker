@@ -29,6 +29,7 @@ namespace Clunker.Runtime
             while ((numActions < 0 || numConsumed < numActions) && Queue.TryDequeue(out Action action))
             {
                 action();
+                numConsumed++;
             }
             return Queue.Count != 0;
         }

@@ -49,6 +49,7 @@ namespace Clunker.Graphics
             var factory = device.ResourceFactory;
 
             var deviceTexture = _skyboxTexture.CreateDeviceTexture(device, factory);
+            _skyboxTexture = null;
             TextureView textureView = factory.CreateTextureView(new TextureViewDescription(deviceTexture));
 
             _vb = factory.CreateBuffer(new BufferDescription(VertexPosition.SizeInBytes * (uint)s_vertices.Length, BufferUsage.VertexBuffer));

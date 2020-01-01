@@ -73,8 +73,6 @@ namespace Wrecker
                     new Vector2(650, 1300))
             });
 
-            var images = new Dictionary<string, Resource<Image<Rgba32>>>();
-
             var resourceLoader = new ResourceLoader();
             var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
 
@@ -133,7 +131,7 @@ namespace Wrecker
                 worldSpace,
                 new ChunkStorage(),
                 new ChunkGenerator(types, voxelMaterialInstance, chunkSize, 1),
-                4, chunkSize);
+                10, chunkSize);
 
             scene.AddSystem(worldSystem);
             scene.AddSystem(new PhysicsSystem());

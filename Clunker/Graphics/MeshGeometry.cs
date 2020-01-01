@@ -55,6 +55,7 @@ namespace Clunker.Graphics
                 _vertexBuffer = factory.CreateBuffer(new BufferDescription(vertexBufferSize, BufferUsage.VertexBuffer));
             }
             graphicsDevice.UpdateBuffer(_vertexBuffer, 0, _vertices);
+            _vertices = null;
 
             var indexBufferSize = sizeof(ushort) * (uint)_indices.Length;
             if (_indexBuffer == null || _indexBuffer.SizeInBytes < indexBufferSize)
@@ -62,7 +63,9 @@ namespace Clunker.Graphics
                 if (_indexBuffer != null) graphicsDevice.DisposeWhenIdle(_indexBuffer);
                 _indexBuffer = factory.CreateBuffer(new BufferDescription(indexBufferSize, BufferUsage.IndexBuffer));
             }
+
             graphicsDevice.UpdateBuffer(_indexBuffer, 0, _indices);
+            _indices = null;
             _mustUpdateResources = false;
         }
 

@@ -111,7 +111,7 @@ namespace Clunker
 
                 Started?.Invoke();
                 var frameWatch = Stopwatch.StartNew();
-                var targetFrameTime = 0.13f;
+                var targetFrameTime = 0.033f;
                 while (_window.Exists)
                 {
                     var inputSnapshot = _window.PumpEvents();
@@ -177,13 +177,14 @@ namespace Clunker
                     _commandList.End();
                     _graphicsDevice.SubmitCommands(_commandList);
                     _graphicsDevice.SwapBuffers(_graphicsDevice.MainSwapchain);
-                    _graphicsDevice.WaitForIdle();
 
                     bool jobsRemain = true;
                     while (jobsRemain && frameWatch.Elapsed.TotalSeconds < targetFrameTime)
                     {
                         jobsRemain = BestEffortFrameQueue.ConsumeActions(1);
                     }
+
+                    _graphicsDevice.WaitForIdle();
                 }
             }, TaskCreationOptions.LongRunning);
         }

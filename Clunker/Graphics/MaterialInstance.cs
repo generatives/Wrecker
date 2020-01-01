@@ -16,8 +16,8 @@ namespace Clunker.Graphics
 
         private Resource<Image<Rgba32>> _image;
 
-        public int ImageWidth => _image.Data.Width;
-        public int ImageHeight => _image.Data.Height;
+        public int ImageWidth { get; private set; }
+        public int ImageHeight { get; private set; }
 
         [Ignore]
         private TextureView _textureView;
@@ -33,6 +33,8 @@ namespace Clunker.Graphics
         {
             Material = material;
             _image = image;
+            ImageWidth = _image.Data.Width;
+            ImageHeight = _image.Data.Height;
             _objectProperties = properties;
         }
 
@@ -43,6 +45,8 @@ namespace Clunker.Graphics
             var deviceTexture = texture.CreateDeviceTexture(device, factory);
             _textureView = factory.CreateTextureView(new TextureViewDescription(deviceTexture));
             _worldTextureSet = context.Renderer.MakeTextureViewSet(_textureView);
+
+            _image = null;
         }
 
         public void Bind(GraphicsDevice device, CommandList cl, RenderingContext context)

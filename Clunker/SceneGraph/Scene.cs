@@ -165,11 +165,16 @@ namespace Clunker.SceneGraph
             }
         }
 
+        /// <summary>
+        /// Removes the GameObject from the scene. Only works if it is a root GameObject
+        /// </summary>
+        /// <param name="gameObject"></param>
         public void RemoveGameObject(GameObject gameObject)
         {
             if(gameObject.CurrentScene == this)
             {
                 _gameObjects.Remove(gameObject);
+
                 gameObject.RemovedFromCurrentScene();
                 //if (gameObject.HasJobs)
                 //{
