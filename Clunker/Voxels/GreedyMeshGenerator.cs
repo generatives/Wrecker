@@ -2,6 +2,7 @@
 using Clunker.Math;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Text;
 using Veldrid;
@@ -10,14 +11,18 @@ namespace Clunker.Voxels
 {
     public class GreedyMeshGenerator
     {
+        public static System.Collections.Concurrent.ConcurrentBag<double> Times = new System.Collections.Concurrent.ConcurrentBag<double>();
+
         public static void GenerateMesh(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
+            var stopwatch = Stopwatch.StartNew();
             MeshPosZ(voxels, quadProcessor);
             MeshNegZ(voxels, quadProcessor);
             MeshPosX(voxels, quadProcessor);
             MeshNegX(voxels, quadProcessor);
             MeshPosY(voxels, quadProcessor);
             MeshNegY(voxels, quadProcessor);
+            Times.Add(stopwatch.Elapsed.TotalMilliseconds);
         }
 
         private static void MeshPosZ(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)

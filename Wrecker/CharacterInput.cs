@@ -5,6 +5,7 @@ using Clunker.SceneGraph.ComponentInterfaces;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using Veldrid;
@@ -144,6 +145,8 @@ namespace Wrecker
             ImGui.Text($"Orientation: {GameObject.Transform.WorldOrientation}");
             ImGui.Text($"Has Character: {_character.HasCharacter}");
             ImGui.Text($"FPS: {MathF.Round(1f / time, 2)}");
+            var avgTime = Clunker.Voxels.GreedyMeshGenerator.Times.Any() ? Clunker.Voxels.GreedyMeshGenerator.Times.Average() : 0;
+            ImGui.Text($"Avg Time: {avgTime}");
             ImGui.End();
         }
     }
