@@ -38,10 +38,26 @@ namespace Clunker.Voxels
             var indices = new List<ushort>(data.GridSize * data.GridSize * data.GridSize);
             var imageSize = new Vector2(materialInstance.ImageWidth, materialInstance.ImageHeight);
 
-            GreedyMeshGenerator.GenerateMesh(data, (typeNum, orientation, side, quad, size) =>
+            //GreedyMeshGenerator.GenerateMesh(data, (typeNum, orientation, side, quad, size) =>
+            //{
+            //    var type = _types[typeNum];
+            //    var textureOffset = GetTexCoords(type, orientation, side);
+            //    indices.Add((ushort)(vertices.Count + 0));
+            //    indices.Add((ushort)(vertices.Count + 1));
+            //    indices.Add((ushort)(vertices.Count + 3));
+            //    indices.Add((ushort)(vertices.Count + 1));
+            //    indices.Add((ushort)(vertices.Count + 2));
+            //    indices.Add((ushort)(vertices.Count + 3));
+            //    vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / imageSize, quad.Normal));
+            //    vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
+            //    vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
+            //    vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
+            //});
+
+            SurfaceNetGenerator.GenerateMesh(data, (quad) =>
             {
-                var type = _types[typeNum];
-                var textureOffset = GetTexCoords(type, orientation, side);
+                var type = _types[1];
+                var textureOffset = GetTexCoords(type, VoxelSide.TOP, VoxelSide.TOP);
                 indices.Add((ushort)(vertices.Count + 0));
                 indices.Add((ushort)(vertices.Count + 1));
                 indices.Add((ushort)(vertices.Count + 3));
@@ -57,7 +73,8 @@ namespace Clunker.Voxels
             var mesh = new MeshGeometry()
             {
                 Vertices = vertices.ToArray(),
-                Indices = indices.ToArray()
+                Indices = indices.ToArray(),
+                BoundingSize = new Vector3(data.GridSize * data.VoxelSize)
             };
             var entityRecord = _scene.CommandRecorder.Record(entity);
             entityRecord.Set(mesh);

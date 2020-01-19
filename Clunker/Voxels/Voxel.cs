@@ -10,20 +10,14 @@ namespace Clunker.Voxels
 {
     public struct Voxel
     {
-        // 1 Bit Exists
-        // 12 Bits VoxelType
-        // 3 Bits Orientation
-        // 16 Bits Unused
-
-        public uint Data;
-        public bool Exists { get => (1 & Data) == 1; set => Data = Data | (uint)(value ? 1 : 0); }
-        public ushort BlockType { get => (ushort)((Data >> 1) & 0xFFF); set => Data = Data | (uint)(value << 1); }
-        public VoxelSide Orientation { get => (VoxelSide)((Data >> 13) & 0x7); set => Data = Data | ((uint)value << 13); }
-
+        public bool Exists { get => Density > 0; set => Density = value ? byte.MaxValue : (byte)0; }
+        public byte Density { get; set; }
+        public ushort BlockType { get; set; }
+        public VoxelSide Orientation { get; set; }
 
         public static bool operator ==(Voxel v, Voxel v1)
         {
-            return v.Exists == v1.Exists &&
+            return v.Density == v1.Density &&
                    v.BlockType == v1.BlockType &&
                    v.Orientation == v1.Orientation;
         }
@@ -40,7 +34,7 @@ namespace Clunker.Voxels
 
         public override int GetHashCode()
         {
-            return (Exists, BlockType, Orientation).GetHashCode();
+            return (Density, BlockType, Orientation).GetHashCode();
         }
     }
 

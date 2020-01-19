@@ -33,29 +33,59 @@ namespace Clunker.WorldSpace
             var random = new Random((coordinates.X << 20) ^ (coordinates.Y << 10) ^ (coordinates.Z));
             var voxelSpaceData = new VoxelGridData(_chunkSize, _voxelSize);
 
-            GenerateSpheres(voxelSpaceData, random);
-            //JoinVoxels(voxels);
-            SplatterHoles(voxelSpaceData, random);
+            //GenerateSpheres(voxelSpaceData, random);
+            //SplatterHoles(voxelSpaceData, random);
+            //bool anyExist = true;
+
+            bool anyExist = false;
+
+            var planetPosition = new Vector3(_chunkSize / 2f);
+            var planetSize = _chunkSize * 0.75f / 2f;
+
+            if (coordinates == new Vector3i())
+            {
+                for (int x = 0; x < _chunkSize; x++)
+                    for (int y = 0; y < _chunkSize; y++)
+                        for (int z = 0; z < _chunkSize; z++)
+                        {
+                            var voxelPosition = new Vector3(x, y, z);
+
+                            //var exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f;
+                            //var exists = planetPosition == voxelPosition;
+                            var density = Math.Max(1 - (Vector3.Distance(planetPosition, voxelPosition) / planetSize), 0) * byte.MaxValue;
+                            anyExist = anyExist || density > 0;
+                            if(density != 0)
+                            {
+
+                            }
+                            voxelSpaceData[x, y, z] = new Voxel() { Density = (byte)density };
+                        }
+            }
 
             //for (int x = 0; x < _chunkSize; x++)
             //    for (int y = 0; y < _chunkSize; y++)
             //        for (int z = 0; z < _chunkSize; z++)
             //        {
-            //            var planetPosition = new Vector3(0, 0, -1000);
+            //            var planetPosition = new Vector3(0, 0, -800);
             //            var planetSize = 750;
             //            var voxelPosition = new Vector3(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z);
-            //            voxelSpaceData[x, y, z] = new Voxel() { Exists = Vector3.Distance(planetPosition, voxelPosition) < planetSize };
 
-            //            voxelSpaceData[x, y, z] = new Voxel() { Exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f };
+            //            //var exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f;
+            //            var exists = Vector3.Distance(planetPosition, voxelPosition) < planetSize;
+            //            anyExist = anyExist || exists;
+            //            voxelSpaceData[x, y, z] = new Voxel() { Exists = exists };
             //        }
 
-            entity.Set(_materialInstance);
+            if (anyExist)
+            {
+                entity.Set(_materialInstance);
 
-            entity.Set(voxelSpaceData);
+                entity.Set(voxelSpaceData);
 
-            var transform = new Transform();
-            transform.Position = new Vector3(coordinates.X * _chunkSize * _voxelSize, coordinates.Y * _chunkSize * _voxelSize, coordinates.Z * _chunkSize * _voxelSize);
-            entity.Set(transform);
+                var transform = new Transform();
+                transform.Position = new Vector3(coordinates.X * _chunkSize * _voxelSize, coordinates.Y * _chunkSize * _voxelSize, coordinates.Z * _chunkSize * _voxelSize);
+                entity.Set(transform);
+            }
         }
 
         public void GenerateSpheres(VoxelGridData voxels, Random random)
@@ -90,7 +120,7 @@ namespace Clunker.WorldSpace
                                 strength += (float)(radius * radius) / rSq;
                             }
                         }
-                        voxels[x, y, z] = new Voxel() { Exists = strength > 0.5f };
+                        voxels[x, y, z] = new Voxel() { Density = (byte)Math.Round(Math.Max(strength, 0.5f) / 0.5f * byte.MaxValue) };
                     }
         }
 

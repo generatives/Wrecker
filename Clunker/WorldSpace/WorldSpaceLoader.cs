@@ -95,7 +95,7 @@ namespace Clunker.WorldSpace
                                 _chunkMap[coordinates] = chunk;
 
                                 chunksLoaded++;
-                                if (chunksLoaded == 3) return;
+                                if (chunksLoaded == Environment.ProcessorCount) return;
                             }
                         }
                     }

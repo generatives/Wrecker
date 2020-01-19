@@ -40,7 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClunkerECS\Clunker.csproj" />
+    <ProjectReference Include="..\Clunker\Clunker.csproj" />
   </ItemGroup>
 
 </Project>

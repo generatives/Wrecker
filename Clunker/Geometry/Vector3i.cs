@@ -95,6 +95,11 @@ namespace Clunker.Geometry
             return new Vector3(v.X, v.Y, v.Z);
         }
 
+        public static implicit operator Vector3i((int, int, int) v)
+        {
+            return new Vector3i(v.Item1, v.Item2, v.Item3);
+        }
+
         public override string ToString()
         {
             return $"X: {X}, Y: {Y}, Z:{Z}";

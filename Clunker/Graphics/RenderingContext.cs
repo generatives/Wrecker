@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using Veldrid;
+using Veldrid.Utilities;
 
 namespace Clunker.Graphics
 {
@@ -17,5 +18,6 @@ namespace Clunker.Graphics
         public CommandList CommandList;
         public bool RenderWireframes;
         public Renderer Renderer;
+        public BoundingFrustum Frustrum;
     }
 }

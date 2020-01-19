@@ -56,11 +56,11 @@ namespace Clunker.Voxels
         public bool Exists(Vector3i index) => Exists(index.X, index.Y, index.Z);
         public bool Exists(int x, int y, int z)
         {
-            return WithinBounds(x, y, z) && this[x, y, z].Exists;
+            return ContainsIndex(x, y, z) && this[x, y, z].Exists;
         }
 
-        public bool WithinBounds(Vector3i index) => WithinBounds(index.X, index.Y, index.Z);
-        public bool WithinBounds(int x, int y, int z)
+        public bool ContainsIndex(Vector3i index) => ContainsIndex(index.X, index.Y, index.Z);
+        public bool ContainsIndex(int x, int y, int z)
         {
             return x >= 0 && x < GridSize &&
                 y >= 0 && y < GridSize &&
@@ -70,7 +70,7 @@ namespace Clunker.Voxels
         public bool SetVoxel(int x, int y, int z, Voxel voxel) => SetVoxel(new Vector3i(x, y, z), voxel);
         public bool SetVoxel(Vector3i index, Voxel voxel)
         {
-            if (WithinBounds(index))
+            if (ContainsIndex(index))
             {
                 this[index] = voxel;
                 return true;
