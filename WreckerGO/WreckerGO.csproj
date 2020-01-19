@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <Configurations>Debug;Release;DebugLeakDebug</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\skybox_nx.png" />
+    <None Remove="Assets\skybox_ny.png" />
+    <None Remove="Assets\skybox_nz.png" />
+    <None Remove="Assets\skybox_px.png" />
+    <None Remove="Assets\skybox_py.png" />
+    <None Remove="Assets\skybox_pz.png" />
+    <None Remove="Assets\spritesheet_tiles.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\skybox_nx.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\skybox_ny.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\skybox_nz.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\skybox_px.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\skybox_py.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\skybox_pz.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\spritesheet_tiles.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Clunker\ClunkerGO.csproj" />
+  </ItemGroup>
+
+</Project>

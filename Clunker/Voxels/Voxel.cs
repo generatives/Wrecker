@@ -40,7 +40,7 @@ namespace Clunker.Voxels
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Exists, BlockType, Orientation);
+            return (Exists, BlockType, Orientation).GetHashCode();
         }
     }
 
@@ -57,17 +57,17 @@ namespace Clunker.Voxels
             switch (side)
             {
                 case VoxelSide.TOP:
-                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitX, MathF.PI / 2f);
+                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitX, (float)Math.PI / 2f);
                 case VoxelSide.BOTTOM:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, (float)Math.PI / 2f);
                 case VoxelSide.NORTH:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, (float)Math.PI);
                 case VoxelSide.SOUTH:
                     return Quaternion.Identity;
                 case VoxelSide.EAST:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2f);
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitY, (float)Math.PI / 2f);
                 case VoxelSide.WEST:
-                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitY, MathF.PI / 2f);
+                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitY, (float)Math.PI / 2f);
                 default:
                     return Quaternion.Identity;
             }

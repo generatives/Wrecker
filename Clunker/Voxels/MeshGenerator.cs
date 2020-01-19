@@ -1,4 +1,4 @@
-﻿using Clunker.Math;
+﻿using Clunker.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -17,9 +17,9 @@ namespace Clunker.Voxels
         }
         public static void GenerateGridMesh(VoxelGridData space, Action<Voxel, VoxelSide, Quad> quadProcessor)
         {
-            for (int x = 0; x < space.XLength; x++)
-                for (int y = 0; y < space.YLength; y++)
-                    for (int z = 0; z < space.ZLength; z++)
+            for (int x = 0; x < space.GridSize; x++)
+                for (int y = 0; y < space.GridSize; y++)
+                    for (int z = 0; z < space.GridSize; z++)
                     {
                         var voxel = space[x, y, z];
                         AddBlock(quadProcessor, voxel, x, y, z, VoxelSide.BOTTOM, space.VoxelSize);

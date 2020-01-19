@@ -1,4 +1,4 @@
-﻿using Clunker.Math;
+﻿using Clunker.Geometry;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,17 +17,13 @@ namespace Clunker.Voxels
 
         private Voxel[] _voxels;
         public float VoxelSize { get; private set; }
-        public int XLength { get; private set; }
-        public int YLength { get; private set; }
-        public int ZLength { get; private set; }
+        public int GridSize { get; private set; }
         public bool HasExistingVoxels => this.Any(v => v.Item2.Exists);
 
-        public VoxelGridData(int xLength, int yLength, int zLength, float voxelSize)
+        public VoxelGridData(int gridSize, float voxelSize)
         {
-            _voxels = new Voxel[xLength * yLength * zLength];
-            XLength = xLength;
-            YLength = yLength;
-            ZLength = zLength;
+            _voxels = new Voxel[gridSize * gridSize * gridSize];
+            GridSize = gridSize;
 
             VoxelSize = voxelSize;
         }
@@ -48,11 +44,11 @@ namespace Clunker.Voxels
         {
             get
             {
-                return _voxels[x + YLength * (y + ZLength * z)];
+                return _voxels[x + GridSize * (y + GridSize * z)];
             }
             set
             {
-                _voxels[x + YLength * (y + ZLength * z)] = value;
+                _voxels[x + GridSize * (y + GridSize * z)] = value;
                 Changed?.Invoke();
             }
         }
@@ -66,9 +62,9 @@ namespace Clunker.Voxels
         public bool WithinBounds(Vector3i index) => WithinBounds(index.X, index.Y, index.Z);
         public bool WithinBounds(int x, int y, int z)
         {
-            return x >= 0 && x < XLength &&
-                y >= 0 && y < YLength &&
-                z >= 0 && z < ZLength;
+            return x >= 0 && x < GridSize &&
+                y >= 0 && y < GridSize &&
+                z >= 0 && z < GridSize;
         }
 
         public bool SetVoxel(int x, int y, int z, Voxel voxel) => SetVoxel(new Vector3i(x, y, z), voxel);
@@ -87,9 +83,9 @@ namespace Clunker.Voxels
 
         public void FindExposedSides(Action<Voxel, int, int, int, VoxelSide> sideProcessor)
         {
-            for(int x = 0; x < XLength; x++)
-                for (int y = 0; y < YLength; y++)
-                    for (int z = 0; z < ZLength; z++)
+            for(int x = 0; x < GridSize; x++)
+                for (int y = 0; y < GridSize; y++)
+                    for (int z = 0; z < GridSize; z++)
                     {
                         Voxel voxel = this[x, y, z];
                         if (voxel.Exists)
@@ -129,9 +125,9 @@ namespace Clunker.Voxels
 
         public void FindExposedBlocks(Action<Voxel, int, int, int> blockProcessor)
         {
-            for (int x = 0; x < XLength; x++)
-                for (int y = 0; y < YLength; y++)
-                    for (int z = 0; z < ZLength; z++)
+            for (int x = 0; x < GridSize; x++)
+                for (int y = 0; y < GridSize; y++)
+                    for (int z = 0; z < GridSize; z++)
                     {
                         Voxel voxel = this[x, y, z];
                         if (voxel.Exists)
@@ -151,9 +147,9 @@ namespace Clunker.Voxels
 
         public IEnumerator<(Vector3, Voxel)> GetEnumerator()
         {
-            for (int x = 0; x < XLength; x++)
-                for (int y = 0; y < YLength; y++)
-                    for (int z = 0; z < ZLength; z++)
+            for (int x = 0; x < GridSize; x++)
+                for (int y = 0; y < GridSize; y++)
+                    for (int z = 0; z < GridSize; z++)
                     {
                         yield return (new Vector3(x, y, z), this[x, y, z]);
                     }

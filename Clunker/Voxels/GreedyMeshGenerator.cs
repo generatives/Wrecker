@@ -1,5 +1,5 @@
 ﻿using Clunker.Graphics;
-using Clunker.Math;
+using Clunker.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,30 +16,28 @@ namespace Clunker.Voxels
         public static void GenerateMesh(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
             var stopwatch = Stopwatch.StartNew();
-            MeshPosZ(voxels, quadProcessor);
-            MeshNegZ(voxels, quadProcessor);
-            MeshPosX(voxels, quadProcessor);
-            MeshNegX(voxels, quadProcessor);
-            MeshPosY(voxels, quadProcessor);
-            MeshNegY(voxels, quadProcessor);
+            var plane = new VoxelPoint[voxels.GridSize, voxels.GridSize];
+            MeshPosZ(voxels, plane, quadProcessor);
+            MeshNegZ(voxels, plane, quadProcessor);
+            MeshPosX(voxels, plane, quadProcessor);
+            MeshNegX(voxels, plane, quadProcessor);
+            MeshPosY(voxels, plane, quadProcessor);
+            MeshNegY(voxels, plane, quadProcessor);
             Times.Add(stopwatch.Elapsed.TotalMilliseconds);
         }
 
-        private static void MeshPosZ(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshPosZ(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
-            var xLength = voxels.XLength;
-            var yLength = voxels.YLength;
-            var zLength = voxels.ZLength;
-            var plane = new VoxelPoint[xLength, yLength];
+            var gridSize = voxels.GridSize;
 
-            for (int z = 0; z < zLength; z++)
+            for (int z = 0; z < gridSize; z++)
             {
                 bool someFacesExist = false;
-                for (int x = 0; x < xLength; x++)
+                for (int x = 0; x < gridSize; x++)
                 {
-                    for (int y = 0; y < yLength; y++)
+                    for (int y = 0; y < gridSize; y++)
                     {
-                        var open = z + 1 == zLength || !voxels[x, y, z + 1].Exists;
+                        var open = z + 1 == gridSize || !voxels[x, y, z + 1].Exists;
                         var voxel = voxels[x, y, z];
                         someFacesExist = (open && voxel.Exists) || someFacesExist;
                         plane[x, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
@@ -62,19 +60,16 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshNegZ(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshNegZ(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
-            var xLength = voxels.XLength;
-            var yLength = voxels.YLength;
-            var zLength = voxels.ZLength;
-            var plane = new VoxelPoint[xLength, yLength];
+            var gridSize = voxels.GridSize;
 
-            for (int z = 0; z < zLength; z++)
+            for (int z = 0; z < gridSize; z++)
             {
                 bool someFacesExist = false;
-                for (int x = 0; x < xLength; x++)
+                for (int x = 0; x < gridSize; x++)
                 {
-                    for (int y = 0; y < yLength; y++)
+                    for (int y = 0; y < gridSize; y++)
                     {
                         var open = z == 0 || !voxels[x, y, z - 1].Exists;
                         var voxel = voxels[x, y, z];
@@ -99,21 +94,18 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshPosX(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshPosX(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
-            var xLength = voxels.XLength;
-            var yLength = voxels.YLength;
-            var zLength = voxels.ZLength;
-            var plane = new VoxelPoint[zLength, yLength];
+            var gridSize = voxels.GridSize;
 
-            for (int x = 0; x < xLength; x++)
+            for (int x = 0; x < gridSize; x++)
             {
                 bool someFacesExist = false;
-                for (int z = 0; z < zLength; z++)
+                for (int z = 0; z < gridSize; z++)
                 {
-                    for (int y = 0; y < yLength; y++)
+                    for (int y = 0; y < gridSize; y++)
                     {
-                        var open = x + 1 == xLength || !voxels[x + 1, y, z].Exists;
+                        var open = x + 1 == gridSize || !voxels[x + 1, y, z].Exists;
                         var voxel = voxels[x, y, z];
                         someFacesExist = (open && voxel.Exists) || someFacesExist;
                         plane[z, y] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
@@ -136,19 +128,16 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshNegX(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshNegX(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
-            var xLength = voxels.XLength;
-            var yLength = voxels.YLength;
-            var zLength = voxels.ZLength;
-            var plane = new VoxelPoint[zLength, yLength];
+            var gridSize = voxels.GridSize;
 
-            for (int x = 0; x < xLength; x++)
+            for (int x = 0; x < gridSize; x++)
             {
                 bool someFacesExist = false;
-                for (int z = 0; z < zLength; z++)
+                for (int z = 0; z < gridSize; z++)
                 {
-                    for (int y = 0; y < yLength; y++)
+                    for (int y = 0; y < gridSize; y++)
                     {
                         var open = x == 0 || !voxels[x - 1, y, z].Exists;
                         var voxel = voxels[x, y, z];
@@ -173,21 +162,18 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshPosY(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshPosY(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
-            var xLength = voxels.XLength;
-            var yLength = voxels.YLength;
-            var zLength = voxels.ZLength;
-            var plane = new VoxelPoint[xLength, zLength];
+            var gridSize = voxels.GridSize;
 
-            for (int y = 0; y < yLength; y++)
+            for (int y = 0; y < gridSize; y++)
             {
                 bool someFacesExist = false;
-                for (int x = 0; x < xLength; x++)
+                for (int x = 0; x < gridSize; x++)
                 {
-                    for (int z = 0; z < zLength; z++)
+                    for (int z = 0; z < gridSize; z++)
                     {
-                        var open = y + 1 == yLength || !voxels[x, y + 1, z].Exists;
+                        var open = y + 1 == gridSize || !voxels[x, y + 1, z].Exists;
                         var voxel = voxels[x, y, z];
                         someFacesExist = (open && voxel.Exists) || someFacesExist;
                         plane[x, z] = new VoxelPoint() { Voxel = voxels[x, y, z], Processed = !open };
@@ -210,19 +196,16 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshNegY(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshNegY(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
-            var xLength = voxels.XLength;
-            var yLength = voxels.YLength;
-            var zLength = voxels.ZLength;
-            var plane = new VoxelPoint[xLength, zLength];
+            var gridSize = voxels.GridSize;
 
-            for (int y = 0; y < yLength; y++)
+            for (int y = 0; y < gridSize; y++)
             {
                 bool someFacesExist = false;
-                for (int x = 0; x < xLength; x++)
+                for (int x = 0; x < gridSize; x++)
                 {
-                    for (int z = 0; z < zLength; z++)
+                    for (int z = 0; z < gridSize; z++)
                     {
                         var open = y == 0 || !voxels[x, y - 1, z].Exists;
                         var voxel = voxels[x, y, z];
