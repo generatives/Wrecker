@@ -7,6 +7,7 @@ using DefaultEcs;
 using DefaultEcs.System;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Text;
 
@@ -15,34 +16,35 @@ namespace Clunker.Physics.Voxels
     public class VoxelShapeGenerator : AEntitySystem<double>
     {
         private PhysicsSystem _physicsSystem;
+        private List<Vector3i> _exposedVoxelsBuffer;
 
         public VoxelShapeGenerator(PhysicsSystem physicsSystem, World world) : base(world.GetEntities().With<Transform>().With<VoxelBody>().WhenAdded<VoxelGrid>().WhenChanged<VoxelGrid>().AsSet())
         {
             _physicsSystem = physicsSystem;
+            _exposedVoxelsBuffer = new List<Vector3i>();
         }
 
         protected override void Update(double state, in Entity entity)
         {
             var voxels = entity.Get<VoxelGrid>();
-            var body = entity.Get<VoxelBody>();
+            ref var body = ref entity.Get<VoxelBody>();
             var transform = entity.Get<Transform>();
 
             var size = voxels.VoxelSize;
-            var exposedVoxels = new List<Vector3i>(voxels.GridSize * voxels.GridSize * voxels.GridSize / 6);
             voxels.FindExposedBlocks((v, x, y, z) =>
             {
-                exposedVoxels.Add(new Vector3i(x, y, z));
+                _exposedVoxelsBuffer.Add(new Vector3i(x, y, z));
             });
 
-            if(exposedVoxels.Count > 0)
+            if(_exposedVoxelsBuffer.Count > 0)
             {
-                var voxelIndicesByChildIndex = exposedVoxels.ToArray();
+                var voxelIndicesByChildIndex = _exposedVoxelsBuffer.ToArray();
 
                 using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
                 {
-                    for (int i = 0; i < exposedVoxels.Count; ++i)
+                    for (int i = 0; i < _exposedVoxelsBuffer.Count; ++i)
                     {
-                        var position = exposedVoxels[i];
+                        var position = _exposedVoxelsBuffer[i];
                         var box = new Box(size, size, size);
                         var pose = new RigidPose(new Vector3(
                             position.X * size + size / 2,
@@ -69,10 +71,10 @@ namespace Clunker.Physics.Voxels
                     }
                     var transformedOffset = Vector3.Transform(offset, transform.WorldOrientation);
                     body.VoxelStatic = _physicsSystem.AddStatic(new StaticDescription(transform.WorldPosition + transformedOffset, new CollidableDescription(body.VoxelShape, 0.1f)), entity);
-
-                    entity.Set(body);
                 }
             }
+
+            _exposedVoxelsBuffer.Clear();
         }
     }
 }
