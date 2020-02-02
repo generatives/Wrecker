@@ -8,7 +8,7 @@ namespace Clunker.Voxels
 {
     public static class SurfaceNetGenerator
     {
-        public static void GenerateMesh(VoxelGridData voxels, Action<Quad> quadProcessor)
+        public static void GenerateMesh(VoxelGrid voxels, Action<Quad> quadProcessor)
         {
             for (int x = 0; x < voxels.GridSize; x++)
             {
@@ -81,7 +81,7 @@ namespace Clunker.Voxels
             }
         }
 
-        private static Vector3 GetVertexPosition(VoxelGridData voxels, int x, int y, int z)
+        private static Vector3 GetVertexPosition(VoxelGrid voxels, int x, int y, int z)
         {
             var v1 = GetPositionAndSize(voxels, (x, y, z));
             var v2 = GetPositionAndSize(voxels, (x - 1, y, z));
@@ -106,12 +106,12 @@ namespace Clunker.Voxels
             return sumPosition / sumSize;
         }
 
-        private static bool IsSurface(VoxelGridData voxels, Vector3i index, Vector3i otherIndex)
+        private static bool IsSurface(VoxelGrid voxels, Vector3i index, Vector3i otherIndex)
         {
             return voxels[index].Exists && (!voxels.ContainsIndex(otherIndex) || !voxels[otherIndex].Exists);
         }
 
-        private static (Vector3, byte) GetPositionAndSize(VoxelGridData voxels, Vector3i index)
+        private static (Vector3, byte) GetPositionAndSize(VoxelGrid voxels, Vector3i index)
         {
             var position = index * voxels.VoxelSize + new Vector3(0.5f * voxels.VoxelSize);
             if(voxels.ContainsIndex(index))

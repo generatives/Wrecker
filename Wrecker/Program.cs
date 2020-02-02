@@ -2,6 +2,8 @@
 using Clunker.Core;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
+using Clunker.Physics;
+using Clunker.Physics.Voxels;
 using Clunker.Resources;
 using Clunker.Voxels;
 using Clunker.WorldSpace;
@@ -41,7 +43,7 @@ namespace ClunkerECSDemo
             var resourceLoader = new ResourceLoader();
             var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
 
-            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.UnlitFragmentCode);
+            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
             var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
 
             var scene = new Scene();
@@ -67,8 +69,14 @@ namespace ClunkerECSDemo
             scene.RendererSystems.Add(new MeshGeometryRenderer(scene.World));
 
             scene.LogicSystems.Add(new SimpleCameraMover(scene.World));
-            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, transform, 2, 64));
-            scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance, 64, 1)));
+            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, transform, 3, 32));
+            scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance, 32, 1)));
+
+            var physicsSystem = new PhysicsSystem();
+            scene.LogicSystems.Add(physicsSystem);
+            scene.LogicSystems.Add(new VoxelShapeGenerator(physicsSystem, scene.World));
+
+            scene.LogicSystems.Add(new ClickVoxelRemover(physicsSystem, transform));
 
             var types = new VoxelTypes(new[]
             {

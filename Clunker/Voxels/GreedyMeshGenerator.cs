@@ -13,7 +13,7 @@ namespace Clunker.Voxels
     {
         public static System.Collections.Concurrent.ConcurrentBag<double> Times = new System.Collections.Concurrent.ConcurrentBag<double>();
 
-        public static void GenerateMesh(VoxelGridData voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        public static void GenerateMesh(VoxelGrid voxels, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
             var stopwatch = Stopwatch.StartNew();
             var plane = new VoxelPoint[voxels.GridSize, voxels.GridSize];
@@ -26,7 +26,7 @@ namespace Clunker.Voxels
             Times.Add(stopwatch.Elapsed.TotalMilliseconds);
         }
 
-        private static void MeshPosZ(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshPosZ(VoxelGrid voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
             var gridSize = voxels.GridSize;
 
@@ -60,7 +60,7 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshNegZ(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshNegZ(VoxelGrid voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
             var gridSize = voxels.GridSize;
 
@@ -94,7 +94,7 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshPosX(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshPosX(VoxelGrid voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
             var gridSize = voxels.GridSize;
 
@@ -128,7 +128,7 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshNegX(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshNegX(VoxelGrid voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
             var gridSize = voxels.GridSize;
 
@@ -162,7 +162,7 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshPosY(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshPosY(VoxelGrid voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
             var gridSize = voxels.GridSize;
 
@@ -196,7 +196,7 @@ namespace Clunker.Voxels
             }
         }
 
-        private static void MeshNegY(VoxelGridData voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
+        private static void MeshNegY(VoxelGrid voxels, VoxelPoint[,] plane, Action<ushort, VoxelSide, VoxelSide, Quad, Vector2i> quadProcessor)
         {
             var gridSize = voxels.GridSize;
 

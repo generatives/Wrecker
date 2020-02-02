@@ -1,7 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +14,15 @@
     <PackageReference Include="Veldrid.SPIRV" Version="1.0.13" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="4.7.0" />
     <PackageReference Include="Veldrid.Utilities" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\bepuphysics2\BepuPhysics\BepuPhysics.csproj" />
+    <ProjectReference Include="..\bepuphysics2\BepuUtilities\BepuUtilities.csproj" />
   </ItemGroup>
 
 </Project>

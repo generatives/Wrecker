@@ -23,7 +23,7 @@ namespace Clunker.Voxels
         private Scene _scene;
         private VoxelTypes _types;
 
-        public VoxelGridMesher(Scene scene, VoxelTypes types, IParallelRunner runner) : base(scene.World.GetEntities().With<MaterialInstance>().WhenAdded<VoxelGridData>().WhenChanged<VoxelGridData>().AsSet(), runner)
+        public VoxelGridMesher(Scene scene, VoxelTypes types, IParallelRunner runner) : base(scene.World.GetEntities().With<MaterialInstance>().WhenAdded<VoxelGrid>().WhenChanged<VoxelGrid>().AsSet(), runner)
         {
             _scene = scene;
             _types = types;
@@ -31,7 +31,7 @@ namespace Clunker.Voxels
 
         protected override void Update(double state, in Entity entity)
         {
-            ref var data = ref entity.Get<VoxelGridData>();
+            ref var data = ref entity.Get<VoxelGrid>();
             ref var materialInstance = ref entity.Get<MaterialInstance>();
 
             var vertices = new List<VertexPositionTextureNormal>(data.GridSize * data.GridSize * data.GridSize);
@@ -54,10 +54,10 @@ namespace Clunker.Voxels
             //    vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
             //});
 
-            SurfaceNetGenerator.GenerateMesh(data, (quad) =>
+            MeshGenerator.GenerateMesh(data, (voxel, side, quad) =>
             {
-                var type = _types[1];
-                var textureOffset = GetTexCoords(type, VoxelSide.TOP, VoxelSide.TOP);
+                var type = _types[voxel.BlockType];
+                var textureOffset = GetTexCoords(type, voxel.Orientation, side);
                 indices.Add((ushort)(vertices.Count + 0));
                 indices.Add((ushort)(vertices.Count + 1));
                 indices.Add((ushort)(vertices.Count + 3));

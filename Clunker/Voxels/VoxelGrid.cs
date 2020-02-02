@@ -11,16 +11,14 @@ using System.Threading.Tasks;
 
 namespace Clunker.Voxels
 {
-    public class VoxelGridData : IEnumerable<(Vector3, Voxel)>
+    public struct VoxelGrid : IEnumerable<(Vector3, Voxel)>
     {
-        public event Action Changed;
-
         private Voxel[] _voxels;
         public float VoxelSize { get; private set; }
         public int GridSize { get; private set; }
         public bool HasExistingVoxels => this.Any(v => v.Item2.Exists);
 
-        public VoxelGridData(int gridSize, float voxelSize)
+        public VoxelGrid(int gridSize, float voxelSize)
         {
             _voxels = new Voxel[gridSize * gridSize * gridSize];
             GridSize = gridSize;
@@ -49,7 +47,6 @@ namespace Clunker.Voxels
             set
             {
                 _voxels[x + GridSize * (y + GridSize * z)] = value;
-                Changed?.Invoke();
             }
         }
 
