@@ -91,7 +91,8 @@ namespace Clunker.Physics
             _dynamicContexts.Remove(body.Handle);
         }
 
-        public void RemoveShape(TypedIndex shapeIndex)
+        public void RemoveShape<TShape>(TypedIndex shapeIndex)
+             where TShape : unmanaged, IShape
         {
             Simulation.Shapes.Remove(shapeIndex);
             _shapeContexts.Remove(shapeIndex);
@@ -107,9 +108,9 @@ namespace Clunker.Physics
             return new StaticReference(handle, Simulation.Statics);
         }
 
-        public T GetShape<T>(int typeIndex) where T : unmanaged, IShape
+        public T GetShape<T>(TypedIndex typedIndex) where T : unmanaged, IShape
         {
-            return Simulation.Shapes.GetShape<T>(typeIndex);
+            return Simulation.Shapes.GetShape<T>(typedIndex.Index);
         }
 
         public void Raycast<THitHandler>(in Vector3 origin, in Vector3 direction, float maximumT, ref THitHandler hitHandler, int id = 0) where THitHandler : IRayHitHandler

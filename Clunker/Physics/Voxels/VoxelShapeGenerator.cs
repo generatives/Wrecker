@@ -1,6 +1,7 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
 using Clunker.Core;
+using Clunker.ECS;
 using Clunker.Geometry;
 using Clunker.Voxels;
 using DefaultEcs;
@@ -13,18 +14,18 @@ using System.Text;
 
 namespace Clunker.Physics.Voxels
 {
-    public class VoxelShapeGenerator : AEntitySystem<double>
+    public class VoxelShapeGenerator : ComputedComponentSystem<double>
     {
         private PhysicsSystem _physicsSystem;
         private List<Vector3i> _exposedVoxelsBuffer;
 
-        public VoxelShapeGenerator(PhysicsSystem physicsSystem, World world) : base(world.GetEntities().With<Transform>().With<VoxelBody>().WhenAdded<VoxelGrid>().WhenChanged<VoxelGrid>().AsSet())
+        public VoxelShapeGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(VoxelGrid), typeof(Transform), typeof(VoxelBody))
         {
             _physicsSystem = physicsSystem;
             _exposedVoxelsBuffer = new List<Vector3i>();
         }
 
-        protected override void Update(double state, in Entity entity)
+        protected override void Compute(double time, in Entity entity)
         {
             var voxels = entity.Get<VoxelGrid>();
             ref var body = ref entity.Get<VoxelBody>();
@@ -36,7 +37,7 @@ namespace Clunker.Physics.Voxels
                 _exposedVoxelsBuffer.Add(new Vector3i(x, y, z));
             });
 
-            if(_exposedVoxelsBuffer.Count > 0)
+            if (_exposedVoxelsBuffer.Count > 0)
             {
                 var voxelIndicesByChildIndex = _exposedVoxelsBuffer.ToArray();
 
@@ -53,13 +54,15 @@ namespace Clunker.Physics.Voxels
                         compoundBuilder.Add(box, pose, 1);
                     }
 
-                    compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var offset);
+                    compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var offset);
 
                     var shape = new BigCompound(compoundChildren, _physicsSystem.Simulation.Shapes, _physicsSystem.Pool);
 
                     if (body.VoxelShape.Exists)
                     {
-                        _physicsSystem.RemoveShape(body.VoxelShape);
+                        var oldShape = _physicsSystem.GetShape<BigCompound>(body.VoxelShape);
+                        oldShape.Dispose(_physicsSystem.Pool);
+                        _physicsSystem.RemoveShape<BigCompound>(body.VoxelShape);
                     }
 
                     body.VoxelShape = _physicsSystem.AddShape(shape);
@@ -75,6 +78,25 @@ namespace Clunker.Physics.Voxels
             }
 
             _exposedVoxelsBuffer.Clear();
+        }
+
+        protected override void Remove(in Entity entity)
+        {
+            ref var body = ref entity.Get<VoxelBody>();
+
+            if (body.VoxelShape.Exists)
+            {
+                var oldShape = _physicsSystem.GetShape<BigCompound>(body.VoxelShape);
+                oldShape.Dispose(_physicsSystem.Pool);
+                _physicsSystem.RemoveShape<BigCompound>(body.VoxelShape);
+            }
+
+            if (body.VoxelStatic.Exists)
+            {
+                _physicsSystem.RemoveStatic(body.VoxelStatic);
+            }
+
+            body.VoxelIndicesByChildIndex = null;
         }
     }
 }

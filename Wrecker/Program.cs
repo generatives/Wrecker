@@ -56,7 +56,6 @@ namespace ClunkerECSDemo
             camera.Set(new Camera());
 
             scene.RendererSystems.Add(new MeshGeometryInitializer(scene.World));
-            scene.RendererSystems.Add(new MeshGeometryDisposal(scene.World));
 
             var px = Image.Load("Assets\\skybox_px.png");
             var nx = Image.Load("Assets\\skybox_nx.png");

@@ -1,4 +1,5 @@
-﻿using Clunker.Graphics;
+﻿using Clunker.ECS;
+using Clunker.Graphics;
 using DefaultEcs;
 using DefaultEcs.System;
 using System;
@@ -8,13 +9,13 @@ using Veldrid;
 
 namespace Clunker.Graphics
 {
-    public class MeshGeometryInitializer : AEntitySystem<RenderingContext>
+    public class MeshGeometryInitializer : ComputedComponentSystem<RenderingContext>
     {
-        public MeshGeometryInitializer(World world) : base(world.GetEntities().WhenAdded<MeshGeometry>().WhenChanged<MeshGeometry>().AsSet())
+        public MeshGeometryInitializer(World world) : base(world, typeof(MeshGeometry))
         {
         }
 
-        protected override void Update(RenderingContext context, in Entity entity)
+        protected override void Compute(RenderingContext context, in Entity entity)
         {
             ref var geometry = ref entity.Get<MeshGeometry>();
 
@@ -53,14 +54,8 @@ namespace Clunker.Graphics
                 IndexBuffer = indexBuffer
             });
         }
-    }
-    public class MeshGeometryDisposal : AEntitySystem<RenderingContext>
-    {
-        public MeshGeometryDisposal(World world) : base(world.GetEntities().With<MeshGeometryResources>().WhenRemoved<MeshGeometry>().AsSet())
-        {
-        }
 
-        protected override void Update(RenderingContext context, in Entity entity)
+        protected override void Remove(in Entity entity)
         {
             ref var resource = ref entity.Get<MeshGeometryResources>();
 

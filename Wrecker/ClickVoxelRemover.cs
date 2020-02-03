@@ -60,7 +60,7 @@ namespace Wrecker
 
                     var gridIndex = body.VoxelIndicesByChildIndex[handler.ChildIndex];
 
-                    foreach(var index in GeometricIterators.Rectangle(gridIndex, 0))
+                    foreach(var index in GeometricIterators.Rectangle(gridIndex, 2))
                     {
                         if(voxels.ContainsIndex(index))
                         {
