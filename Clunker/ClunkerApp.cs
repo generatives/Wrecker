@@ -1,5 +1,8 @@
 ﻿using Clunker.Graphics;
 using Clunker.Input;
+using Clunker.SceneGraph;
+using Clunker.SceneGraph.ComponentInterfaces;
+using Clunker.SceneGraph.SceneSystemInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,12 +13,14 @@ using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 using System.Linq;
+using Clunker.Utilities.Diagnostics;
+using Clunker.Runtime;
+using ImGuiNET;
+using Hyperion;
 using System.IO;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Clunker.Resources;
-using DefaultEcs;
-using Clunker.Core;
 
 namespace Clunker
 {
@@ -28,21 +33,33 @@ namespace Clunker
         private bool _windowResized;
         private GraphicsDevice _graphicsDevice;
         private CommandList _commandList;
-        private EntitySet _cameras;
-        public Entity CameraEntity => _cameras.GetEntities().ToArray().FirstOrDefault();
-        public Transform CameraTransform => CameraEntity.World == Scene.World ? CameraEntity.Get<Transform>() : null;
-        private Scene Scene { get; set; }
+        public Camera Camera { get; private set; }
+        private Scene NextScene { get; set; }
+        public Scene CurrentScene { get; private set; }
 
         private List<IRenderer> _renderers;
 
+        public RoundRobinWorkQueue WorkQueue { get; private set; }
+        public DrivenWorkQueue BestEffortFrameQueue { get; private set; }
+
         public ResourceLoader Resources { get; private set; }
+
+        public Serializer Serializer { get; private set; }
+
+        public byte[] ShipBin;
 
         public ClunkerApp(ResourceLoader resourceLoader, Scene initialScene)
         {
             Resources = resourceLoader;
-            Scene = initialScene;
+            //Serializer = new Serializer(new SerializerOptions(true, true,
+            //    new[]
+            //    {
+            //        Surrogate.Create<Resource<Image<Rgba32>>, ResourceSurrogate<Image<Rgba32>>>(r => new ResourceSurrogate<Image<Rgba32>>() { Id = r.Id }, s => resourceLoader.LoadImage(s.Id))
+            //    }));
+            NextScene = initialScene;
             _renderers = new List<IRenderer>();
-            _cameras = Scene.World.GetEntities().With<Camera>().With<Transform>().AsSet();
+            WorkQueue = new RoundRobinWorkQueue(new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue());
+            BestEffortFrameQueue = new DrivenWorkQueue();
         }
 
         public void AddRenderer(IRenderer renderer)
@@ -67,6 +84,16 @@ namespace Clunker
             return _renderers.FirstOrDefault(r => r is T) as T;
         }
 
+        public void AddRenderable(IRenderable renderable)
+        {
+            _renderers.ForEach(r => r.AddRenderable(renderable));
+        }
+
+        public void RemoveRenderable(IRenderable renderable)
+        {
+            _renderers.ForEach(r => r.RemoveRenderable(renderable));
+        }
+
         public Task Start(WindowCreateInfo wci, GraphicsDeviceOptions graphicsDeviceOptions)
         {
             return Task.Factory.StartNew(() =>
@@ -84,7 +111,7 @@ namespace Clunker
 
                 Started?.Invoke();
                 var frameWatch = Stopwatch.StartNew();
-
+                var targetFrameTime = 0.033f;
                 while (_window.Exists)
                 {
                     var inputSnapshot = _window.PumpEvents();
@@ -105,22 +132,45 @@ namespace Clunker
                         imGuiRenderer.WindowResized(_window.Width, _window.Height);
                     }
 
-                    var frameTime = frameWatch.Elapsed.TotalSeconds;
+                    var frameTime = (float)frameWatch.Elapsed.TotalSeconds;
                     frameWatch.Restart();
 
-                    imGuiRenderer.Update((float)frameTime, InputTracker.LockMouse ? new EmptyInputSnapshot() : InputTracker.FrameSnapshot );
-
-                    Scene.Update(frameTime);
+                    imGuiRenderer.Update(frameTime, InputTracker.LockMouse ? new EmptyInputSnapshot() : InputTracker.FrameSnapshot );
 
                     Tick?.Invoke();
+                    if(NextScene != null)
+                    {
+                        if (CurrentScene != null)
+                        {
+                            CurrentScene.SceneStopped();
+                        }
+                        CurrentScene = NextScene;
+                        NextScene = null;
+                        CurrentScene.SceneStarted(this);
+                    }
+                    if (CurrentScene != null)
+                    {
+                        StackedTiming.PushFrameTimer("Scene Update");
+                        CurrentScene.Update(frameTime);
+                        StackedTiming.PopFrameTimer();
+                    }
 
                     _commandList.Begin();
+
                     _commandList.SetFramebuffer(_graphicsDevice.MainSwapchain.Framebuffer);
                     //commandList.ClearColorTarget(0, new RgbaFloat(25f / 255, 25f / 255, 112f / 255, 1.0f));
                     _commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
                     _commandList.ClearDepthStencil(1f);
 
-                    _renderers.ForEach(r => r.Render(Scene, CameraTransform, _graphicsDevice, _commandList, RenderWireframes.NO));
+                    StackedTiming.PushFrameTimer("Render");
+                    if (Camera != null)
+                    {
+                        _renderers.ForEach(r => r.Render(Camera, _graphicsDevice, _commandList, RenderWireframes.SOLID));
+                    }
+                    StackedTiming.PopFrameTimer();
+
+                    StackedTiming.Render(frameTime);
+                    Timing.Render(frameTime);
 
                     imGuiRenderer.Render(_graphicsDevice, _commandList);
 
@@ -128,9 +178,27 @@ namespace Clunker
                     _graphicsDevice.SubmitCommands(_commandList);
                     _graphicsDevice.SwapBuffers(_graphicsDevice.MainSwapchain);
 
+                    bool jobsRemain = true;
+                    while (jobsRemain && frameWatch.Elapsed.TotalSeconds < targetFrameTime)
+                    {
+                        jobsRemain = BestEffortFrameQueue.ConsumeActions(1);
+                    }
+
                     _graphicsDevice.WaitForIdle();
                 }
             }, TaskCreationOptions.LongRunning);
+        }
+
+        internal void CameraCreated(Camera camera)
+        {
+            if (Camera == null)
+            {
+                Camera = camera;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("A camera already exists, ignoring the new camera");
+            }
         }
     }
 }

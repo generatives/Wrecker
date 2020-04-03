@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <LangVersion>8.0</LangVersion>
+    <Configurations>Debug;Release;DebugLeakDebug</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Clunker\Clunker.csproj" />
+    <ProjectReference Include="..\ClunkerGO\Clunker.csproj" />
   </ItemGroup>
 
 </Project>

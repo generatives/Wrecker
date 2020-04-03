@@ -6,7 +6,9 @@ using BepuPhysics.CollisionDetection.SweepTasks;
 using BepuPhysics.Constraints;
 using BepuPhysics.Trees;
 using BepuUtilities.Memory;
-using DefaultEcs.System;
+using Clunker.Physics.CharacterController;
+using Clunker.SceneGraph;
+using Clunker.SceneGraph.SceneSystemInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -15,12 +17,13 @@ using System.Text;
 
 namespace Clunker.Physics
 {
-    public class PhysicsSystem : ISystem<double>
+    public class PhysicsSystem : SceneSystem, IUpdatableSystem, IDisposable
     {
         public Simulation Simulation { get; private set; }
         private SimpleThreadDispatcher _threadDispatcher;
         public BufferPool Pool { get; private set; }
-        public bool IsEnabled { get; set; } = true;
+
+        private CharacterControllers _characters;
 
         private Dictionary<int, object> _staticContexts;
         private Dictionary<int, object> _dynamicContexts;
@@ -30,15 +33,26 @@ namespace Clunker.Physics
         {
             //The buffer pool is a source of raw memory blobs for the engine to use.
             Pool = new BufferPool();
+            _characters = new CharacterControllers(Pool);
             //Note that you can also control the order of internal stage execution using a different ITimestepper implementation.
             //For the purposes of this demo, we just use the default by passing in nothing (which happens to be PositionFirstTimestepper at the time of writing).
-            Simulation = Simulation.Create(Pool, new NarrowPhaseCallbacks(), new PoseIntegratorCallbacks(new Vector3(0, 0, 0)));
+            Simulation = Simulation.Create(Pool, new CharacterNarrowphaseCallbacks(_characters), new PoseIntegratorCallbacks(new Vector3(0, 0, 0)));
+
+            //Drop a ball on a big static box.
+            var sphere = new Sphere(1);
+            sphere.ComputeInertia(1, out var sphereInertia);
             
             _threadDispatcher = new SimpleThreadDispatcher(Environment.ProcessorCount);
 
             _staticContexts = new Dictionary<int, object>();
             _dynamicContexts = new Dictionary<int, object>();
             _shapeContexts = new Dictionary<TypedIndex, object>();
+        }
+
+        public CharacterControllerRef CreateCharacter(Vector3 position, Capsule capsule, float speculativeMargin, float mass, float maximumHorizontalForce,
+            float maximumVerticalGlueForce, float jumpVelocity, float speed, float maximumSlope)
+        {
+            return new CharacterControllerRef(_characters, position, capsule, speculativeMargin, mass, maximumHorizontalForce, maximumVerticalGlueForce, jumpVelocity, speed, 0.75f, 0.75f, maximumSlope);
         }
 
         public StaticReference AddStatic(StaticDescription description, object context = null)
@@ -91,8 +105,7 @@ namespace Clunker.Physics
             _dynamicContexts.Remove(body.Handle);
         }
 
-        public void RemoveShape<TShape>(TypedIndex shapeIndex)
-             where TShape : unmanaged, IShape
+        public void RemoveShape(TypedIndex shapeIndex)
         {
             Simulation.Shapes.Remove(shapeIndex);
             _shapeContexts.Remove(shapeIndex);
@@ -108,9 +121,9 @@ namespace Clunker.Physics
             return new StaticReference(handle, Simulation.Statics);
         }
 
-        public T GetShape<T>(TypedIndex typedIndex) where T : unmanaged, IShape
+        public T GetShape<T>(int typeIndex) where T : unmanaged, IShape
         {
-            return Simulation.Shapes.GetShape<T>(typedIndex.Index);
+            return Simulation.Shapes.GetShape<T>(typeIndex);
         }
 
         public void Raycast<THitHandler>(in Vector3 origin, in Vector3 direction, float maximumT, ref THitHandler hitHandler, int id = 0) where THitHandler : IRayHitHandler
@@ -118,13 +131,14 @@ namespace Clunker.Physics
             Simulation.RayCast(origin, direction, maximumT, ref hitHandler, id);
         }
 
-        public void Update(double time)
+        public void Update(float time)
         {
-            Simulation.Timestep((float)time, _threadDispatcher);
+            Simulation.Timestep(time);
         }
 
         public void Dispose()
         {
+            _characters.Dispose();
             //If you intend to reuse the BufferPool, disposing the simulation is a good idea- it returns all the buffers to the pool for reuse.
             //Here, we dispose it, but it's not really required; we immediately thereafter clear the BufferPool of all held memory.
             //Note that failing to dispose buffer pools can result in memory leaks.

@@ -10,14 +10,20 @@ namespace Clunker.Voxels
 {
     public struct Voxel
     {
-        public bool Exists { get => Density > 0; set => Density = value ? byte.MaxValue : (byte)0; }
-        public byte Density { get; set; }
-        public ushort BlockType { get; set; }
-        public VoxelSide Orientation { get; set; }
+        // 1 Bit Exists
+        // 12 Bits VoxelType
+        // 3 Bits Orientation
+        // 16 Bits Unused
+
+        public uint Data;
+        public bool Exists { get => (1 & Data) == 1; set => Data = Data | (uint)(value ? 1 : 0); }
+        public ushort BlockType { get => (ushort)((Data >> 1) & 0xFFF); set => Data = Data | (uint)(value << 1); }
+        public VoxelSide Orientation { get => (VoxelSide)((Data >> 13) & 0x7); set => Data = Data | ((uint)value << 13); }
+
 
         public static bool operator ==(Voxel v, Voxel v1)
         {
-            return v.Density == v1.Density &&
+            return v.Exists == v1.Exists &&
                    v.BlockType == v1.BlockType &&
                    v.Orientation == v1.Orientation;
         }
@@ -34,7 +40,7 @@ namespace Clunker.Voxels
 
         public override int GetHashCode()
         {
-            return (Density, BlockType, Orientation).GetHashCode();
+            return HashCode.Combine(Exists, BlockType, Orientation);
         }
     }
 
@@ -51,17 +57,17 @@ namespace Clunker.Voxels
             switch (side)
             {
                 case VoxelSide.TOP:
-                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitX, (float)Math.PI / 2f);
+                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitX, MathF.PI / 2f);
                 case VoxelSide.BOTTOM:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, (float)Math.PI / 2f);
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
                 case VoxelSide.NORTH:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, (float)Math.PI);
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
                 case VoxelSide.SOUTH:
                     return Quaternion.Identity;
                 case VoxelSide.EAST:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitY, (float)Math.PI / 2f);
+                    return Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2f);
                 case VoxelSide.WEST:
-                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitY, (float)Math.PI / 2f);
+                    return Quaternion.CreateFromAxisAngle(-Vector3.UnitY, MathF.PI / 2f);
                 default:
                     return Quaternion.Identity;
             }

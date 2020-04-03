@@ -1,160 +1,90 @@
 ﻿using Clunker.Geometry;
+using Clunker.SceneGraph;
+using Clunker.SceneGraph.ComponentInterfaces;
+using Clunker.Voxels;
+using Hyperion;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Clunker.Voxels
 {
-    public struct VoxelGrid : IEnumerable<(Vector3, Voxel)>
+    public class VoxelGrid : Component
     {
-        private Voxel[] _voxels;
-        public float VoxelSize { get; private set; }
-        public int GridSize { get; private set; }
-        public bool HasExistingVoxels => this.Any(v => v.Item2.Exists);
+        public event Action<VoxelGrid> VoxelsChanged;
 
-        public VoxelGrid(int gridSize, float voxelSize)
+        public VoxelGridData Data { get; private set; }
+
+        private Dictionary<Vector3i, GameObject> _voxelEntities;
+        public IEnumerable<GameObject> VoxelEntities => _voxelEntities.Values;
+
+        [Ignore]
+        private bool _requestedVoxelsChanged;
+
+        public VoxelGrid(VoxelGridData voxels, Dictionary<Vector3i, GameObject> voxelEntities)
         {
-            _voxels = new Voxel[gridSize * gridSize * gridSize];
-            GridSize = gridSize;
+            Data = voxels;
+            Data.Changed += Data_Changed;
 
-            VoxelSize = voxelSize;
+            _voxelEntities = voxelEntities;
         }
 
-        public Voxel this[Vector3i index]
+        private void Data_Changed()
         {
-            get
+            if (!_requestedVoxelsChanged && VoxelsChanged != null)
             {
-                return this[index.X, index.Y, index.Z];
-            }
-            set
-            {
-                this[index.X, index.Y, index.Z] = value;
-            }
-        }
-
-        public Voxel this[int x, int y, int z]
-        {
-            get
-            {
-                return _voxels[x + GridSize * (y + GridSize * z)];
-            }
-            set
-            {
-                _voxels[x + GridSize * (y + GridSize * z)] = value;
+                this.EnqueueFrameJob(StartVoxelsChanged);
+                _requestedVoxelsChanged = true;
             }
         }
 
-        public bool Exists(Vector3i index) => Exists(index.X, index.Y, index.Z);
-        public bool Exists(int x, int y, int z)
+        private void StartVoxelsChanged()
         {
-            return ContainsIndex(x, y, z) && this[x, y, z].Exists;
+            VoxelsChanged?.Invoke(this);
+            _requestedVoxelsChanged = false;
         }
 
-        public bool ContainsIndex(Vector3i index) => ContainsIndex(index.X, index.Y, index.Z);
-        public bool ContainsIndex(int x, int y, int z)
+        public Voxel GetVoxel(Vector3i index)
         {
-            return x >= 0 && x < GridSize &&
-                y >= 0 && y < GridSize &&
-                z >= 0 && z < GridSize;
+            return Data[index];
         }
 
-        public bool SetVoxel(int x, int y, int z, Voxel voxel) => SetVoxel(new Vector3i(x, y, z), voxel);
-        public bool SetVoxel(Vector3i index, Voxel voxel)
+        public void SetVoxel(Vector3i index, Voxel voxel, params VoxelEntity[] entities)
         {
-            if (ContainsIndex(index))
+            if(Data.SetVoxel(index, voxel))
             {
-                this[index] = voxel;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
+                if (_voxelEntities.ContainsKey(index))
+                {
+                    var oldEntity = _voxelEntities[index];
+                    GameObject.RemoveChild(oldEntity);
+                    GameObject.CurrentScene.RemoveGameObject(oldEntity);
+                    _voxelEntities.Remove(index);
+                }
 
-        public void FindExposedSides(Action<Voxel, int, int, int, VoxelSide> sideProcessor)
-        {
-            for(int x = 0; x < GridSize; x++)
-                for (int y = 0; y < GridSize; y++)
-                    for (int z = 0; z < GridSize; z++)
+                if(entities.Any())
+                {
+                    var gameObject = new GameObject();
+                    gameObject.Transform.Position = index * Data.VoxelSize + Vector3.One * Data.VoxelSize / 2f;
+                    gameObject.Transform.Orientation = voxel.Orientation.GetQuaternion();
+                    foreach (var entity in entities)
                     {
-                        Voxel voxel = this[x, y, z];
-                        if (voxel.Exists)
+                        if (entity.Space != null)
                         {
-                            if (!Exists(x, y - 1, z))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.BOTTOM);
-                            }
-
-                            if (!Exists(x + 1, y, z))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.EAST);
-                            }
-
-                            if (!Exists(x - 1, y, z))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.WEST);
-                            }
-
-                            if (!Exists(x, y + 1, z))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.TOP);
-                            }
-
-                            if (!Exists(x, y, z - 1))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.NORTH);
-                            }
-
-                            if (!Exists(x, y, z + 1))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.SOUTH);
-                            }
+                            throw new Exception("Tried setting a VoxelEntity which is already in a VoxelSpace");
                         }
+                        entity.Space = this;
+                        entity.Index = index;
+                        entity.Voxel = voxel;
+                        gameObject.AddComponent(entity);
                     }
-        }
-
-        public void FindExposedBlocks(Action<Voxel, int, int, int> blockProcessor)
-        {
-            for (int x = 0; x < GridSize; x++)
-                for (int y = 0; y < GridSize; y++)
-                    for (int z = 0; z < GridSize; z++)
-                    {
-                        Voxel voxel = this[x, y, z];
-                        if (voxel.Exists)
-                        {
-                            if (!Exists(x, y - 1, z) ||
-                                !Exists(x + 1, y, z) ||
-                                !Exists(x - 1, y, z) ||
-                                !Exists(x, y + 1, z) ||
-                                !Exists(x, y, z - 1) ||
-                                !Exists(x, y, z + 1))
-                            {
-                                blockProcessor(voxel, x, y, z);
-                            }
-                        }
-                    }
-        }
-
-        public IEnumerator<(Vector3, Voxel)> GetEnumerator()
-        {
-            for (int x = 0; x < GridSize; x++)
-                for (int y = 0; y < GridSize; y++)
-                    for (int z = 0; z < GridSize; z++)
-                    {
-                        yield return (new Vector3(x, y, z), this[x, y, z]);
-                    }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
+                    GameObject.AddChild(gameObject);
+                    _voxelEntities[index] = gameObject;
+                }
+            }
         }
     }
 }

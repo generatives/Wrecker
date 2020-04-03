@@ -1,17 +1,24 @@
-﻿using System;
+﻿using Hyperion;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Veldrid;
+using Veldrid.ImageSharp;
 using Veldrid.SPIRV;
 
 namespace Clunker.Graphics
 {
     public class Material
     {
+        [Ignore]
         private Pipeline _pipeline;
 
+        [Ignore]
         private Pipeline _wireframePipeline;
 
+        [Ignore]
         internal ResourceSet _projViewSet;
 
         private string _vertexShader;
@@ -27,9 +34,8 @@ namespace Clunker.Graphics
             _noCulling = noCulling;
         }
 
-        private void UpdateResources(RenderingContext context)
+        private void UpdateResources(GraphicsDevice device, RenderingContext context)
         {
-            var device = context.GraphicsDevice;
             var factory = device.ResourceFactory;
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new[]
@@ -76,23 +82,23 @@ namespace Clunker.Graphics
                 context.Renderer.SceneLightingBuffer));
         }
 
-        public void Bind(RenderingContext context)
+        public void Bind(GraphicsDevice device, CommandList cl, RenderingContext context)
         {
             if(MustBuildResources)
             {
-                UpdateResources(context);
+                UpdateResources(device, context);
             }
 
             if (!context.RenderWireframes)
             {
-                context.CommandList.SetPipeline(_pipeline);
+                cl.SetPipeline(_pipeline);
             }
             else
             {
-                context.CommandList.SetPipeline(_wireframePipeline);
+                cl.SetPipeline(_wireframePipeline);
             }
 
-            context.CommandList.SetGraphicsResourceSet(0, _projViewSet);
+            cl.SetGraphicsResourceSet(0, _projViewSet);
         }
     }
 }

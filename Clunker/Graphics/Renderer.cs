@@ -1,5 +1,7 @@
-﻿using Clunker.Core;
-using Clunker.Graphics.Materials;
+﻿using Clunker.Graphics.Materials;
+using Clunker.SceneGraph;
+using Clunker.SceneGraph.ComponentInterfaces;
+using Clunker.SceneGraph.SceneSystemInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,6 +51,15 @@ namespace Clunker.Graphics
         private Matrix4x4 _projectionMatrix;
         private bool _projectionMatrixChanged;
 
+        private List<IRenderable> _backgroundRenderables;
+        private List<IRenderable> _sceneRenderables;
+
+        public Renderer()
+        {
+            _backgroundRenderables = new List<IRenderable>();
+            _sceneRenderables = new List<IRenderable>();
+        }
+
         public void Initialize(GraphicsDevice device, CommandList commandList, int windowWidth, int windowHeight)
         {
             _device = device;
@@ -97,7 +108,35 @@ namespace Clunker.Graphics
             _projectionMatrixChanged = true;
         }
 
-        public void Render(Scene scene, Transform camera, GraphicsDevice device, CommandList commandList, Graphics.RenderWireframes renderWireframes)
+        public void AddRenderable(IRenderable renderable)
+        {
+            renderable.Initialize(_device, _commandList, new RenderableInitialize() { Renderer = this });
+            switch (renderable.Pass)
+            {
+                case RenderingPass.BACKGROUND:
+                    _backgroundRenderables.Add(renderable);
+                    return;
+                case RenderingPass.SCENE:
+                    _sceneRenderables.Add(renderable);
+                    return;
+            }
+        }
+
+        public void RemoveRenderable(IRenderable renderable)
+        {
+            renderable.Remove(_device, _commandList);
+            switch (renderable.Pass)
+            {
+                case RenderingPass.BACKGROUND:
+                    _backgroundRenderables.Remove(renderable);
+                    return;
+                case RenderingPass.SCENE:
+                    _sceneRenderables.Remove(renderable);
+                    return;
+            }
+        }
+
+        public void Render(Camera camera, GraphicsDevice device, CommandList commandList, Graphics.RenderWireframes renderWireframes)
         {
             if (_projectionMatrixChanged)
             {
@@ -115,23 +154,51 @@ namespace Clunker.Graphics
                 DiffuseLightDirection = Vector3.Normalize(new Vector3(2, 5, -1))
             });
 
-            var cameraLocation = camera.WorldPosition;
+            var cameraLocation = camera.GameObject.Transform.WorldPosition;
             var frustrum = new BoundingFrustum(viewMatrix * _projectionMatrix);
 
-            var context = new RenderingContext() { GraphicsDevice = device, CommandList = commandList, Renderer = this, RenderWireframes = false };
-
-            if (renderWireframes == RenderWireframes.NO)
+            if (renderWireframes == RenderWireframes.SOLID || renderWireframes == RenderWireframes.BOTH)
             {
+                var context = new RenderingContext() { Renderer = this, RenderWireframes = false };
                 commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.White);
+                RenderSet(_backgroundRenderables, _device, _commandList, context, cameraLocation, frustrum);
+                RenderSet(_sceneRenderables, _device, _commandList, context, cameraLocation, frustrum);
             }
 
-            if (renderWireframes == RenderWireframes.YES)
+            if (renderWireframes == RenderWireframes.WIRE_FRAMES || renderWireframes == RenderWireframes.BOTH)
             {
-                context.RenderWireframes = true;
+                var context = new RenderingContext() { Renderer = this, RenderWireframes = true };
                 commandList.UpdateBuffer(WireframeColourBuffer, 0, RgbaFloat.Black);
+                RenderSet(_backgroundRenderables, _device, _commandList, context, cameraLocation, frustrum);
+                RenderSet(_sceneRenderables, _device, _commandList, context, cameraLocation, frustrum);
+            }
+        }
+        private void RenderSet(List<IRenderable> renderables, GraphicsDevice device, CommandList commandList, RenderingContext context, Vector3 location, BoundingFrustum frustum)
+        {
+            var transparent = new List<IRenderable>();
+            foreach (var renderable in renderables)
+            {
+                if(renderable.IsActive && renderable.IsVisible(frustum))
+                {
+                    if (renderable.Transparent)
+                    {
+                        transparent.Add(renderable);
+                    }
+                    else
+                    {
+                        renderable.Render(device, commandList, context);
+                    }
+                }
             }
 
-            scene.Render(context);
+            if (transparent.Any())
+            {
+                var sorted = transparent.OrderBy(r => Vector3.DistanceSquared(location, r.Position));
+                foreach (var renderable in sorted)
+                {
+                    renderable.Render(device, commandList, context);
+                }
+            }
         }
     }
 }

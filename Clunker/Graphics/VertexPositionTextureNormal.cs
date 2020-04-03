@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hyperion;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -8,6 +9,7 @@ namespace Clunker.Graphics
 {
     public struct VertexPositionTextureNormal
     {
+        [Ignore]
         public const byte SizeInBytes = 32;
 
         public readonly Vector3 Position;

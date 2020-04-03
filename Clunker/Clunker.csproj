@@ -1,19 +1,45 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <Configurations>Debug;Release</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>8.0</LangVersion>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DefaultEcs" Version="0.13.1" />
+    <Compile Remove="Physics\VoxelCollidable.cs" />
+    <Compile Remove="Physics\VoxelGridCollidable.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DynamicExpresso.Core" Version="2.3.1" />
+    <PackageReference Include="Hyperion" Version="0.9.8" />
     <PackageReference Include="Veldrid" Version="4.7.0" />
     <PackageReference Include="Veldrid.ImageSharp" Version="4.7.0" />
     <PackageReference Include="Veldrid.ImGui" Version="5.72.0" />
-    <PackageReference Include="Veldrid.SPIRV" Version="1.0.13" />
+    <PackageReference Include="Veldrid.SPIRV" Version="1.0.12" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="4.7.0" />
     <PackageReference Include="Veldrid.Utilities" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\bepuphysics2\BepuPhysics\BepuPhysics.csproj" />
+    <ProjectReference Include="..\bepuphysics2\BepuUtilities\BepuUtilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Physics\CharacterController\CharacterMotionConstraint.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CharacterMotionConstraint.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -21,8 +47,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\bepuphysics2\BepuPhysics\BepuPhysics.csproj" />
-    <ProjectReference Include="..\bepuphysics2\BepuUtilities\BepuUtilities.csproj" />
+    <Compile Update="Physics\CharacterController\CharacterMotionConstraint.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CharacterMotionConstraint.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>
