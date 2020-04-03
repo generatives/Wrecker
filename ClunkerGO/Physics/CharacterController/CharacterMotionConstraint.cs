@@ -2,7 +2,6 @@
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using System.Numerics;
-using Quaternion = BepuUtilities.Quaternion;
 using System;
 using BepuPhysics.CollisionDetection;
 using System.Runtime.CompilerServices;
@@ -31,7 +30,7 @@ namespace Clunker.Physics.CharacterController
     /// <summary>
     /// Description of a character motion constraint where the support is static.
     /// </summary>
-    public struct StaticCharacterMotionConstraint : IConstraintDescription<StaticCharacterMotionConstraint>
+    public struct StaticCharacterMotionConstraint : IOneBodyConstraintDescription<StaticCharacterMotionConstraint>
     {
         /// <summary>
         /// Maximum force that the horizontal motion constraint can apply to reach the current velocity goal.
@@ -326,7 +325,7 @@ namespace Clunker.Physics.CharacterController
     /// <summary>
     /// Description of a character motion constraint where the support is dynamic.
     /// </summary>
-    public struct DynamicCharacterMotionConstraint : IConstraintDescription<DynamicCharacterMotionConstraint>
+    public struct DynamicCharacterMotionConstraint : ITwoBodyConstraintDescription<DynamicCharacterMotionConstraint>
     {
         /// <summary>
         /// Maximum force that the horizontal motion constraint can apply to reach the current velocity goal.

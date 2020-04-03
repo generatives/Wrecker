@@ -51,11 +51,11 @@ namespace Clunker
         public ClunkerApp(ResourceLoader resourceLoader, Scene initialScene)
         {
             Resources = resourceLoader;
-            Serializer = new Serializer(new SerializerOptions(true, true,
-                new[]
-                {
-                    Surrogate.Create<Resource<Image<Rgba32>>, ResourceSurrogate<Image<Rgba32>>>(r => new ResourceSurrogate<Image<Rgba32>>() { Id = r.Id }, s => resourceLoader.LoadImage(s.Id))
-                }));
+            //Serializer = new Serializer(new SerializerOptions(true, true,
+            //    new[]
+            //    {
+            //        Surrogate.Create<Resource<Image<Rgba32>>, ResourceSurrogate<Image<Rgba32>>>(r => new ResourceSurrogate<Image<Rgba32>>() { Id = r.Id }, s => resourceLoader.LoadImage(s.Id))
+            //    }));
             NextScene = initialScene;
             _renderers = new List<IRenderer>();
             WorkQueue = new RoundRobinWorkQueue(new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue(), new ThreadedWorkQueue());

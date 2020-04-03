@@ -15,7 +15,7 @@ namespace Clunker.Physics.Voxels
         [Ignore]
         private StaticReference _voxelStatic;
 
-        protected override void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia, Vector3 offset)
+        protected override void SetBody(TypedIndex type, float speculativeMargin, in BodyInertia inertia, Vector3 offset)
         {
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
             if(_voxelStatic.Exists) physicsSystem.RemoveStatic(_voxelStatic);

@@ -7,6 +7,7 @@ using Clunker.Physics.Voxels;
 using Clunker.Resources;
 using Clunker.Voxels;
 using Clunker.WorldSpace;
+using DefaultEcs;
 using DefaultEcs.Threading;
 using SixLabors.ImageSharp;
 using System;
@@ -73,11 +74,11 @@ namespace ClunkerECSDemo
 
             var physicsSystem = new PhysicsSystem();
             scene.LogicSystems.Add(physicsSystem);
-            scene.LogicSystems.Add(new VoxelShapeGenerator(physicsSystem, scene.World));
+            scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, scene.World));
 
             scene.LogicSystems.Add(new ClickVoxelRemover(physicsSystem, transform));
 
-            var types = new VoxelTypes(new[]
+            var voxelTypes = new VoxelTypes(new[]
             {
                 new VoxelType(
                     "DarkStone",
@@ -96,11 +97,37 @@ namespace ClunkerECSDemo
                     new Vector2(650, 1300))
             });
 
-            scene.LogicSystems.Add(new VoxelGridMesher(scene, types, parrallelRunner));
+            scene.LogicSystems.Add(new VoxelGridMesher(scene, voxelTypes, parrallelRunner));
+
+            var spaceShip = scene.World.CreateEntity();
+            SetAsShip(spaceShip, voxelMaterialInstance);
 
             var app = new ClunkerApp(resourceLoader, scene);
 
             app.Start(wci, options).Wait();
+        }
+
+        private static void SetAsShip(Entity entity, MaterialInstance materialInstance)
+        {
+            var gridLength = 8;
+            var padding = 3;
+            var voxelSize = 1;
+            var voxelSpaceData = new VoxelGrid(gridLength, voxelSize);
+            for (var x = padding; x < gridLength - padding; x++)
+            {
+                for (var y = padding; y < gridLength - padding; y++)
+                {
+                    for (var z = padding; z < gridLength - padding; z++)
+                    {
+                        voxelSpaceData[x, y, z] = new Voxel() { Exists = true };
+                    }
+                }
+            }
+
+            entity.Set(new Transform());
+            entity.Set(materialInstance);
+            entity.Set(voxelSpaceData);
+            entity.Set(new VoxelDynamicBody());
         }
     }
 }

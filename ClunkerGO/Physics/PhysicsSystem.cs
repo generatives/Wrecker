@@ -81,7 +81,7 @@ namespace Clunker.Physics
         public object GetDynamicContext(int handle) => _dynamicContexts.ContainsKey(handle) ? _dynamicContexts[handle] : null;
         public object GetDynamicContext(BodyReference reference) => GetDynamicContext(reference.Handle);
 
-        public TypedIndex AddShape<TShape>(TShape shape, object context = null) where TShape : struct, IShape
+        public TypedIndex AddShape<TShape>(TShape shape, object context = null) where TShape : unmanaged, IShape
         {
             var index = Simulation.Shapes.Add(shape);
             if (context != null)
@@ -121,7 +121,7 @@ namespace Clunker.Physics
             return new StaticReference(handle, Simulation.Statics);
         }
 
-        public T GetShape<T>(int typeIndex) where T : struct, IShape
+        public T GetShape<T>(int typeIndex) where T : unmanaged, IShape
         {
             return Simulation.Shapes.GetShape<T>(typeIndex);
         }

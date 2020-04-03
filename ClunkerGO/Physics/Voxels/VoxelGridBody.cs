@@ -74,6 +74,6 @@ namespace Clunker.Physics.Voxels
         }
 
         protected abstract void RemoveBody();
-        protected abstract void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia, Vector3 offset);
+        protected abstract void SetBody(TypedIndex type, float speculativeMargin, in BodyInertia inertia, Vector3 offset);
     }
 }

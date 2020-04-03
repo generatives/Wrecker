@@ -53,9 +53,9 @@ namespace Wrecker
                     context = _physicsSystem.GetStaticContext(handler.Collidable.Handle);
                 }
 
-                if(context is Entity entity && entity.Has<VoxelBody>() && entity.Has<VoxelGrid>())
+                if(context is Entity entity && entity.Has<VoxelStaticBody>() && entity.Has<VoxelGrid>())
                 {
-                    var body = entity.Get<VoxelBody>();
+                    var body = entity.Get<VoxelStaticBody>();
                     var voxels = entity.Get<VoxelGrid>();
 
                     var gridIndex = body.VoxelIndicesByChildIndex[handler.ChildIndex];

@@ -1,23 +1,19 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
-using BepuPhysics.Constraints;
 using BepuUtilities;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
-using Quaternion = BepuUtilities.Quaternion;
 
 namespace Clunker.Physics.CharacterController
 {
     /// <summary>
-    /// Raw data for a character controller instance.
+    /// Raw data for a dynamic character controller instance.
     /// </summary>
     public struct CharacterController
     {
@@ -114,6 +110,7 @@ namespace Clunker.Physics.CharacterController
             characters = new QuickList<CharacterController>(initialCharacterCapacity, pool);
             ResizeBodyHandleCapacity(initialBodyHandleCapacity);
             analyzeContactsWorker = AnalyzeContactsWorker;
+            expandBoundingBoxesWorker = ExpandBoundingBoxesWorker;
         }
 
         /// <summary>
@@ -184,7 +181,7 @@ namespace Clunker.Physics.CharacterController
             Debug.Assert(bodyHandle >= 0 && (bodyHandle >= bodyHandleToCharacterIndex.Length || bodyHandleToCharacterIndex[bodyHandle] == -1),
                 "Cannot allocate more than one character for the same body handle.");
             if (bodyHandle >= bodyHandleToCharacterIndex.Length)
-                ResizeBodyHandleCapacity(System.Math.Max(bodyHandle + 1, bodyHandleToCharacterIndex.Length * 2));
+                ResizeBodyHandleCapacity(Math.Max(bodyHandle + 1, bodyHandleToCharacterIndex.Length * 2));
             var characterIndex = characters.Count;
             ref var character = ref characters.Allocate(pool);
             character = default;
@@ -256,7 +253,7 @@ namespace Clunker.Physics.CharacterController
         Buffer<ContactCollectionWorkerCache> contactCollectionWorkerCaches;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool TryReportContacts<TManifold>(CollidableReference characterCollidable, CollidableReference supportCollidable, CollidablePair pair, ref TManifold manifold, int workerIndex) where TManifold : struct, IContactManifold
+        bool TryReportContacts<TManifold>(CollidableReference characterCollidable, CollidableReference supportCollidable, CollidablePair pair, ref TManifold manifold, int workerIndex) where TManifold : struct, IContactManifold<TManifold>
         {
             if (characterCollidable.Mobility == CollidableMobility.Dynamic && characterCollidable.Handle < bodyHandleToCharacterIndex.Length)
             {
@@ -283,7 +280,7 @@ namespace Clunker.Physics.CharacterController
                     ref var bodyLocation = ref Simulation.Bodies.HandleToLocation[character.BodyHandle];
                     ref var set = ref Simulation.Bodies.Sets[bodyLocation.SetIndex];
                     ref var pose = ref set.Poses[bodyLocation.Index];
-                    Quaternion.Transform(character.LocalUp, pose.Orientation, out var up);
+                    QuaternionEx.Transform(character.LocalUp, pose.Orientation, out var up);
                     //Note that this branch is compiled out- the generic constraints force type specialization.
                     if (manifold.Convex)
                     {
@@ -388,18 +385,20 @@ namespace Clunker.Physics.CharacterController
 
 
         /// <summary>
-        /// Reports contacts about a collision to the character system. If the pair does not involve a character, does nothing and returns false.
+        /// Reports contacts about a collision to the character system. If the pair does not involve a character or there are no contacts, does nothing and returns false.
         /// </summary>
         /// <param name="pair">Pair of objects associated with the contact manifold.</param>
         /// <param name="manifold">Contact manifold between the colliding objects.</param>
         /// <param name="workerIndex">Index of the currently executing worker thread.</param>
         /// <param name="materialProperties">Material properties for this pair. Will be modified if the pair involves a character.</param>
-        /// <returns>True if the pair involved a character pair, false otherwise.</returns>
+        /// <returns>True if the pair involved a character pair and has contacts, false otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryReportContacts<TManifold>(in CollidablePair pair, ref TManifold manifold, int workerIndex, ref PairMaterialProperties materialProperties) where TManifold : struct, IContactManifold
+        public bool TryReportContacts<TManifold>(in CollidablePair pair, ref TManifold manifold, int workerIndex, ref PairMaterialProperties materialProperties) where TManifold : struct, IContactManifold<TManifold>
         {
             Debug.Assert(contactCollectionWorkerCaches.Allocated && workerIndex < contactCollectionWorkerCaches.Length && contactCollectionWorkerCaches[workerIndex].SupportCandidates.Allocated,
                 "Worker caches weren't properly allocated; did you forget to call PrepareForContacts before collision detection?");
+            if (manifold.Count == 0)
+                return false;
             //It's possible for neither, one, or both collidables to be a character. Check each one, treating the other as a potential support.
             var aIsCharacter = TryReportContacts(pair.A, pair.B, pair, ref manifold, workerIndex);
             var bIsCharacter = TryReportContacts(pair.B, pair.A, pair, ref manifold, workerIndex);
@@ -414,6 +413,44 @@ namespace Clunker.Physics.CharacterController
             return false;
         }
 
+        Buffer<(int Start, int Count)> boundingBoxExpansionJobs;
+        unsafe void ExpandBoundingBoxes(int start, int count)
+        {
+            var end = start + count;
+            for (int i = start; i < end; ++i)
+            {
+                ref var character = ref characters[i];
+                var characterBody = Simulation.Bodies.GetBodyReference(character.BodyHandle);
+                if (characterBody.Awake)
+                {
+                    Simulation.BroadPhase.GetActiveBoundsPointers(characterBody.Collidable.BroadPhaseIndex, out var min, out var max);
+                    QuaternionEx.Transform(character.LocalUp, characterBody.Pose.Orientation, out var characterUp);
+                    var supportExpansion = character.MinimumSupportContinuationDepth * characterUp;
+                    *min += Vector3.Min(Vector3.Zero, supportExpansion);
+                    *max += Vector3.Max(Vector3.Zero, supportExpansion);
+                }
+            }
+        }
+
+        int boundingBoxExpansionJobIndex;
+        Action<int> expandBoundingBoxesWorker;
+        void ExpandBoundingBoxesWorker(int workerIndex)
+        {
+            while (true)
+            {
+                var jobIndex = Interlocked.Increment(ref boundingBoxExpansionJobIndex);
+                if (jobIndex < boundingBoxExpansionJobs.Length)
+                {
+                    ref var job = ref boundingBoxExpansionJobs[jobIndex];
+                    ExpandBoundingBoxes(job.Start, job.Count);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
         /// <summary>
         /// Preallocates space for support data collected during the narrow phase. Should be called before the narrow phase executes.
         /// </summary>
@@ -426,9 +463,35 @@ namespace Clunker.Physics.CharacterController
             {
                 contactCollectionWorkerCaches[i] = new ContactCollectionWorkerCache(characters.Count, pool);
             }
-            //If you wanted additional control during downstepping, you could introduce a bounding box resize here- 
-            //extend the bounding box in the direction of the character's local down direction by MinimumSupportContinuationDepth.
-            //If it walks off a step with height less than MinimumSupportContinuationDepth, it would retain constraint-based control.
+            //While the character will retain support with contacts with depths above the MinimumSupportContinuationDepth if there was support in the previous frame,
+            //it's possible for the contacts to be lost because the bounding box isn't expanded by MinimumSupportContinuationDepth and the broad phase doesn't see the support collidable.
+            //Here, we expand the bounding boxes to compensate.
+            if (threadCount == 1 || characters.Count < 256)
+            {
+                ExpandBoundingBoxes(0, characters.Count);
+            }
+            else
+            {
+                var jobCount = Math.Min(characters.Count, threadCount);
+                var charactersPerJob = characters.Count / jobCount;
+                var baseCharacterCount = charactersPerJob * jobCount;
+                var remainder = characters.Count - baseCharacterCount;
+                pool.Take(jobCount, out boundingBoxExpansionJobs);
+                var previousEnd = 0;
+                for (int jobIndex = 0; jobIndex < jobCount; ++jobIndex)
+                {
+                    var charactersForJob = jobIndex < remainder ? charactersPerJob + 1 : charactersPerJob;
+                    ref var job = ref boundingBoxExpansionJobs[jobIndex];
+                    job.Start = previousEnd;
+                    job.Count = charactersForJob;
+                    previousEnd += job.Count;
+                }
+
+                boundingBoxExpansionJobIndex = -1;
+                threadDispatcher.DispatchWorkers(expandBoundingBoxesWorker);
+                pool.Return(ref boundingBoxExpansionJobs);
+
+            }
         }
 
         struct PendingDynamicConstraint
@@ -531,7 +594,7 @@ namespace Clunker.Physics.CharacterController
                     //If the character is jumping, don't create a constraint.
                     if (supportCandidate.Depth > float.MinValue && character.TryJump)
                     {
-                        Quaternion.Transform(character.LocalUp, Simulation.Bodies.ActiveSet.Poses[bodyLocation.Index].Orientation, out var characterUp);
+                        QuaternionEx.Transform(character.LocalUp, Simulation.Bodies.ActiveSet.Poses[bodyLocation.Index].Orientation, out var characterUp);
                         //Note that we assume that character orientations are constant. This isn't necessarily the case in all uses, but it's a decent approximation.
                         var characterUpVelocity = Vector3.Dot(Simulation.Bodies.ActiveSet.Velocities[bodyLocation.Index].Linear, characterUp);
                         //We don't want the character to be able to 'superboost' by simply adding jump speed on top of horizontal motion.
@@ -581,7 +644,7 @@ namespace Clunker.Physics.CharacterController
                         Matrix3x3 surfaceBasis;
                         surfaceBasis.Y = supportCandidate.Normal;
                         //Note negation: we're using a right handed basis where -Z is forward, +Z is backward.
-                        Quaternion.Transform(character.LocalUp, Simulation.Bodies.ActiveSet.Poses[bodyLocation.Index].Orientation, out var up);
+                        QuaternionEx.Transform(character.LocalUp, Simulation.Bodies.ActiveSet.Poses[bodyLocation.Index].Orientation, out var up);
                         var rayDistance = Vector3.Dot(character.ViewDirection, surfaceBasis.Y);
                         var rayVelocity = Vector3.Dot(up, surfaceBasis.Y);
                         Debug.Assert(rayVelocity > 0,
@@ -594,11 +657,11 @@ namespace Clunker.Physics.CharacterController
                         }
                         else
                         {
-                            Quaternion.GetQuaternionBetweenNormalizedVectors(Vector3.UnitY, surfaceBasis.Y, out var rotation);
-                            Quaternion.TransformUnitZ(rotation, out surfaceBasis.Z);
+                            QuaternionEx.GetQuaternionBetweenNormalizedVectors(Vector3.UnitY, surfaceBasis.Y, out var rotation);
+                            QuaternionEx.TransformUnitZ(rotation, out surfaceBasis.Z);
                         }
                         surfaceBasis.X = Vector3.Cross(surfaceBasis.Y, surfaceBasis.Z);
-                        Quaternion.CreateFromRotationMatrix(surfaceBasis, out var surfaceBasisQuaternion);
+                        QuaternionEx.CreateFromRotationMatrix(surfaceBasis, out var surfaceBasisQuaternion);
                         if (supportCandidate.Support.Mobility != CollidableMobility.Static)
                         {
                             //The character is supported by a body.
@@ -701,7 +764,7 @@ namespace Clunker.Physics.CharacterController
             }
             else
             {
-                analysisJobCount = System.Math.Min(characters.Count, threadDispatcher.ThreadCount * 4);
+                analysisJobCount = Math.Min(characters.Count, threadDispatcher.ThreadCount * 4);
                 if (analysisJobCount > 0)
                 {
                     pool.Take(threadDispatcher.ThreadCount, out analyzeContactsWorkerCaches);
@@ -810,11 +873,11 @@ namespace Clunker.Physics.CharacterController
                     break;
                 }
             }
-            var targetHandleCapacity = BufferPool.GetCapacityForCount<int>(System.Math.Max(lastOccupiedIndex + 1, bodyHandleCapacity));
+            var targetHandleCapacity = BufferPool.GetCapacityForCount<int>(Math.Max(lastOccupiedIndex + 1, bodyHandleCapacity));
             if (targetHandleCapacity != bodyHandleToCharacterIndex.Length)
                 ResizeBodyHandleCapacity(targetHandleCapacity);
 
-            var targetCharacterCapacity = BufferPool.GetCapacityForCount<int>(System.Math.Max(characters.Count, characterCapacity));
+            var targetCharacterCapacity = BufferPool.GetCapacityForCount<int>(Math.Max(characters.Count, characterCapacity));
             if (targetCharacterCapacity != characters.Span.Length)
                 characters.Resize(targetCharacterCapacity, pool);
         }

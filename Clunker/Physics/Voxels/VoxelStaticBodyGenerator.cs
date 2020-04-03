@@ -14,12 +14,12 @@ using System.Text;
 
 namespace Clunker.Physics.Voxels
 {
-    public class VoxelShapeGenerator : ComputedComponentSystem<double>
+    public class VoxelStaticBodyGenerator : ComputedComponentSystem<double>
     {
         private PhysicsSystem _physicsSystem;
         private List<Vector3i> _exposedVoxelsBuffer;
 
-        public VoxelShapeGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(VoxelGrid), typeof(Transform), typeof(VoxelBody))
+        public VoxelStaticBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
         {
             _physicsSystem = physicsSystem;
             _exposedVoxelsBuffer = new List<Vector3i>();
@@ -28,7 +28,7 @@ namespace Clunker.Physics.Voxels
         protected override void Compute(double time, in Entity entity)
         {
             var voxels = entity.Get<VoxelGrid>();
-            ref var body = ref entity.Get<VoxelBody>();
+            ref var body = ref entity.Get<VoxelStaticBody>();
             var transform = entity.Get<Transform>();
 
             var size = voxels.VoxelSize;
@@ -82,7 +82,7 @@ namespace Clunker.Physics.Voxels
 
         protected override void Remove(in Entity entity)
         {
-            ref var body = ref entity.Get<VoxelBody>();
+            ref var body = ref entity.Get<VoxelStaticBody>();
 
             if (body.VoxelShape.Exists)
             {

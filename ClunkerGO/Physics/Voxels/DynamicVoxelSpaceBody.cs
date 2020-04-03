@@ -60,7 +60,7 @@ namespace Clunker.Physics.Voxels
         {
             if (VoxelBody.Exists)
             {
-                GameObject.Transform.WorldOrientation = VoxelBody.Pose.Orientation.ToStandard();
+                GameObject.Transform.WorldOrientation = VoxelBody.Pose.Orientation;
                 GameObject.Transform.WorldPosition = VoxelBody.Pose.Position - WorldBodyOffset;
             }
         }
@@ -141,14 +141,14 @@ namespace Clunker.Physics.Voxels
 
                     if (VoxelBody.Exists)
                     {
-                        physicsSystem.Simulation.Bodies.ChangeShape(VoxelBody.Handle, _voxelShape);
-                        physicsSystem.Simulation.Bodies.ChangeLocalInertia(VoxelBody.Handle, ref compoundInertia);
+                        physicsSystem.Simulation.Bodies.SetShape(VoxelBody.Handle, _voxelShape);
+                        physicsSystem.Simulation.Bodies.SetLocalInertia(VoxelBody.Handle, compoundInertia);
                         VoxelBody.Pose.Position += offsetDiff;
                     }
                     else
                     {
                         var desc = BodyDescription.CreateDynamic(
-                            new RigidPose(GameObject.Transform.WorldPosition + WorldBodyOffset, GameObject.Transform.WorldOrientation.ToPhysics()),
+                            new RigidPose(GameObject.Transform.WorldPosition + WorldBodyOffset, GameObject.Transform.WorldOrientation),
                             compoundInertia,
                             new CollidableDescription(_voxelShape, 0.1f),
                             new BodyActivityDescription(-1));

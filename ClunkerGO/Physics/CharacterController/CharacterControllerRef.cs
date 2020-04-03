@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
-using Quaternion = BepuUtilities.Quaternion;
 
 namespace Clunker.Physics.CharacterController
 {
@@ -85,7 +84,7 @@ namespace Clunker.Physics.CharacterController
             //Modifying the character's raw data does not automatically wake the character up, so we do so explicitly if necessary.
             //If you don't explicitly wake the character up, it won't respond to the changed motion goals.
             //(You can also specify a negative deactivation threshold in the BodyActivityDescription to prevent the character from sleeping at all.)
-            if (!Body.IsActive &&
+            if (!Body.Awake &&
                 ((character.TryJump && character.Supported) ||
                 newTargetVelocity != character.TargetVelocity ||
                 (newTargetVelocity != Vector2.Zero && character.ViewDirection != viewDirection)))
@@ -104,7 +103,7 @@ namespace Clunker.Physics.CharacterController
             //Feel free to try alternative implementations. Again, there is no one correct approach.
             if (!character.Supported && movementDirectionLengthSquared > 0)
             {
-                Quaternion.Transform(character.LocalUp, Body.Pose.Orientation, out var characterUp);
+                BepuUtilities.QuaternionEx.Transform(character.LocalUp, Body.Pose.Orientation, out var characterUp);
                 var characterRight = Vector3.Cross(character.ViewDirection, characterUp);
                 var rightLengthSquared = characterRight.LengthSquared();
                 if (rightLengthSquared > 1e-10f)
@@ -119,7 +118,7 @@ namespace Clunker.Physics.CharacterController
                     //While we shouldn't allow the character to continue accelerating in the air indefinitely, trying to move in a given direction should never slow us down in that direction.
                     var velocityChangeAlongMovementDirection = MathF.Max(0, targetVelocity - currentVelocity);
                     Body.Velocity.Linear += worldMovementDirection * velocityChangeAlongMovementDirection;
-                    Debug.Assert(Body.IsActive, "Velocity changes don't automatically update objects; the character should have already been woken up before applying air control.");
+                    Debug.Assert(Body.Awake, "Velocity changes don't automatically update objects; the character should have already been woken up before applying air control."); ;
                 }
             }
         }

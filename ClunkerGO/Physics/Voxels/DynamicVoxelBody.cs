@@ -23,20 +23,20 @@ namespace Clunker.Physics.Voxels
 
         public Vector3 RelativeBodyOffset => Vector3.Transform(BodyOffset, GameObject.Transform.WorldOrientation);
 
-        protected override void SetBody(TypedIndex type, float speculativeMargin, BodyInertia inertia, Vector3 offset)
+        protected override void SetBody(TypedIndex type, float speculativeMargin, in BodyInertia inertia, Vector3 offset)
         {
             BodyOffset = offset;
             var physicsSystem = GameObject.CurrentScene.GetOrCreateSystem<PhysicsSystem>();
 
             if(VoxelBody.Exists)
             {
-                physicsSystem.Simulation.Bodies.ChangeShape(VoxelBody.Handle, type);
-                physicsSystem.Simulation.Bodies.ChangeLocalInertia(VoxelBody.Handle, ref inertia);
+                physicsSystem.Simulation.Bodies.SetShape(VoxelBody.Handle, type);
+                physicsSystem.Simulation.Bodies.SetLocalInertia(VoxelBody.Handle, inertia);
             }
             else
             {
                 var desc = BodyDescription.CreateDynamic(
-                    new RigidPose(GameObject.Transform.WorldPosition + RelativeBodyOffset, GameObject.Transform.WorldOrientation.ToPhysics()),
+                    new RigidPose(GameObject.Transform.WorldPosition + RelativeBodyOffset, GameObject.Transform.WorldOrientation),
                     inertia,
                     new CollidableDescription(type, speculativeMargin),
                     new BodyActivityDescription(-1));
@@ -54,7 +54,7 @@ namespace Clunker.Physics.Voxels
         {
             if(HasBody)
             {
-                GameObject.Transform.WorldOrientation = VoxelBody.Pose.Orientation.ToStandard();
+                GameObject.Transform.WorldOrientation = VoxelBody.Pose.Orientation;
                 GameObject.Transform.WorldPosition = VoxelBody.Pose.Position - RelativeBodyOffset;
             }
         }

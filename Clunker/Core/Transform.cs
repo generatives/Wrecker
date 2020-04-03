@@ -11,7 +11,10 @@ namespace Clunker.Core
 {
     public class Transform
     {
-        public Transform Parent { get; internal set; }
+        public Transform Parent { get; private set; }
+
+        private List<Transform> _children;
+        public IEnumerable<Transform> Children { get => _children; }
         public bool InheiritParentTransform { get; set; } = true;
         public bool IsInheiritingParentTransform => InheiritParentTransform && Parent != null;
         public Vector3 Position { get; set; }
@@ -91,7 +94,39 @@ namespace Clunker.Core
 
         public Transform()
         {
+            _children = new List<Transform>(0);
             Scale = Vector3.One;
+        }
+
+        public void AddChild(Transform child)
+        {
+            if(child.Parent != null)
+            {
+                child.Parent.RemoveChild(child);
+            }
+            _children.Add(child);
+            child.Parent = this;
+        }
+
+        public void RemoveChild(Transform child)
+        {
+            if(child.Parent == this)
+            {
+                child.Parent = null;
+                _children.Remove(child);
+            }
+        }
+
+        public void SetParent(Transform parent)
+        {
+            if(parent != null)
+            {
+                parent.AddChild(this);
+            }
+            else
+            {
+                Parent = null;
+            }
         }
 
         public void MoveBy(float forward, float vertical, float right)

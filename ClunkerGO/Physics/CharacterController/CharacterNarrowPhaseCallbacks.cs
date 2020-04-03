@@ -1,15 +1,11 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
-using BepuPhysics.Constraints;
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Text;
+using BepuPhysics.Constraints;
 
 namespace Clunker.Physics.CharacterController
 {
-
     /// <summary>
     /// Implements simple callbacks to inform the CharacterControllers system of created contacts.
     /// </summary>
@@ -25,7 +21,7 @@ namespace Clunker.Physics.CharacterController
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool AllowContactGeneration(int workerIndex, CollidableReference a, CollidableReference b)
         {
-            return true;
+            return a.Mobility == CollidableMobility.Dynamic || b.Mobility == CollidableMobility.Dynamic;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -35,29 +31,15 @@ namespace Clunker.Physics.CharacterController
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void GetMaterial(out PairMaterialProperties pairMaterial)
+        public unsafe bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold, out PairMaterialProperties pairMaterial) where TManifold : struct, IContactManifold<TManifold>
         {
             pairMaterial = new PairMaterialProperties { FrictionCoefficient = 1, MaximumRecoveryVelocity = 2, SpringSettings = new SpringSettings(30, 1) };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe bool ConfigureContactManifold(int workerIndex, CollidablePair pair, ConvexContactManifold* manifold, out PairMaterialProperties pairMaterial)
-        {
-            GetMaterial(out pairMaterial);
-            Characters.TryReportContacts(pair, ref *manifold, workerIndex, ref pairMaterial);
+            Characters.TryReportContacts(pair, ref manifold, workerIndex, ref pairMaterial);
             return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe bool ConfigureContactManifold(int workerIndex, CollidablePair pair, NonconvexContactManifold* manifold, out PairMaterialProperties pairMaterial)
-        {
-            GetMaterial(out pairMaterial);
-            Characters.TryReportContacts(pair, ref *manifold, workerIndex, ref pairMaterial);
-            return true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe bool ConfigureContactManifold(int workerIndex, CollidablePair pair, int childIndexA, int childIndexB, ConvexContactManifold* manifold)
+        public unsafe bool ConfigureContactManifold(int workerIndex, CollidablePair pair, int childIndexA, int childIndexB, ref ConvexContactManifold manifold)
         {
             return true;
         }
@@ -73,3 +55,5 @@ namespace Clunker.Physics.CharacterController
         }
     }
 }
+
+

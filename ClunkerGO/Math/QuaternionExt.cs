@@ -41,15 +41,5 @@ namespace Clunker.Geometry
 
             return (yaw, pitch, roll);
         }
-
-        public static BepuUtilities.Quaternion ToPhysics(this Quaternion q)
-        {
-            return new BepuUtilities.Quaternion(q.X, q.Y, q.Z, q.W);
-        }
-
-        public static Quaternion ToStandard(this BepuUtilities.Quaternion q)
-        {
-            return new Quaternion(q.X, q.Y, q.Z, q.W);
-        }
     }
 }

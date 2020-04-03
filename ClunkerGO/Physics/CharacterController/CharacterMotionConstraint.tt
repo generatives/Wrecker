@@ -8,7 +8,6 @@ using BepuUtilities;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using System.Numerics;
-using Quaternion = BepuUtilities.Quaternion;
 using System;
 using BepuPhysics.CollisionDetection;
 using System.Runtime.CompilerServices;
@@ -42,7 +41,7 @@ namespace Clunker.Physics.CharacterController
     /// <summary>
     /// Description of a character motion constraint where the support is <#=prefix.ToLower()#>.
     /// </summary>
-    public struct <#=prefix#>CharacterMotionConstraint : IConstraintDescription<<#=prefix#>CharacterMotionConstraint>
+    public struct <#=prefix#>CharacterMotionConstraint : I<#=dynamic ? "TwoBody" : "OneBody"#>ConstraintDescription<<#=prefix#>CharacterMotionConstraint>
     {
         /// <summary>
         /// Maximum force that the horizontal motion constraint can apply to reach the current velocity goal.
