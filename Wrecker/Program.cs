@@ -1,33 +1,22 @@
 ﻿using Clunker;
-using Clunker.Construct;
-using Clunker.Editor;
-using Clunker.Editor.Inspector;
+using Clunker.Core;
 using Clunker.Graphics;
-using Clunker.Graphics.Factories;
 using Clunker.Graphics.Materials;
-using Clunker.Geometry;
 using Clunker.Physics;
-using Clunker.Physics.CharacterController;
 using Clunker.Physics.Voxels;
 using Clunker.Resources;
-using Clunker.SceneGraph;
-using Clunker.SceneGraph.ComponentInterfaces;
-using Clunker.SceneGraph.Core;
-using Clunker.Tooling;
-using Clunker.UtilityComponents;
 using Clunker.Voxels;
-using Clunker.World;
-using Hyperion;
+using Clunker.WorldSpace;
+using DefaultEcs;
+using DefaultEcs.Threading;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Numerics;
 using Veldrid;
 using Veldrid.StartupUtilities;
+using Wrecker;
 
-namespace Wrecker
+namespace ClunkerECSDemo
 {
     class Program
     {
@@ -36,7 +25,6 @@ namespace Wrecker
             WindowCreateInfo wci = new WindowCreateInfo
             {
                 X = 100,
-
                 Y = 100,
                 WindowWidth = 1280,
                 WindowHeight = 720,
@@ -52,9 +40,45 @@ namespace Wrecker
 #if DEBUG
             options.Debug = true;
 #endif
-            var scene = new Scene();
 
-            var types = new VoxelTypes(new[]
+            var resourceLoader = new ResourceLoader();
+            var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
+
+            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
+            var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
+
+            var scene = new Scene();
+            var parrallelRunner = new DefaultParallelRunner(Environment.ProcessorCount);
+
+            var camera = scene.World.CreateEntity();
+            var transform = new Transform();
+            transform.Position = new Vector3(0, 0, 3);
+            camera.Set(transform);
+            camera.Set(new Camera());
+
+            scene.RendererSystems.Add(new MeshGeometryInitializer(scene.World));
+
+            var px = Image.Load("Assets\\skybox_px.png");
+            var nx = Image.Load("Assets\\skybox_nx.png");
+            var py = Image.Load("Assets\\skybox_py.png");
+            var ny = Image.Load("Assets\\skybox_ny.png");
+            var pz = Image.Load("Assets\\skybox_pz.png");
+            var nz = Image.Load("Assets\\skybox_nz.png");
+            scene.RendererSystems.Add(new SkyboxRenderer(px, nx, py, ny, pz, nz));
+
+            scene.RendererSystems.Add(new MeshGeometryRenderer(scene.World));
+
+            scene.LogicSystems.Add(new SimpleCameraMover(scene.World));
+            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, transform, 3, 32));
+            scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance, 32, 1)));
+
+            var physicsSystem = new PhysicsSystem();
+            scene.LogicSystems.Add(physicsSystem);
+            scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, scene.World));
+
+            scene.LogicSystems.Add(new ClickVoxelRemover(physicsSystem, transform));
+
+            var voxelTypes = new VoxelTypes(new[]
             {
                 new VoxelType(
                     "DarkStone",
@@ -73,81 +97,23 @@ namespace Wrecker
                     new Vector2(650, 1300))
             });
 
-            var resourceLoader = new ResourceLoader();
-            var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
+            scene.LogicSystems.Add(new VoxelGridMesher(scene, voxelTypes, parrallelRunner));
 
-            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
-            var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
-
-            var noCullingMaterial = new Material(Mesh3d.VertexCode, Mesh3d.UnlitFragmentCode, true);
-            var noCullingVoxelMaterial = new MaterialInstance(noCullingMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
-
-            //var cross = QuadCrossFactory.Build(new Rectangle(390, 130, 128, 128), true, noCullingVoxelMaterial);
-            //cross.Name = "Cross";
-            //scene.AddGameObject(cross);
-
-            var tools = new Tool[]
-            {
-                new RemoveVoxelEditingTool() { Name = "Remove" },
-                new BasicVoxelAddingTool("DarkStone", 0, types, voxelMaterialInstance),
-                new BasicVoxelAddingTool("Metal", 1, types, voxelMaterialInstance),
-                new ThrusterVoxelEditingTool(new Rectangle(390, 130, 128, 128), noCullingVoxelMaterial, 2, types, voxelMaterialInstance) { Name = "Thruster" }
-            };
-
-            var px = Image.Load("Assets\\skybox_px.png");
-            var nx = Image.Load("Assets\\skybox_nx.png");
-            var py = Image.Load("Assets\\skybox_py.png");
-            var ny = Image.Load("Assets\\skybox_ny.png");
-            var pz = Image.Load("Assets\\skybox_pz.png");
-            var nz = Image.Load("Assets\\skybox_nz.png");
-
-            var camera = new GameObject("Player");
-            camera.Transform.Position = new Vector3(0, 0, 3);
-            camera.AddComponent(new Camera());
-            camera.AddComponent(new Character());
-            camera.AddComponent(new CharacterInput());
-            camera.AddComponent(new ComponentSwitcher(tools));
-            //camera.AddComponent(new EditorMenu());
-            //camera.AddComponent(new Inspector());
-            //camera.AddComponent(new Clunker.Editor.Console.Console());
-            camera.AddComponent(new Skybox(px, nx, py, ny, pz, nz));
-            scene.AddGameObject(camera);
-
-            var ship = CreateShip(types, voxelMaterialInstance);
-
-            scene.AddGameObject(ship);
-
-            //camera.AddComponent(new ObjectFollower() { ToFollow = ship, Distance = new Vector3(0.5f, 1, 6) });
-
-            var chunkSize = 32;
-
-            var worldSpaceObj = new GameObject("World Space");
-            var worldSpace = new VoxelSpace(new Vector3i(chunkSize, chunkSize, chunkSize), 1);
-            worldSpaceObj.AddComponent(worldSpace);
-            scene.AddGameObject(worldSpaceObj);
-
-            var worldSystem = new WorldSystem(
-                camera,
-                worldSpace,
-                new ChunkStorage(),
-                new ChunkGenerator(types, voxelMaterialInstance, chunkSize, 1),
-                10, chunkSize);
-
-            scene.AddSystem(worldSystem);
-            scene.AddSystem(new PhysicsSystem());
+            var spaceShip = scene.World.CreateEntity();
+            SetAsShip(spaceShip, voxelMaterialInstance);
 
             var app = new ClunkerApp(resourceLoader, scene);
 
             app.Start(wci, options).Wait();
         }
 
-        private static GameObject CreateShip(VoxelTypes types, MaterialInstance materialInstance)
+        private static void SetAsShip(Entity entity, MaterialInstance materialInstance)
         {
             var gridLength = 8;
-            var padding = 2;
+            var padding = 3;
             var voxelSize = 1;
-            var voxelSpaceData = new VoxelGridData(gridLength, gridLength, gridLength, voxelSize);
-            for(var x = padding; x < gridLength - padding; x++ )
+            var voxelSpaceData = new VoxelGrid(gridLength, voxelSize);
+            for (var x = padding; x < gridLength - padding; x++)
             {
                 for (var y = padding; y < gridLength - padding; y++)
                 {
@@ -158,22 +124,10 @@ namespace Wrecker
                 }
             }
 
-            var voxelSpace = new VoxelSpace(new Vector3i(gridLength, gridLength, gridLength), voxelSize);
-            var spaceShip = new GameObject("Single Block");
-            spaceShip.AddComponent(voxelSpace);
-            spaceShip.AddComponent(new DynamicVoxelSpaceBody());
-            //spaceShip.AddComponent(new Construct());
-            //spaceShip.AddComponent(new ConstructFlightControl());
-            spaceShip.AddComponent(new ConstructVoxelSpaceExpander(types, materialInstance));
-
-            var voxelGridObj = new GameObject($"{spaceShip.Name} Voxel Grid");
-            voxelGridObj.AddComponent(new VoxelGrid(voxelSpaceData, new Dictionary<Vector3i, GameObject>()));
-            voxelGridObj.AddComponent(new VoxelMeshRenderable(types, materialInstance));
-            //voxelGridObj.AddComponent(new VoxelGridRenderable(types, materialInstance));
-
-            voxelSpace.Add(new Vector3i(0, 0, 0), voxelGridObj);
-
-            return spaceShip;
+            entity.Set(new Transform());
+            entity.Set(materialInstance);
+            entity.Set(voxelSpaceData);
+            entity.Set(new VoxelDynamicBody());
         }
     }
 }

@@ -8,18 +8,18 @@ namespace Clunker.Voxels
 {
     public class MeshGenerator
     {
-        public static void GenerateMesh(VoxelGridData space, Action<Voxel, VoxelSide, Quad> quadProcessor)
+        public static void GenerateMesh(VoxelGrid space, Action<Voxel, VoxelSide, Quad> quadProcessor)
         {
             space.FindExposedSides((v, x, y, z, side) =>
             {
                 AddBlock(quadProcessor, v, x, y, z, side, space.VoxelSize);
             });
         }
-        public static void GenerateGridMesh(VoxelGridData space, Action<Voxel, VoxelSide, Quad> quadProcessor)
+        public static void GenerateGridMesh(VoxelGrid space, Action<Voxel, VoxelSide, Quad> quadProcessor)
         {
-            for (int x = 0; x < space.XLength; x++)
-                for (int y = 0; y < space.YLength; y++)
-                    for (int z = 0; z < space.ZLength; z++)
+            for (int x = 0; x < space.GridSize; x++)
+                for (int y = 0; y < space.GridSize; y++)
+                    for (int z = 0; z < space.GridSize; z++)
                     {
                         var voxel = space[x, y, z];
                         AddBlock(quadProcessor, voxel, x, y, z, VoxelSide.BOTTOM, space.VoxelSize);

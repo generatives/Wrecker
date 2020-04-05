@@ -1,4 +1,5 @@
 ﻿using Clunker.Geometry;
+using DefaultEcs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,24 +7,28 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Clunker.SceneGraph.Core
+namespace Clunker.Core
 {
-    public class Transform : Component
+    public class Transform
     {
+        public Transform Parent { get; private set; }
+
+        private List<Transform> _children;
+        public IEnumerable<Transform> Children { get => _children; }
         public bool InheiritParentTransform { get; set; } = true;
-        public bool IsInheiritingParentTransform => InheiritParentTransform && GameObject.Parent != null;
+        public bool IsInheiritingParentTransform => InheiritParentTransform && Parent != null;
         public Vector3 Position { get; set; }
         public Vector3 WorldPosition
         {
             get
             {
-                return IsInheiritingParentTransform ? GameObject.Parent.Transform.GetWorld(Position) : Position;
+                return IsInheiritingParentTransform ? Parent.GetWorld(Position) : Position;
             }
             set
             {
                 if(IsInheiritingParentTransform)
                 {
-                    Position = GameObject.Parent.Transform.GetLocal(value);
+                    Position = Parent.GetLocal(value);
                 }
                 else
                 {
@@ -36,13 +41,13 @@ namespace Clunker.SceneGraph.Core
         {
             get
             {
-                return IsInheiritingParentTransform ? Orientation * GameObject.Parent.Transform.WorldOrientation : Orientation;
+                return IsInheiritingParentTransform ? Orientation * Parent.WorldOrientation : Orientation;
             }
             set
             {
                 if (IsInheiritingParentTransform)
                 {
-                    Orientation = value * Quaternion.Inverse(GameObject.Parent.Transform.WorldOrientation);
+                    Orientation = value * Quaternion.Inverse(Parent.WorldOrientation);
                 }
                 else
                 {
@@ -55,13 +60,13 @@ namespace Clunker.SceneGraph.Core
         {
             get
             {
-                return IsInheiritingParentTransform ? Vector3.Multiply(Scale, GameObject.Parent.Transform.WorldScale) : Scale;
+                return IsInheiritingParentTransform ? Vector3.Multiply(Scale, Parent.WorldScale) : Scale;
             }
             set
             {
                 if (IsInheiritingParentTransform)
                 {
-                    Scale = Vector3.Divide(value, GameObject.Parent.Transform.WorldScale);
+                    Scale = Vector3.Divide(value, Parent.WorldScale);
                 }
                 else
                 {
@@ -73,23 +78,55 @@ namespace Clunker.SceneGraph.Core
             Matrix4x4.CreateFromQuaternion(Orientation) *
             Matrix4x4.CreateTranslation(Position);
 
-        public Matrix4x4 WorldMatrix => IsInheiritingParentTransform ? GameObject.Parent.Transform.GetWorldMatrix(Matrix) : Matrix;
+        public Matrix4x4 WorldMatrix => IsInheiritingParentTransform ? Parent.GetWorldMatrix(Matrix) : Matrix;
 
         public Matrix4x4 InverseMatrix => Matrix4x4.CreateTranslation(-Position) *
             Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Orientation)) *
             Matrix4x4.CreateScale(new Vector3(1f / Scale.X, 1f / Scale.Y, 1f / Scale.Z));
 
-        public Matrix4x4 WorldInverseMatrix => IsInheiritingParentTransform ? GameObject.Parent.Transform.WorldInverseMatrix * InverseMatrix : InverseMatrix;
+        public Matrix4x4 WorldInverseMatrix => IsInheiritingParentTransform ? Parent.WorldInverseMatrix * InverseMatrix : InverseMatrix;
 
         private Matrix4x4 GetWorldMatrix(Matrix4x4 matrix4X4)
         {
             var transformed = matrix4X4 * Matrix;
-            return IsInheiritingParentTransform ? GameObject.Parent.Transform.GetWorldMatrix(transformed) : transformed;
+            return IsInheiritingParentTransform ? Parent.GetWorldMatrix(transformed) : transformed;
         }
 
-        internal Transform()
+        public Transform()
         {
+            _children = new List<Transform>(0);
             Scale = Vector3.One;
+        }
+
+        public void AddChild(Transform child)
+        {
+            if(child.Parent != null)
+            {
+                child.Parent.RemoveChild(child);
+            }
+            _children.Add(child);
+            child.Parent = this;
+        }
+
+        public void RemoveChild(Transform child)
+        {
+            if(child.Parent == this)
+            {
+                child.Parent = null;
+                _children.Remove(child);
+            }
+        }
+
+        public void SetParent(Transform parent)
+        {
+            if(parent != null)
+            {
+                parent.AddChild(this);
+            }
+            else
+            {
+                Parent = null;
+            }
         }
 
         public void MoveBy(float forward, float vertical, float right)
@@ -119,6 +156,14 @@ namespace Clunker.SceneGraph.Core
         public Vector3 GetWorld(Vector3 local)
         {
             return Vector3.Transform(local, WorldMatrix);
+        }
+
+        public Matrix4x4 GetViewMatrix()
+        {
+            var position = WorldPosition;
+            var orientation = WorldOrientation;
+            Vector3 lookDir = Vector3.Transform(-Vector3.UnitZ, orientation);
+            return Matrix4x4.CreateLookAt(position, position + lookDir, Vector3.UnitY);
         }
     }
 }
