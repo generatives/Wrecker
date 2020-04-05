@@ -12,8 +12,9 @@ using Veldrid.Utilities;
 using DefaultEcs.System;
 using DefaultEcs;
 using DefaultEcs.Threading;
+using Clunker.Voxels.Meshing;
 
-namespace Clunker.Voxels
+namespace Clunker.Voxels.Meshing
 {
     /// <summary>
     /// Creates a GeometryMesh of exposed sides

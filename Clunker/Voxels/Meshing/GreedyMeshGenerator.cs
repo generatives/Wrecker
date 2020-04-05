@@ -7,7 +7,7 @@ using System.Numerics;
 using System.Text;
 using Veldrid;
 
-namespace Clunker.Voxels
+namespace Clunker.Voxels.Meshing
 {
     public class GreedyMeshGenerator
     {

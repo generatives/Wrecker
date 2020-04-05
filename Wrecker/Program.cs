@@ -1,16 +1,20 @@
 ﻿using Clunker;
 using Clunker.Core;
+using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
 using Clunker.Physics;
 using Clunker.Physics.Voxels;
 using Clunker.Resources;
 using Clunker.Voxels;
+using Clunker.Voxels.Meshing;
+using Clunker.Voxels.Space;
 using Clunker.WorldSpace;
 using DefaultEcs;
 using DefaultEcs.Threading;
 using SixLabors.ImageSharp;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Veldrid;
 using Veldrid.StartupUtilities;
@@ -48,7 +52,7 @@ namespace ClunkerECSDemo
             var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
 
             var scene = new Scene();
-            var parrallelRunner = new DefaultParallelRunner(Environment.ProcessorCount);
+            var parrallelRunner = new DefaultParallelRunner(1);
 
             var camera = scene.World.CreateEntity();
             var transform = new Transform();
@@ -73,8 +77,16 @@ namespace ClunkerECSDemo
             scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance, 32, 1)));
 
             var physicsSystem = new PhysicsSystem();
-            scene.LogicSystems.Add(physicsSystem);
+
+            scene.LogicSystems.Add(new InputForceApplier(physicsSystem, scene.World));
+
+            scene.LogicSystems.Add(new ExposedVoxelFinder(scene.World));
+            scene.LogicSystems.Add(new VoxelSpaceChangePropogator(scene.World));
             scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, scene.World));
+            scene.LogicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, scene.World));
+
+            scene.LogicSystems.Add(physicsSystem);
+            scene.LogicSystems.Add(new DynamicBodyPositionSync(scene.World));
 
             scene.LogicSystems.Add(new ClickVoxelRemover(physicsSystem, transform));
 
@@ -99,15 +111,14 @@ namespace ClunkerECSDemo
 
             scene.LogicSystems.Add(new VoxelGridMesher(scene, voxelTypes, parrallelRunner));
 
-            var spaceShip = scene.World.CreateEntity();
-            SetAsShip(spaceShip, voxelMaterialInstance);
+            SetAsShip(scene.World, voxelMaterialInstance);
 
             var app = new ClunkerApp(resourceLoader, scene);
 
             app.Start(wci, options).Wait();
         }
 
-        private static void SetAsShip(Entity entity, MaterialInstance materialInstance)
+        private static void SetAsShip(World world, MaterialInstance materialInstance)
         {
             var gridLength = 8;
             var padding = 3;
@@ -124,10 +135,42 @@ namespace ClunkerECSDemo
                 }
             }
 
-            entity.Set(new Transform());
-            entity.Set(materialInstance);
-            entity.Set(voxelSpaceData);
-            entity.Set(new VoxelDynamicBody());
+            var shipEntity = world.CreateEntity();
+            var gridEntity1 = world.CreateEntity();
+
+            var gridTransform1 = new Transform();
+            gridEntity1.Set(gridTransform1);
+            gridEntity1.Set(materialInstance);
+            gridEntity1.Set(new ExposedVoxels());
+            gridEntity1.Set(voxelSpaceData);
+            gridEntity1.Set(new VoxelSpaceMember() { Parent = shipEntity });
+
+            var gridEntity2 = world.CreateEntity();
+
+            var gridTransform2 = new Transform();
+            gridTransform2.Position = Vector3.UnitX * gridLength * voxelSize;
+            gridEntity2.Set(gridTransform2);
+            gridEntity2.Set(materialInstance);
+            gridEntity2.Set(new ExposedVoxels());
+            gridEntity2.Set(voxelSpaceData);
+            gridEntity2.Set(new VoxelSpaceMember() { Parent = shipEntity });
+
+            var shipTransform = new Transform();
+            shipTransform.AddChild(gridTransform1);
+            shipTransform.AddChild(gridTransform2);
+            shipEntity.Set(shipTransform);
+            shipEntity.Set(new VoxelSpaceDynamicBody());
+            shipEntity.Set(new DynamicBody());
+            shipEntity.Set(new VoxelSpace()
+            {
+                GridSize = gridLength,
+                VoxelSize = voxelSize,
+                Members = new Dictionary<Vector3i, Entity>()
+                {
+                    { new Vector3i(0, 0, 0), gridEntity1 },
+                    { new Vector3i(1, 0, 0), gridEntity2 }
+                }
+            });
         }
     }
 }

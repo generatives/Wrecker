@@ -17,35 +17,30 @@ namespace Clunker.Physics.Voxels
     public class VoxelStaticBodyGenerator : ComputedComponentSystem<double>
     {
         private PhysicsSystem _physicsSystem;
-        private List<Vector3i> _exposedVoxelsBuffer;
 
-        public VoxelStaticBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
+        public VoxelStaticBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(ExposedVoxels), typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
         {
             _physicsSystem = physicsSystem;
-            _exposedVoxelsBuffer = new List<Vector3i>();
         }
 
         protected override void Compute(double time, in Entity entity)
         {
-            var voxels = entity.Get<VoxelGrid>();
-            ref var body = ref entity.Get<VoxelStaticBody>();
-            var transform = entity.Get<Transform>();
+            ref var exposedVoxels = ref entity.Get<ExposedVoxels>();
 
-            var size = voxels.VoxelSize;
-            voxels.FindExposedBlocks((v, x, y, z) =>
+            if (exposedVoxels.Exposed.Count > 0)
             {
-                _exposedVoxelsBuffer.Add(new Vector3i(x, y, z));
-            });
+                ref var voxels = ref entity.Get<VoxelGrid>();
+                ref var body = ref entity.Get<VoxelStaticBody>();
+                var transform = entity.Get<Transform>();
 
-            if (_exposedVoxelsBuffer.Count > 0)
-            {
-                var voxelIndicesByChildIndex = _exposedVoxelsBuffer.ToArray();
+                var size = voxels.VoxelSize;
+                var exposed = exposedVoxels.Exposed;
 
                 using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
                 {
-                    for (int i = 0; i < _exposedVoxelsBuffer.Count; ++i)
+                    for (int i = 0; i < exposed.Count; ++i)
                     {
-                        var position = _exposedVoxelsBuffer[i];
+                        var position = exposed[i];
                         var box = new Box(size, size, size);
                         var pose = new RigidPose(new Vector3(
                             position.X * size + size / 2,
@@ -62,11 +57,10 @@ namespace Clunker.Physics.Voxels
                     {
                         var oldShape = _physicsSystem.GetShape<BigCompound>(body.VoxelShape);
                         oldShape.Dispose(_physicsSystem.Pool);
-                        _physicsSystem.RemoveShape<BigCompound>(body.VoxelShape);
+                        _physicsSystem.RemoveShape(body.VoxelShape);
                     }
 
                     body.VoxelShape = _physicsSystem.AddShape(shape);
-                    body.VoxelIndicesByChildIndex = voxelIndicesByChildIndex;
 
                     if (body.VoxelStatic.Exists)
                     {
@@ -76,8 +70,6 @@ namespace Clunker.Physics.Voxels
                     body.VoxelStatic = _physicsSystem.AddStatic(new StaticDescription(transform.WorldPosition + transformedOffset, new CollidableDescription(body.VoxelShape, 0.1f)), entity);
                 }
             }
-
-            _exposedVoxelsBuffer.Clear();
         }
 
         protected override void Remove(in Entity entity)
@@ -88,15 +80,13 @@ namespace Clunker.Physics.Voxels
             {
                 var oldShape = _physicsSystem.GetShape<BigCompound>(body.VoxelShape);
                 oldShape.Dispose(_physicsSystem.Pool);
-                _physicsSystem.RemoveShape<BigCompound>(body.VoxelShape);
+                _physicsSystem.RemoveShape(body.VoxelShape);
             }
 
             if (body.VoxelStatic.Exists)
             {
                 _physicsSystem.RemoveStatic(body.VoxelStatic);
             }
-
-            body.VoxelIndicesByChildIndex = null;
         }
     }
 }

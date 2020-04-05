@@ -1,16 +1,11 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
-using BepuPhysics.CollisionDetection;
-using BepuPhysics.CollisionDetection.CollisionTasks;
-using BepuPhysics.CollisionDetection.SweepTasks;
-using BepuPhysics.Constraints;
-using BepuPhysics.Trees;
 using BepuUtilities.Memory;
+using Clunker.Physics.Bepu;
 using DefaultEcs.System;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Clunker.Physics
@@ -91,8 +86,7 @@ namespace Clunker.Physics
             _dynamicContexts.Remove(body.Handle);
         }
 
-        public void RemoveShape<TShape>(TypedIndex shapeIndex)
-             where TShape : unmanaged, IShape
+        public void RemoveShape(TypedIndex shapeIndex)
         {
             Simulation.Shapes.Remove(shapeIndex);
             _shapeContexts.Remove(shapeIndex);

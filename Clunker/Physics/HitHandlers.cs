@@ -1,6 +1,5 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
-using BepuPhysics.CollisionDetection;
 using BepuPhysics.Trees;
 using System;
 using System.Collections.Generic;

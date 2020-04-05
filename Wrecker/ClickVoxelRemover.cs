@@ -55,10 +55,11 @@ namespace Wrecker
 
                 if(context is Entity entity && entity.Has<VoxelStaticBody>() && entity.Has<VoxelGrid>())
                 {
-                    var body = entity.Get<VoxelStaticBody>();
-                    var voxels = entity.Get<VoxelGrid>();
+                    ref var body = ref entity.Get<VoxelStaticBody>();
+                    ref var voxels = ref entity.Get<VoxelGrid>();
+                    ref var exposedVoxels = ref entity.Get<ExposedVoxels>();
 
-                    var gridIndex = body.VoxelIndicesByChildIndex[handler.ChildIndex];
+                    var gridIndex = exposedVoxels.Exposed[handler.ChildIndex];
 
                     foreach(var index in GeometricIterators.Rectangle(gridIndex, 2))
                     {

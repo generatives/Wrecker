@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Clunker.Physics
+namespace Clunker.Physics.Bepu
 {
     //The simulation has a variety of extension points that must be defined. 
     //The demos tend to reuse a few types like the DemoNarrowPhaseCallbacks, but this demo will provide its own (super simple) versions.

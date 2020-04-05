@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Clunker.Physics
+namespace Clunker.Physics.Bepu
 {
 
     //Note that the engine does not require any particular form of gravity- it, like all the contact callbacks, is managed by a callback.

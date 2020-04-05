@@ -5,7 +5,7 @@ using System.Threading;
 using BepuUtilities.Memory;
 using BepuUtilities;
 
-namespace Clunker.Physics
+namespace Clunker.Physics.Bepu
 {
     public class SimpleThreadDispatcher : IThreadDispatcher, IDisposable
     {

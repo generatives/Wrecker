@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Collections.Pooled" Version="1.0.82" />
     <PackageReference Include="DefaultEcs" Version="0.13.1" />
     <PackageReference Include="Veldrid" Version="4.7.0" />
     <PackageReference Include="Veldrid.ImageSharp" Version="4.7.0" />

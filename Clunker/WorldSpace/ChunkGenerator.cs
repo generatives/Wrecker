@@ -85,7 +85,7 @@ namespace Clunker.WorldSpace
 
                 entity.Set(_materialInstance);
                 entity.Set(new VoxelStaticBody());
-
+                entity.Set(new ExposedVoxels());
                 entity.Set(voxelSpaceData);
             }
         }

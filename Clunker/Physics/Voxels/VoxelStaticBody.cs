@@ -11,6 +11,5 @@ namespace Clunker.Physics.Voxels
     {
         public TypedIndex VoxelShape;
         public StaticReference VoxelStatic;
-        public Vector3i[] VoxelIndicesByChildIndex;
     }
 }
