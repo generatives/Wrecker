@@ -13,6 +13,52 @@ namespace Clunker.Voxels.Space
         public float VoxelSize { get; set; }
         public Dictionary<Vector3i, Entity> Members { get; set; }
 
+        public Voxel? GetVoxel(Vector3i index)
+        {
+            var memberIndex = new Vector3i(
+                (int)Math.Floor((float)index.X / GridSize),
+                (int)Math.Floor((float)index.Y / GridSize),
+                (int)Math.Floor((float)index.Z / GridSize));
+
+            var voxelIndex = new Vector3i(
+                index.X - memberIndex.X * GridSize,
+                index.Y - memberIndex.Y * GridSize,
+                index.Z - memberIndex.Z * GridSize);
+
+            if(Members.ContainsKey(memberIndex))
+            {
+                var grid = Members[memberIndex].Get<VoxelGrid>();
+
+                return grid[voxelIndex];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public void SetVoxel(Vector3i index, Voxel voxel)
+        {
+            var memberIndex = new Vector3i(
+                (int)Math.Floor((float)index.X / GridSize),
+                (int)Math.Floor((float)index.Y / GridSize),
+                (int)Math.Floor((float)index.Z / GridSize));
+
+            var voxelIndex = new Vector3i(
+                index.X - memberIndex.X * GridSize,
+                index.Y - memberIndex.Y * GridSize,
+                index.Z - memberIndex.Z * GridSize);
+
+            if(Members.ContainsKey(memberIndex))
+            {
+                var member = Members[memberIndex];
+                var grid = member.Get<VoxelGrid>();
+
+                grid.SetVoxel(voxelIndex, voxel);
+                member.Set(grid);
+            }
+        }
+
         public Vector3i GetGridIndexFromLocalPosition(Vector3 position)
         {
             var spaceIndex = new Vector3i(

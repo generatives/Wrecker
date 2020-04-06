@@ -6,6 +6,7 @@ using Clunker.Physics;
 using Clunker.Physics.Voxels;
 using Clunker.Utilties;
 using Clunker.Voxels;
+using Clunker.Voxels.Space;
 using DefaultEcs;
 using DefaultEcs.System;
 using System;
@@ -28,11 +29,18 @@ namespace Wrecker
 
         public bool IsEnabled { get; set; } = true;
 
+        private int framesHeld = 0;
+
         public void Update(double state)
         {
             if(GameInputTracker.IsMouseButtonPressed(Veldrid.MouseButton.Left))
             {
-                OnClick();
+                framesHeld++;
+                if(framesHeld == 1)
+                {
+                    OnClick();
+                    framesHeld = 0;
+                }
             }
         }
 
@@ -53,23 +61,40 @@ namespace Wrecker
                     context = _physicsSystem.GetStaticContext(handler.Collidable.Handle);
                 }
 
-                if(context is Entity entity && entity.Has<VoxelStaticBody>() && entity.Has<VoxelGrid>())
+                if(context is Entity entity)
                 {
-                    ref var body = ref entity.Get<VoxelStaticBody>();
-                    ref var voxels = ref entity.Get<VoxelGrid>();
-                    ref var exposedVoxels = ref entity.Get<ExposedVoxels>();
-
-                    var gridIndex = exposedVoxels.Exposed[handler.ChildIndex];
-
-                    foreach(var index in GeometricIterators.Rectangle(gridIndex, 2))
+                    if(entity.Has<VoxelStaticBody>() && entity.Has<VoxelGrid>())
                     {
-                        if(voxels.ContainsIndex(index))
-                        {
-                            voxels[index] = new Voxel() { Exists = false };
-                        }
-                    }
+                        ref var body = ref entity.Get<VoxelStaticBody>();
+                        ref var voxels = ref entity.Get<VoxelGrid>();
+                        ref var exposedVoxels = ref entity.Get<ExposedVoxels>();
 
-                    entity.Set(voxels);
+                        var gridIndex = exposedVoxels.Exposed[handler.ChildIndex];
+
+                        foreach (var index in GeometricIterators.Rectangle(gridIndex, 2))
+                        {
+                            if (voxels.ContainsIndex(index))
+                            {
+                                voxels[index] = new Voxel() { Exists = false };
+                            }
+                        }
+
+                        entity.Set(voxels);
+                    }
+                    else if(entity.Has<VoxelSpaceDynamicBody>() && entity.Has<VoxelSpace>())
+                    {
+                        ref var body = ref entity.Get<VoxelSpaceDynamicBody>();
+                        ref var space = ref entity.Get<VoxelSpace>();
+
+                        var spaceIndex = body.VoxelIndicesByChildIndex[handler.ChildIndex];
+
+                        foreach (var index in GeometricIterators.Rectangle(spaceIndex, 2))
+                        {
+                            space.SetVoxel(index, new Voxel() { Exists = false });
+                        }
+
+                        entity.Set(space);
+                    }
                 }
             }
         }

@@ -56,27 +56,37 @@ namespace Clunker.Physics.Voxels
                     }
                 }
 
-                compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var offset);
-                spaceBody.VoxelCompound = new BigCompound(compoundChildren, _physicsSystem.Simulation.Shapes, _physicsSystem.Pool);
-                spaceBody.VoxelShape = _physicsSystem.AddShape(spaceBody.VoxelCompound, this);
-                var offsetDiff = offset - body.BodyOffset;
-                body.BodyOffset = offset;
+                if(spaceBody.VoxelIndicesByChildIndex.Count > 0)
+                {
+                    compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var offset);
+                    spaceBody.VoxelCompound = new BigCompound(compoundChildren, _physicsSystem.Simulation.Shapes, _physicsSystem.Pool);
+                    spaceBody.VoxelShape = _physicsSystem.AddShape(spaceBody.VoxelCompound, entity);
+                    var offsetDiff = offset - body.BodyOffset;
+                    body.BodyOffset = offset;
 
-                if (body.Body.Exists)
-                {
-                    _physicsSystem.Simulation.Bodies.SetShape(body.Body.Handle, spaceBody.VoxelShape);
-                    _physicsSystem.Simulation.Bodies.SetLocalInertia(body.Body.Handle, compoundInertia);
-                    body.Body.Pose.Position += offsetDiff;
+                    if (body.Body.Exists)
+                    {
+                        _physicsSystem.Simulation.Bodies.SetShape(body.Body.Handle, spaceBody.VoxelShape);
+                        _physicsSystem.Simulation.Bodies.SetLocalInertia(body.Body.Handle, compoundInertia);
+                        body.Body.Pose.Position += offsetDiff;
+                    }
+                    else
+                    {
+                        var worldBodyOffset = body.GetWorldBodyOffset(transform);
+                        var desc = BodyDescription.CreateDynamic(
+                            new RigidPose(transform.WorldPosition + worldBodyOffset, transform.WorldOrientation),
+                            compoundInertia,
+                            new CollidableDescription(spaceBody.VoxelShape, 0.1f),
+                            new BodyActivityDescription(-1));
+                        body.Body = _physicsSystem.AddDynamic(desc, entity);
+                    }
                 }
-                else
+                else if(body.Body.Exists)
                 {
-                    var worldBodyOffset = body.GetWorldBodyOffset(transform);
-                    var desc = BodyDescription.CreateDynamic(
-                        new RigidPose(transform.WorldPosition + worldBodyOffset, transform.WorldOrientation),
-                        compoundInertia,
-                        new CollidableDescription(spaceBody.VoxelShape, 0.1f),
-                        new BodyActivityDescription(-1));
-                    body.Body = _physicsSystem.AddDynamic(desc, this);
+                    spaceBody.VoxelCompound.Dispose(_physicsSystem.Pool);
+                    _physicsSystem.RemoveShape(spaceBody.VoxelShape);
+                    _physicsSystem.RemoveDynamic(body.Body);
+                    spaceBody.VoxelIndicesByChildIndex.Clear();
                 }
             }
         }
