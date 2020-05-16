@@ -348,14 +348,15 @@ namespace Clunker.Voxels.Meshing
 
         public static void GenerateMesh(VoxelGrid voxels, Action<Triangle> triangleProcessor)
         {
+            var cube = new float[8];
+            var edgeVertexBuffer = new Vector3[12];
+
             for (int x = -1; x < voxels.GridSize + 1; x++)
             {
                 for (int y = -1; y < voxels.GridSize + 1; y++)
                 {
                     for (int z = -1; z < voxels.GridSize + 1; z++)
                     {
-                        var cube = new float[8];
-
                         //Get the values in the 8 neighbours which make up a cube
                         for (var i = 0; i < 8; i++)
                         {
@@ -367,7 +368,7 @@ namespace Clunker.Voxels.Meshing
                         }
 
                         //Perform algorithm
-                        March(x, y, z, cube, triangleProcessor);
+                        March(x, y, z, cube, triangleProcessor, edgeVertexBuffer);
                     }
                 }
             }
@@ -376,7 +377,7 @@ namespace Clunker.Voxels.Meshing
         /// <summary>
         /// MarchCube performs the Marching Cubes algorithm on a single cube
         /// </summary>
-        private static void March(float x, float y, float z, float[] cube, Action<Triangle> triangleProcessor)
+        private static void March(float x, float y, float z, float[] cube, Action<Triangle> triangleProcessor, Vector3[] edgeVertexBuffer)
         {
             int flagIndex = 0;
 
@@ -395,8 +396,6 @@ namespace Clunker.Voxels.Meshing
             //If the cube is entirely inside or outside of the surface, then there will be no intersections
             if (edgeFlags == 0) return;
 
-            var edgeVertex = new Vector3[12];
-
             //Find the point of intersection of the surface with each edge
             for (var i = 0; i < 12; i++)
             {
@@ -406,9 +405,9 @@ namespace Clunker.Voxels.Meshing
                     var offset = GetOffset(cube[_edgeConnection[i, 0]], cube[_edgeConnection[i, 1]]);
                     //var offset = 0.5f;
 
-                    edgeVertex[i].X = x + (_vertexOffset[_edgeConnection[i, 0], 0] + offset * _edgeDirection[i, 0]);
-                    edgeVertex[i].Y = y + (_vertexOffset[_edgeConnection[i, 0], 1] + offset * _edgeDirection[i, 1]);
-                    edgeVertex[i].Z = z + (_vertexOffset[_edgeConnection[i, 0], 2] + offset * _edgeDirection[i, 2]);
+                    edgeVertexBuffer[i].X = x + (_vertexOffset[_edgeConnection[i, 0], 0] + offset * _edgeDirection[i, 0]);
+                    edgeVertexBuffer[i].Y = y + (_vertexOffset[_edgeConnection[i, 0], 1] + offset * _edgeDirection[i, 1]);
+                    edgeVertexBuffer[i].Z = z + (_vertexOffset[_edgeConnection[i, 0], 2] + offset * _edgeDirection[i, 2]);
                 }
             }
 
@@ -417,9 +416,9 @@ namespace Clunker.Voxels.Meshing
             {
                 if (_triangleConnectionTable[flagIndex, 3 * i] < 0) break;
 
-                triangleProcessor(new Triangle(edgeVertex[_triangleConnectionTable[flagIndex, 3 * i + 0]],
-                    edgeVertex[_triangleConnectionTable[flagIndex, 3 * i + 1]],
-                    edgeVertex[_triangleConnectionTable[flagIndex, 3 * i + 2]]));
+                triangleProcessor(new Triangle(edgeVertexBuffer[_triangleConnectionTable[flagIndex, 3 * i + 0]],
+                    edgeVertexBuffer[_triangleConnectionTable[flagIndex, 3 * i + 1]],
+                    edgeVertexBuffer[_triangleConnectionTable[flagIndex, 3 * i + 2]]));
             }
         }
 

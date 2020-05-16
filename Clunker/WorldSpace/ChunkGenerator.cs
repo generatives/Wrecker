@@ -128,7 +128,7 @@ namespace Clunker.WorldSpace
 
         public void SplatterHoles(VoxelGrid voxels, Random random)
         {
-            var numHoles = random.Next(0, 50);
+            var numHoles = random.Next(15, 35);
             for (int a = 0; a < numHoles; a++)
             {
                 int r = random.Next(1, 5);
