@@ -55,7 +55,7 @@ namespace Clunker.WorldSpace
             //                //var exists = planetPosition == voxelPosition;
             //                var density = Math.Max(1 - (Vector3.Distance(planetPosition, voxelPosition) / planetSize), 0) * byte.MaxValue;
             //                anyExist = anyExist || density > 0;
-            //                if(density != 0)
+            //                if (density != 0)
             //                {
 
             //                }
@@ -67,8 +67,8 @@ namespace Clunker.WorldSpace
             //    for (int y = 0; y < _chunkSize; y++)
             //        for (int z = 0; z < _chunkSize; z++)
             //        {
-            //            var planetPosition = new Vector3(0, 0, -800);
-            //            var planetSize = 750;
+            //            var planetPosition = new Vector3(0, 0, -350);
+            //            var planetSize = 300;
             //            var voxelPosition = new Vector3(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z);
 
             //            //var exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f;
@@ -84,19 +84,19 @@ namespace Clunker.WorldSpace
                 entity.Set(transform);
 
                 entity.Set(_materialInstance);
-                entity.Set(new VoxelStaticBody());
-                entity.Set(new ExposedVoxels());
+                //entity.Set(new VoxelStaticBody());
+                //entity.Set(new ExposedVoxels());
                 entity.Set(voxelSpaceData);
             }
         }
 
         public void GenerateSpheres(VoxelGrid voxels, Random random)
         {
-            var numAstroids = random.Next(3, 10);
+            var numAstroids = random.Next(1, 3);
             var locations = new (Vector3i, int)[numAstroids];
-            for (byte a = 0; a < numAstroids; a++)
+            for (var a = 0; a < numAstroids; a++)
             {
-                int r = random.Next(2, 4);
+                int r = random.Next(4, 6);
                 int aX = random.Next(r, _chunkSize - r);
                 int aY = random.Next(r, _chunkSize - r);
                 int aZ = random.Next(r, _chunkSize - r);
@@ -114,7 +114,7 @@ namespace Clunker.WorldSpace
                             var rSq = ((x - location.X) * (x - location.X)) + ((y - location.Y) * (y - location.Y)) + ((z - location.Z) * (z - location.Z));
                             if(rSq == 0)
                             {
-                                strength = 500;
+                                strength = 1;
                                 break;
                             }
                             else
@@ -122,7 +122,7 @@ namespace Clunker.WorldSpace
                                 strength += (float)(radius * radius) / rSq;
                             }
                         }
-                        voxels[x, y, z] = new Voxel() { Exists = strength > 0.5f };
+                        voxels[x, y, z] = new Voxel() { Density = (byte)(255 * Math.Max(0, strength - 0.5f)) };
                     }
         }
 

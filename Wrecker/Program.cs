@@ -48,7 +48,7 @@ namespace ClunkerECSDemo
             var resourceLoader = new ResourceLoader();
             var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
 
-            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
+            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode, true);
             var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
 
             var scene = new Scene();
@@ -73,7 +73,7 @@ namespace ClunkerECSDemo
             scene.RendererSystems.Add(new MeshGeometryRenderer(scene.World));
 
             scene.LogicSystems.Add(new SimpleCameraMover(scene.World));
-            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, transform, 3, 32));
+            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, transform, 5, 32));
             scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance, 32, 1)));
 
             var physicsSystem = new PhysicsSystem();

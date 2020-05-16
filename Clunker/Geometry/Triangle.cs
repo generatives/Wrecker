@@ -19,5 +19,19 @@ namespace Clunker.Geometry
             C = c;
             Normal = normal;
         }
+
+        public Triangle(Vector3 a, Vector3 b, Vector3 c) : this(a, b, c, CalculateNormal(a, b, c)) { }
+
+        public static Vector3 CalculateNormal(Vector3 a, Vector3 b, Vector3 c)
+        {
+            var v = b - a;
+            var w = c - a;
+
+            return new Vector3(
+                (v.Y * w.Z) - (v.Z * w.Y),
+                (v.Z * w.X) - (v.X * w.Z),
+                (v.X * w.Y) - (v.Y * w.X)
+                );
+        }
     }
 }
