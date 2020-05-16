@@ -6,6 +6,8 @@ using System.Text;
 
 namespace Clunker.Voxels.Meshing
 {
+    // Ported from https://github.com/Scrawk/Marching-Cubes/blob/master/Assets/MarchingCubes/Marching/MarchingCubes.cs
+
     public class MarchingCubesGenerator
     {
         /// <summary>
