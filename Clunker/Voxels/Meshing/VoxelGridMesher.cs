@@ -55,34 +55,34 @@ namespace Clunker.Voxels.Meshing
             //    vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
             //});
 
-            //MeshGenerator.GenerateMesh(data, (voxel, side, quad) =>
-            //{
-            //    var type = _types[voxel.BlockType];
-            //    var textureOffset = GetTexCoords(type, voxel.Orientation, side);
-            //    indices.Add((ushort)(vertices.Count + 0));
-            //    indices.Add((ushort)(vertices.Count + 1));
-            //    indices.Add((ushort)(vertices.Count + 3));
-            //    indices.Add((ushort)(vertices.Count + 1));
-            //    indices.Add((ushort)(vertices.Count + 2));
-            //    indices.Add((ushort)(vertices.Count + 3));
-            //    vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / imageSize, quad.Normal));
-            //    vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
-            //    vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
-            //    vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
-            //});
-
-            MarchingCubesGenerator.GenerateMesh(data, (triangle) =>
+            MeshGenerator.GenerateMesh(data, (voxel, side, quad) =>
             {
-                //var type = _types[voxel.BlockType];
-                //var textureOffset = GetTexCoords(type, voxel.Orientation, side);
-                var textureOffset = Vector2.Zero;
+                var type = _types[voxel.BlockType];
+                var textureOffset = GetTexCoords(type, voxel.Orientation, side);
                 indices.Add((ushort)(vertices.Count + 0));
                 indices.Add((ushort)(vertices.Count + 1));
+                indices.Add((ushort)(vertices.Count + 3));
+                indices.Add((ushort)(vertices.Count + 1));
                 indices.Add((ushort)(vertices.Count + 2));
-                vertices.Add(new VertexPositionTextureNormal(triangle.A, (textureOffset + new Vector2(0, 128)) / imageSize, triangle.Normal));
-                vertices.Add(new VertexPositionTextureNormal(triangle.B, (textureOffset + new Vector2(0, 0)) / imageSize, triangle.Normal));
-                vertices.Add(new VertexPositionTextureNormal(triangle.C, (textureOffset + new Vector2(128, 0)) / imageSize, triangle.Normal));
+                indices.Add((ushort)(vertices.Count + 3));
+                vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / imageSize, quad.Normal));
+                vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
+                vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
+                vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
             });
+
+            //MarchingCubesGenerator.GenerateMesh(data, (triangle) =>
+            //{
+            //    //var type = _types[voxel.BlockType];
+            //    //var textureOffset = GetTexCoords(type, voxel.Orientation, side);
+            //    var textureOffset = new Vector2(650, 130);
+            //    indices.Add((ushort)(vertices.Count + 0));
+            //    indices.Add((ushort)(vertices.Count + 1));
+            //    indices.Add((ushort)(vertices.Count + 2));
+            //    vertices.Add(new VertexPositionTextureNormal(triangle.A, (textureOffset + new Vector2(0, 128)) / imageSize, triangle.Normal));
+            //    vertices.Add(new VertexPositionTextureNormal(triangle.B, (textureOffset + new Vector2(0, 0)) / imageSize, triangle.Normal));
+            //    vertices.Add(new VertexPositionTextureNormal(triangle.C, (textureOffset + new Vector2(128, 0)) / imageSize, triangle.Normal));
+            //});
 
             var mesh = new MeshGeometry()
             {

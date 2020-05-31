@@ -64,7 +64,6 @@ namespace Clunker.Voxels.Meshing
             0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c, 0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x000
         };
 
-
         /// <summary>
         /// For each of the possible vertex states listed in cubeEdgeFlags there is a specific triangulation
         /// of the edge intersection points.  triangleConnectionTable lists all of them in the form of
@@ -357,14 +356,15 @@ namespace Clunker.Voxels.Meshing
                 {
                     for (int z = -1; z < voxels.GridSize + 1; z++)
                     {
-                        //Get the values in the 8 neighbours which make up a cube
+
+                        // Get the values in the 8 neighbours which make up a cube
                         for (var i = 0; i < 8; i++)
                         {
                             var ix = x + _vertexOffset[i, 0];
                             var iy = y + _vertexOffset[i, 1];
                             var iz = z + _vertexOffset[i, 2];
 
-                            cube[i] = (voxels.ContainsIndex(ix, iy, iz) && voxels[ix, iy, iz].Exists) ? 0.25f : 0.75f;
+                            cube[i] = voxels.ContainsIndex(ix, iy, iz) ? voxels[ix, iy, iz].Density / 255f : 0;
                         }
 
                         //Perform algorithm
@@ -403,7 +403,6 @@ namespace Clunker.Voxels.Meshing
                 if ((edgeFlags & (1 << i)) != 0)
                 {
                     var offset = GetOffset(cube[_edgeConnection[i, 0]], cube[_edgeConnection[i, 1]]);
-                    //var offset = 0.5f;
 
                     edgeVertexBuffer[i].X = x + (_vertexOffset[_edgeConnection[i, 0], 0] + offset * _edgeDirection[i, 0]);
                     edgeVertexBuffer[i].Y = y + (_vertexOffset[_edgeConnection[i, 0], 1] + offset * _edgeDirection[i, 1]);

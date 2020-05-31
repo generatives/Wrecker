@@ -19,6 +19,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GO", "GO", "{8C40707A-E41F-
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bepu", "Bepu", "{00677077-4CBC-4A57-B28C-2808403B0406}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrecker.PerformanceTests", "Wrecker.PerformanceTests\Wrecker.PerformanceTests.csproj", "{82450954-B59C-4A73-8015-AF4757D19BB0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +90,16 @@ Global
 		{C070D2FF-38FB-482A-B461-7AC8A52E940B}.ReleaseStrip|Any CPU.Build.0 = Release|Any CPU
 		{C070D2FF-38FB-482A-B461-7AC8A52E940B}.ReleaseStripNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
 		{C070D2FF-38FB-482A-B461-7AC8A52E940B}.ReleaseStripNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.DebugLeakDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.DebugLeakDebug|Any CPU.Build.0 = Debug|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.ReleaseStrip|Any CPU.ActiveCfg = Release|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.ReleaseStrip|Any CPU.Build.0 = Release|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.ReleaseStripNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{82450954-B59C-4A73-8015-AF4757D19BB0}.ReleaseStripNoProfiling|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
