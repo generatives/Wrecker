@@ -84,15 +84,15 @@ namespace Clunker.WorldSpace
                 entity.Set(transform);
 
                 entity.Set(_materialInstance);
-                //entity.Set(new VoxelStaticBody());
-                //entity.Set(new ExposedVoxels());
+                entity.Set(new VoxelStaticBody());
+                entity.Set(new ExposedVoxels());
                 entity.Set(voxelSpaceData);
             }
         }
 
         public void GenerateSpheres(VoxelGrid voxels, Random random)
         {
-            var numAstroids = random.Next(1, 3);
+            var numAstroids = random.Next(0, 2);
             var locations = new (Vector3i, int)[numAstroids];
             for (var a = 0; a < numAstroids; a++)
             {

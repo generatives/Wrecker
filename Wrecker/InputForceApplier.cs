@@ -24,29 +24,41 @@ namespace Wrecker
         protected override void Update(double state, in Entity entity)
         {
             ref var body = ref entity.Get<DynamicBody>();
-            ref var transform = ref entity.Get<Transform>();
+            if(body.Body.Exists)
+            {
+                ref var transform = ref entity.Get<Transform>();
 
-            var worldOffset = Vector3.Zero;
+                var worldOffset = Vector3.Zero;
 
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Left))
-            {
-                body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitX * -_force, transform.WorldOrientation), worldOffset);
-                _physicsSystem.Simulation.Awakener.AwakenBody(body.Body.Handle);
-            }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Right))
-            {
-                body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitX * _force, transform.WorldOrientation), worldOffset);
-                _physicsSystem.Simulation.Awakener.AwakenBody(body.Body.Handle);
-            }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Up))
-            {
-                body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitZ * -_force, transform.WorldOrientation), worldOffset);
-                _physicsSystem.Simulation.Awakener.AwakenBody(body.Body.Handle);
-            }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Down))
-            {
-                body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitZ * _force, transform.WorldOrientation), worldOffset);
-                _physicsSystem.Simulation.Awakener.AwakenBody(body.Body.Handle);
+                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Left))
+                {
+                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitX * -_force, transform.WorldOrientation), worldOffset);
+                }
+                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Right))
+                {
+                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitX * _force, transform.WorldOrientation), worldOffset);
+                }
+                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Up))
+                {
+                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitZ * -_force, transform.WorldOrientation), worldOffset);
+                }
+                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Down))
+                {
+                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitZ * _force, transform.WorldOrientation), worldOffset);
+                }
+                if (GameInputTracker.IsKeyPressed(Veldrid.Key.PageUp))
+                {
+                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitY * _force, transform.WorldOrientation), worldOffset);
+                }
+                if (GameInputTracker.IsKeyPressed(Veldrid.Key.PageDown))
+                {
+                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitY * -_force, transform.WorldOrientation), worldOffset);
+                }
+
+                if (!body.Body.Awake && body.Body.Velocity.Linear != Vector3.Zero)
+                {
+                    _physicsSystem.Simulation.Awakener.AwakenBody(body.Body.Handle);
+                }
             }
         }
     }

@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Clunker.Voxels.Space
 {
-    public struct VoxelSpace
+    public struct VoxelSpace : IVoxels
     {
         public int GridSize { get; set; }
         public float VoxelSize { get; set; }

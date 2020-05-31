@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Clunker.Voxels.Space
 {
-    public class VoxelSpaceChangePropogator : ComputedComponentSystem<double>
+    public class VoxelSpaceChangePropogator : ComponentChangeSystem<double>
     {
         public VoxelSpaceChangePropogator(World world) : base(world, typeof(VoxelGrid), typeof(VoxelSpaceMember))
         {

@@ -14,7 +14,7 @@ using System.Text;
 
 namespace Clunker.Physics.Voxels
 {
-    public class VoxelStaticBodyGenerator : ComputedComponentSystem<double>
+    public class VoxelStaticBodyGenerator : ComponentChangeSystem<double>
     {
         private PhysicsSystem _physicsSystem;
 
@@ -60,7 +60,7 @@ namespace Clunker.Physics.Voxels
                         _physicsSystem.RemoveShape(body.VoxelShape);
                     }
 
-                    body.VoxelShape = _physicsSystem.AddShape(shape);
+                    body.VoxelShape = _physicsSystem.AddShape(shape, entity);
 
                     if (body.VoxelStatic.Exists)
                     {

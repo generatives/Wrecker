@@ -1,5 +1,8 @@
 ﻿using Clunker;
 using Clunker.Core;
+using Clunker.Editor;
+using Clunker.Editor.EditorConsole;
+using Clunker.Editor.Toolbar;
 using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
@@ -50,6 +53,8 @@ namespace ClunkerECSDemo
 
             var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
             var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
+            var transparentVoxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = new RgbaFloat(1, 1, 1, 0.85f) });
+            var redVoxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.Red });
 
             var scene = new Scene();
             var parrallelRunner = new DefaultParallelRunner(1);
@@ -88,7 +93,7 @@ namespace ClunkerECSDemo
             scene.LogicSystems.Add(physicsSystem);
             scene.LogicSystems.Add(new DynamicBodyPositionSync(scene.World));
 
-            scene.LogicSystems.Add(new ClickVoxelRemover(physicsSystem, transform));
+            //scene.LogicSystems.Add(new ClickVoxelRemover(physicsSystem, transform));
 
             var voxelTypes = new VoxelTypes(new[]
             {
@@ -111,14 +116,25 @@ namespace ClunkerECSDemo
 
             scene.LogicSystems.Add(new VoxelGridMesher(scene, voxelTypes, parrallelRunner));
 
-            SetAsShip(scene.World, voxelMaterialInstance);
+            scene.LogicSystems.Add(new EditorMenu(new List<IEditor>()
+            {
+                new EditorConsole(scene),
+                new Toolbar(new ITool[]
+                {
+                    new RemoveVoxelEditingTool(redVoxelMaterialInstance, scene.World, physicsSystem, camera),
+                    new BasicVoxelAddingTool("DarkStone", 0, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
+                    new BasicVoxelAddingTool("Metal", 1, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
+                })
+            }));
+
+            CreateShip(scene.World, voxelMaterialInstance);
 
             var app = new ClunkerApp(resourceLoader, scene);
 
             app.Start(wci, options).Wait();
         }
 
-        private static void SetAsShip(World world, MaterialInstance materialInstance)
+        private static void CreateShip(World world, MaterialInstance materialInstance)
         {
             var gridLength = 8;
             var padding = 3;

@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Clunker.Voxels
 {
-    public class ExposedVoxelFinder : ComputedComponentSystem<double>
+    public class ExposedVoxelFinder : ComponentChangeSystem<double>
     {
         public ExposedVoxelFinder(World world) : base(world, typeof(VoxelGrid), typeof(ExposedVoxels))
         {
@@ -17,7 +17,7 @@ namespace Clunker.Voxels
 
         protected override void Compute(double state, in Entity e)
         {
-             ref var voxels = ref e.Get<VoxelGrid>();
+            ref var voxels = ref e.Get<VoxelGrid>();
             ref var exposedVoxels = ref e.Get<ExposedVoxels>();
 
             var exposed = new PooledList<Vector3i>();

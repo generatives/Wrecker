@@ -9,7 +9,7 @@ using Veldrid;
 
 namespace Clunker.Graphics
 {
-    public class MeshGeometryInitializer : ComputedComponentSystem<RenderingContext>
+    public class MeshGeometryInitializer : ComponentChangeSystem<RenderingContext>
     {
         public MeshGeometryInitializer(World world) : base(world, typeof(MeshGeometry))
         {

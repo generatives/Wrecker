@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Clunker.Voxels
 {
-    public struct VoxelGrid : IEnumerable<(Vector3, Voxel)>
+    public struct VoxelGrid : IEnumerable<(Vector3, Voxel)>, IVoxels
     {
         private Voxel[] _voxels;
         public float VoxelSize { get; private set; }
@@ -155,6 +155,16 @@ namespace Clunker.Voxels
         IEnumerator IEnumerable.GetEnumerator()
         {
             return this.GetEnumerator();
+        }
+
+        void IVoxels.SetVoxel(Vector3i index, Voxel voxel)
+        {
+            this[index] = voxel;
+        }
+
+        public Voxel? GetVoxel(Vector3i index)
+        {
+            return ContainsIndex(index) ? this[index] : (Voxel?)null;
         }
     }
 }

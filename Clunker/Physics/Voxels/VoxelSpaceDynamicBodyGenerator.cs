@@ -14,7 +14,7 @@ using System.Text;
 
 namespace Clunker.Physics.Voxels
 {
-    public class VoxelSpaceDynamicBodyGenerator : ComputedComponentSystem<double>
+    public class VoxelSpaceDynamicBodyGenerator : ComponentChangeSystem<double>
     {
         private PhysicsSystem _physicsSystem;
 
