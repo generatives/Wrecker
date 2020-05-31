@@ -48,7 +48,7 @@ namespace ClunkerECSDemo
             var resourceLoader = new ResourceLoader();
             var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
 
-            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode, true);
+            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
             var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
 
             var scene = new Scene();

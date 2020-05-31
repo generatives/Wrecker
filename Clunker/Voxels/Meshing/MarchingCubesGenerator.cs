@@ -415,9 +415,9 @@ namespace Clunker.Voxels.Meshing
             {
                 if (_triangleConnectionTable[flagIndex, 3 * i] < 0) break;
 
-                triangleProcessor(new Triangle(edgeVertexBuffer[_triangleConnectionTable[flagIndex, 3 * i + 0]],
+                triangleProcessor(new Triangle(edgeVertexBuffer[_triangleConnectionTable[flagIndex, 3 * i + 2]],
                     edgeVertexBuffer[_triangleConnectionTable[flagIndex, 3 * i + 1]],
-                    edgeVertexBuffer[_triangleConnectionTable[flagIndex, 3 * i + 2]]));
+                    edgeVertexBuffer[_triangleConnectionTable[flagIndex, 3 * i + 0]]));
             }
         }
 
