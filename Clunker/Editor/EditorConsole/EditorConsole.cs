@@ -18,16 +18,12 @@ namespace Clunker.Editor.EditorConsole
         private List<string> _outputs;
         private Interpreter _interpreter;
 
-        private Stack<string> _inputs;
-        private int _inputPosition;
-
         public EditorConsole(Scene scene)
         {
             _outputs = new List<string>();
-            _inputs = new Stack<string>();
             _interpreter = new Interpreter();
             _interpreter.SetVariable("Scene", scene);
-            _interpreter.SetVariable("this", new ExpandoObject());
+            _interpreter.SetVariable("this", new Dictionary<string, object>());
         }
 
         public string Name => "Console";
@@ -58,7 +54,23 @@ namespace Clunker.Editor.EditorConsole
             {
                 try
                 {
-                    var output = _interpreter.Eval(_input);
+                    _outputs.Add("> " + _input);
+                    object output = default;
+
+                    if (_input.StartsWith("var "))
+                    {
+                        var start = _input.IndexOf('=');
+                        var varName = _input.Substring(4, start - 4).Trim();
+                        var toEval = _input.Substring(start + 1);
+
+                        output = _interpreter.Eval(toEval);
+                        _interpreter.SetVariable(varName, output);
+                    }
+                    else
+                    {
+                        output = _interpreter.Eval(_input);
+                    }
+
                     _outputs.Add(output.ToString());
                 }
                 catch (Exception ex)
