@@ -89,6 +89,7 @@ namespace ClunkerECSDemo
             scene.LogicSystems.Add(new VoxelSpaceChangePropogator(scene.World));
             scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, scene.World));
             scene.LogicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, scene.World));
+            scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(voxelMaterialInstance, scene.World));
 
             scene.LogicSystems.Add(physicsSystem);
             scene.LogicSystems.Add(new DynamicBodyPositionSync(scene.World));
@@ -159,7 +160,8 @@ namespace ClunkerECSDemo
             gridEntity1.Set(materialInstance);
             gridEntity1.Set(new ExposedVoxels());
             gridEntity1.Set(voxelSpaceData);
-            gridEntity1.Set(new VoxelSpaceMember() { Parent = shipEntity });
+            gridEntity1.Set(new VoxelSpaceMember() { Parent = shipEntity, Index = new Vector3i(0, 0, 0) });
+            gridEntity1.Set(new VoxelSpaceExpander());
 
             var gridEntity2 = world.CreateEntity();
 
@@ -169,7 +171,8 @@ namespace ClunkerECSDemo
             gridEntity2.Set(materialInstance);
             gridEntity2.Set(new ExposedVoxels());
             gridEntity2.Set(voxelSpaceData);
-            gridEntity2.Set(new VoxelSpaceMember() { Parent = shipEntity });
+            gridEntity2.Set(new VoxelSpaceMember() { Parent = shipEntity, Index = new Vector3i(1, 0, 0) });
+            gridEntity2.Set(new VoxelSpaceExpander());
 
             var shipTransform = new Transform();
             shipTransform.AddChild(gridTransform1);

@@ -42,7 +42,6 @@ namespace Clunker.Graphics
         public DeviceBuffer ObjectPropertiesBuffer { get; private set; }
 
         private GraphicsDevice _device;
-        private CommandList _commandList;
 
         internal ResourceLayout ObjectLayout;
 
@@ -52,7 +51,6 @@ namespace Clunker.Graphics
         public void Initialize(GraphicsDevice device, CommandList commandList, int windowWidth, int windowHeight)
         {
             _device = device;
-            _commandList = commandList;
 
             var factory = _device.ResourceFactory;
             ProjectionBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
@@ -115,10 +113,9 @@ namespace Clunker.Graphics
                 DiffuseLightDirection = Vector3.Normalize(new Vector3(2, 5, -1))
             });
 
-            var cameraLocation = camera.WorldPosition;
             var frustrum = new BoundingFrustum(viewMatrix * _projectionMatrix);
 
-            var context = new RenderingContext() { GraphicsDevice = device, CommandList = commandList, Renderer = this, RenderWireframes = false };
+            var context = new RenderingContext() { GraphicsDevice = device, CommandList = commandList, Renderer = this, RenderWireframes = false, Frustrum = frustrum };
 
             if (renderWireframes == RenderWireframes.NO)
             {
