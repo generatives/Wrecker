@@ -12,12 +12,13 @@ namespace Clunker.Editor
         public List<IEditor> Editors { get; private set; }
         public bool IsEnabled { get; set; } = true;
 
-        public EditorMenu(List<IEditor> editors)
+        public EditorMenu(Scene scene, List<IEditor> editors)
         {
             Editors = editors;
+            scene.LogicSystems.AddRange(editors);
         }
 
-        public void Update(double state)
+        public void Update(double delta)
         {
             var groupedEditors = Editors.GroupBy(e => e.Category);
 
@@ -29,9 +30,9 @@ namespace Clunker.Editor
                     {
                         foreach (var editor in group)
                         {
-                            bool active = editor.Active;
+                            bool active = editor.IsActive;
                             ImGui.MenuItem(editor.Name, "", ref active, true);
-                            editor.Active = active;
+                            editor.IsActive = active;
                         }
                         ImGui.EndMenu();
                     }
@@ -39,9 +40,9 @@ namespace Clunker.Editor
                 ImGui.EndMainMenuBar();
             }
 
-            foreach (var editor in Editors.Where(e => e.Active))
+            foreach(var editor in Editors.Where(e => e.IsActive))
             {
-                editor.Run();
+                editor.DrawEditor(delta);
             }
         }
 

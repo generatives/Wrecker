@@ -34,7 +34,6 @@ namespace Clunker.Graphics
             if(context.Frustrum.Contains(boundingBox) != ContainmentType.Disjoint)
             {
                 materialInstance.Bind(context);
-                materialInstance.Bind(context);
                 context.CommandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, transform.WorldMatrix);
 
                 context.CommandList.SetVertexBuffer(0, geometryResources.VertexBuffer);

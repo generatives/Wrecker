@@ -2,6 +2,7 @@
 using Clunker.Core;
 using Clunker.Editor;
 using Clunker.Editor.EditorConsole;
+using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Toolbar;
 using Clunker.Geometry;
 using Clunker.Graphics;
@@ -60,9 +61,9 @@ namespace ClunkerECSDemo
             var parrallelRunner = new DefaultParallelRunner(1);
 
             var camera = scene.World.CreateEntity();
-            var transform = new Transform();
-            transform.Position = new Vector3(0, 0, 3);
-            camera.Set(transform);
+            var cameraTransform = new Transform();
+            cameraTransform.Position = new Vector3(0, 0, 3);
+            camera.Set(cameraTransform);
             camera.Set(new Camera());
 
             scene.RendererSystems.Add(new MeshGeometryInitializer(scene.World));
@@ -73,12 +74,12 @@ namespace ClunkerECSDemo
             var ny = Image.Load("Assets\\skybox_ny.png");
             var pz = Image.Load("Assets\\skybox_pz.png");
             var nz = Image.Load("Assets\\skybox_nz.png");
-            scene.RendererSystems.Add(new SkyboxRenderer(px, nx, py, ny, pz, nz));
+            //scene.RendererSystems.Add(new SkyboxRenderer(px, nx, py, ny, pz, nz));
 
             scene.RendererSystems.Add(new MeshGeometryRenderer(scene.World));
 
             scene.LogicSystems.Add(new SimpleCameraMover(scene.World));
-            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, transform, 5, 32));
+            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, cameraTransform, 5, 32));
             scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance, 32, 1)));
 
             var physicsSystem = new PhysicsSystem();
@@ -112,12 +113,22 @@ namespace ClunkerECSDemo
                     "Thruster",
                     new Vector2(650, 1170),
                     new Vector2(650, 1300),
-                    new Vector2(650, 1300))
+                    new Vector2(650, 1300)),
+                new VoxelType(
+                    "Dirt",
+                    new Vector2(650, 130),
+                    new Vector2(650, 130),
+                    new Vector2(650, 130)),
+                new VoxelType(
+                    "Grass",
+                    new Vector2(389, 909),
+                    new Vector2(389, 909),
+                    new Vector2(389, 909))
             });
 
             scene.LogicSystems.Add(new VoxelGridMesher(scene, voxelTypes, parrallelRunner));
 
-            scene.LogicSystems.Add(new EditorMenu(new List<IEditor>()
+            scene.LogicSystems.Add(new EditorMenu(scene, new List<IEditor>()
             {
                 new EditorConsole(scene),
                 new Toolbar(new ITool[]
@@ -125,7 +136,9 @@ namespace ClunkerECSDemo
                     new RemoveVoxelEditingTool(redVoxelMaterialInstance, scene.World, physicsSystem, camera),
                     new BasicVoxelAddingTool("DarkStone", 0, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
                     new BasicVoxelAddingTool("Metal", 1, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
-                })
+                }),
+                new SelectedEntitySystem(scene.World),
+                new PhysicsEntitySelector(scene.World, physicsSystem, cameraTransform)
             }));
 
             CreateShip(scene.World, voxelMaterialInstance);

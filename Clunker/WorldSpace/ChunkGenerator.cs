@@ -35,6 +35,7 @@ namespace Clunker.WorldSpace
             var voxelSpaceData = new VoxelGrid(_chunkSize, _voxelSize);
 
             GenerateSpheres(voxelSpaceData, random);
+            SetTypes(voxelSpaceData);
             SplatterHoles(voxelSpaceData, random);
             bool anyExist = true;
 
@@ -92,7 +93,7 @@ namespace Clunker.WorldSpace
 
         public void GenerateSpheres(VoxelGrid voxels, Random random)
         {
-            var numAstroids = random.Next(0, 2);
+            var numAstroids = random.Next(0, 4);
             var locations = new (Vector3i, int)[numAstroids];
             for (var a = 0; a < numAstroids; a++)
             {
@@ -111,18 +112,37 @@ namespace Clunker.WorldSpace
                         for (byte a = 0; a < numAstroids; a++)
                         {
                             var (location, radius) = locations[a];
-                            var rSq = ((x - location.X) * (x - location.X)) + ((y - location.Y) * (y - location.Y)) + ((z - location.Z) * (z - location.Z));
-                            if(rSq == 0)
+                            if(y <= location.Y + 2)
                             {
-                                strength = 1;
-                                break;
-                            }
-                            else
-                            {
-                                strength += (float)(radius * radius) / rSq;
+                                var rSq = ((x - location.X) * (x - location.X)) + ((y - location.Y) * (y - location.Y)) + ((z - location.Z) * (z - location.Z));
+                                if (rSq == 0)
+                                {
+                                    strength = 1;
+                                    break;
+                                }
+                                else
+                                {
+                                    strength += (float)(radius * radius) / rSq;
+                                }
                             }
                         }
                         voxels[x, y, z] = new Voxel() { Density = (byte)(255 * Math.Max(0, strength - 0.5f)) };
+                    }
+        }
+
+        public void SetTypes(VoxelGrid voxels)
+        {
+            for (int x = 0; x < _chunkSize; x++)
+                for (int y = 0; y < _chunkSize; y++)
+                    for (int z = 0; z < _chunkSize; z++)
+                    {
+                        var voxel = voxels[x, y, z];
+                        if (voxel.Exists)
+                        {
+                            var topBlock = !voxels.ContainsIndex(x, y + 1, z) || !voxels[x, y + 1, z].Exists;
+                            voxel.BlockType = (ushort)(topBlock ? 4 : 3);
+                            voxels[x, y, z] = voxel;
+                        }
                     }
         }
 
@@ -131,7 +151,7 @@ namespace Clunker.WorldSpace
             var numHoles = random.Next(15, 35);
             for (int a = 0; a < numHoles; a++)
             {
-                int r = random.Next(1, 5);
+                int r = random.Next(1, 3);
                 int aX = random.Next(r, _chunkSize - r);
                 int aY = random.Next(r, _chunkSize - r);
                 int aZ = random.Next(r, _chunkSize - r);

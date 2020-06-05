@@ -1,7 +1,10 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuUtilities.Memory;
+using Clunker.Core;
+using Clunker.Geometry;
 using Clunker.Physics.Bepu;
+using DefaultEcs;
 using DefaultEcs.System;
 using System;
 using System.Collections.Generic;
@@ -110,6 +113,32 @@ namespace Clunker.Physics
         public void Raycast<THitHandler>(in Vector3 origin, in Vector3 direction, float maximumT, ref THitHandler hitHandler, int id = 0) where THitHandler : IRayHitHandler
         {
             Simulation.RayCast(origin, direction, maximumT, ref hitHandler, id);
+        }
+
+        public Entity? Raycast(Transform transform)
+        {
+            var handler = new FirstHitHandler(CollidableMobility.Static | CollidableMobility.Dynamic);
+            var forward = transform.Orientation.GetForwardVector();
+            Raycast(transform.WorldPosition, forward, float.MaxValue, ref handler);
+            if (handler.Hit)
+            {
+                object context;
+                if (handler.Collidable.Mobility == CollidableMobility.Dynamic)
+                {
+                    context = GetDynamicContext(handler.Collidable.Handle);
+                }
+                else
+                {
+                    context = GetStaticContext(handler.Collidable.Handle);
+                }
+
+                if (context is Entity entity)
+                {
+                    return entity;
+                }
+            }
+
+            return null;
         }
 
         public void Update(double time)

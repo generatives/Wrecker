@@ -14,7 +14,7 @@ using Clunker.Editor;
 
 namespace Clunker.Editor.Toolbar
 {
-    public class Toolbar : IEditor
+    public class Toolbar : Editor
     {
         private ITool[] _tools;
         private int _index;
@@ -25,13 +25,11 @@ namespace Clunker.Editor.Toolbar
             _index = -1;
         }
 
-        public string Name => "Voxel Editor";
+        public override string Name => "Voxel Editor";
 
-        public string Category => "Entity Editing";
+        public override string Category => "Entity Editing";
 
-        public bool Active { get; set; } = false;
-
-        public void Run()
+        public override void DrawEditor(double deltaTime)
         {
             if(_index == -1)
             {

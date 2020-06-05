@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Clunker.Editor.EditorConsole
 {
-    public class EditorConsole : IEditor
+    public class EditorConsole : Editor
     {
         private string _input = "";
         private bool _scrollOutputDown;
@@ -26,13 +26,11 @@ namespace Clunker.Editor.EditorConsole
             _interpreter.SetVariable("this", new Dictionary<string, object>());
         }
 
-        public string Name => "Console";
+        public override string Name => "Console";
 
-        public string Category => "Console";
+        public override string Category => "Console";
 
-        public bool Active { get; set; }
-
-        public void Run()
+        public override void DrawEditor(double state)
         {
             ImGui.Begin(Name);
 
