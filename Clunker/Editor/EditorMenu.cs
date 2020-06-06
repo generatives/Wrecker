@@ -41,7 +41,7 @@ namespace Clunker.Editor
                         foreach (var editor in group)
                         {
                             bool active = editor.IsActive;
-                            var shortcutStr = editor.HotKey.HasValue ? "Ctrl + Shft + " + editor.HotKey.Value : "";
+                            var shortcutStr = editor.HotKey.HasValue ? "Ctrl+Shft+" + editor.HotKey.Value : "";
                             ImGui.MenuItem(editor.Name, shortcutStr, ref active, true);
                             editor.IsActive = active;
                         }

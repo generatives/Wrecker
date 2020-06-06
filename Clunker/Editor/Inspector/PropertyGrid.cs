@@ -33,7 +33,7 @@ namespace Clunker.Editor.Inspector
                 if (_editors.ContainsKey(prop.PropertyType))
                 {
                     var editor = _editors[prop.PropertyType];
-                    var (changed, newValue) = editor.DrawEditor(prop.Name, value);
+                    var (changed, newValue) = editor.DrawEditor($"{prop.Name} ({prop.PropertyType})", value);
                     if(changed)
                     {
                         prop.SetValue(obj, newValue);
@@ -42,7 +42,7 @@ namespace Clunker.Editor.Inspector
                 }
                 else if(value != null)
                 {
-                    if(ImGui.CollapsingHeader(prop.Name, ImGuiTreeNodeFlags.DefaultOpen))
+                    if(ImGui.CollapsingHeader($"{prop.Name} ({prop.PropertyType})", ImGuiTreeNodeFlags.DefaultOpen))
                     {
                         anyChanged = Draw(value) || anyChanged;
                     }
