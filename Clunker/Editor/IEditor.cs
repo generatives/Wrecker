@@ -1,4 +1,5 @@
 ﻿using DefaultEcs.System;
+using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,6 +10,7 @@ namespace Clunker.Editor
     {
         string Name { get; }
         string Category { get; }
+        char? HotKey { get; }
         bool IsActive { get; set; }
         void DrawEditor(double delta);
     }
@@ -17,6 +19,7 @@ namespace Clunker.Editor
     {
         public abstract string Name { get; }
         public abstract string Category { get; }
+        public virtual char? HotKey { get; } = null;
         public bool IsEnabled { get; set; } = true;
         public bool IsActive { get; set; } = false;
 

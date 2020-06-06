@@ -1,4 +1,5 @@
-﻿using Clunker.Geometry;
+﻿using Clunker.ECS;
+using Clunker.Geometry;
 using DefaultEcs;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Text;
 
 namespace Clunker.Voxels.Space
 {
+    [ClunkerComponent]
     public struct VoxelSpace : IVoxels
     {
         public int GridSize { get; set; }

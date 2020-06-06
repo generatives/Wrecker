@@ -36,13 +36,22 @@ namespace Clunker.Editor.Inspector.PropertyEditor
         }
     }
 
+    public class BooleanEditor : IPropertyEditor
+    {
+        public (bool, object) DrawEditor(string label, object value)
+        {
+            var boolean = (bool)value;
+            var changed = ImGui.Checkbox(label, ref boolean);
+            return (changed, boolean);
+        }
+    }
+
     public class Vector2Editor : IPropertyEditor
     {
         public (bool, object) DrawEditor(string label, object value)
         {
             var vector = (Vector2)value;
-            var changed = ImGui.DragFloat(label + " - X", ref vector.X);
-            changed = ImGui.DragFloat(label + " - Y", ref vector.Y) || changed;
+            var changed = ImGui.DragFloat2(label, ref vector);
             return (changed, vector);
         }
     }
@@ -52,9 +61,7 @@ namespace Clunker.Editor.Inspector.PropertyEditor
         public (bool, object) DrawEditor(string label, object value)
         {
             var vector = (Vector3)value;
-            var changed = ImGui.DragFloat(label + " - X", ref vector.X);
-            changed = ImGui.DragFloat(label + " - Y", ref vector.Y) || changed;
-            changed = ImGui.DragFloat(label + " - Z", ref vector.Z) || changed;
+            var changed = ImGui.DragFloat3(label, ref vector);
             return (changed, vector);
         }
     }
@@ -64,11 +71,9 @@ namespace Clunker.Editor.Inspector.PropertyEditor
         public (bool, object) DrawEditor(string label, object value)
         {
             var quaternion = (Quaternion)value;
-            var changed = ImGui.DragFloat(label + " - X", ref quaternion.X);
-            changed = ImGui.DragFloat(label + " - Y", ref quaternion.Y) || changed;
-            changed = ImGui.DragFloat(label + " - Z", ref quaternion.Z) || changed;
-            changed = ImGui.DragFloat(label + " - W", ref quaternion.W) || changed;
-            quaternion = changed ? Quaternion.Normalize(quaternion) : quaternion;
+            var asVec4 = new Vector4(quaternion.X, quaternion.Y, quaternion.Z, quaternion.W);
+            var changed = ImGui.DragFloat4(label, ref asVec4, 0.01f);
+            quaternion = changed ? Quaternion.Normalize(new Quaternion(asVec4.X, asVec4.Y, asVec4.Z, asVec4.W)) : quaternion;
             return (changed, quaternion);
         }
     }

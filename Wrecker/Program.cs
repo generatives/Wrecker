@@ -2,6 +2,7 @@
 using Clunker.Core;
 using Clunker.Editor;
 using Clunker.Editor.EditorConsole;
+using Clunker.Editor.Inspector;
 using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Toolbar;
 using Clunker.Geometry;
@@ -138,7 +139,9 @@ namespace ClunkerECSDemo
                     new BasicVoxelAddingTool("Metal", 1, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
                 }),
                 new SelectedEntitySystem(scene.World),
-                new PhysicsEntitySelector(scene.World, physicsSystem, cameraTransform)
+                new PhysicsEntitySelector(scene.World, physicsSystem, cameraTransform),
+                new Inspector(scene.World),
+                new EntityList(scene.World)
             }));
 
             CreateShip(scene.World, voxelMaterialInstance);

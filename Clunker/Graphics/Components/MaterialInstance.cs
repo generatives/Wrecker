@@ -1,4 +1,5 @@
-﻿using Clunker.Resources;
+﻿using Clunker.ECS;
+using Clunker.Resources;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
@@ -9,6 +10,7 @@ using Veldrid.ImageSharp;
 
 namespace Clunker.Graphics
 {
+    [ClunkerComponent]
     public class MaterialInstance
     {
         public int ImageWidth => Image.Data.Width;

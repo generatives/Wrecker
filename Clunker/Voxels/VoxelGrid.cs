@@ -1,4 +1,5 @@
-﻿using Clunker.Geometry;
+﻿using Clunker.ECS;
+using Clunker.Geometry;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Clunker.Voxels
 {
+    [ClunkerComponent]
     public struct VoxelGrid : IEnumerable<(Vector3, Voxel)>, IVoxels
     {
         private Voxel[] _voxels;

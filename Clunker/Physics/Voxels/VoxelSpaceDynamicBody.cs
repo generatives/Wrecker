@@ -1,5 +1,6 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
+using Clunker.ECS;
 using Clunker.Geometry;
 using Collections.Pooled;
 using System;
@@ -9,6 +10,7 @@ using System.Text;
 
 namespace Clunker.Physics.Voxels
 {
+    [ClunkerComponent]
     public struct VoxelSpaceDynamicBody
     {
         public BigCompound VoxelCompound { get; set; }

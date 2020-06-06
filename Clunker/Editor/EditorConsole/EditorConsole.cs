@@ -29,6 +29,7 @@ namespace Clunker.Editor.EditorConsole
         public override string Name => "Console";
 
         public override string Category => "Console";
+        public override char? HotKey => 'C';
 
         public override void DrawEditor(double state)
         {

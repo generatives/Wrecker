@@ -17,30 +17,40 @@ namespace Clunker.Editor.Inspector
             _editors = editors;
         }
 
-        public void Draw(object obj)
+        public bool Draw(object obj)
         {
             var properties = obj.GetType()
                 .GetProperties()
                 .Where(p => p.GetMethod != null && p.GetMethod.IsPublic && p.GetMethod.GetParameters().Length == 0 &&
                     p.SetMethod != null && p.SetMethod.IsPublic && p.SetMethod.GetParameters().Length == 1);
 
+            var anyChanged = false;
+
             foreach(var prop in properties)
             {
                 var value = prop.GetValue(obj);
-                if(_editors.ContainsKey(prop.PropertyType))
+                ImGui.Indent();
+                if (_editors.ContainsKey(prop.PropertyType))
                 {
                     var editor = _editors[prop.PropertyType];
                     var (changed, newValue) = editor.DrawEditor(prop.Name, value);
                     if(changed)
                     {
                         prop.SetValue(obj, newValue);
+                        anyChanged = true;
                     }
                 }
                 else if(value != null)
                 {
-                    Draw(value);
+                    if(ImGui.CollapsingHeader(prop.Name, ImGuiTreeNodeFlags.DefaultOpen))
+                    {
+                        anyChanged = Draw(value) || anyChanged;
+                    }
                 }
+                ImGui.Unindent();
             }
+
+            return anyChanged;
         }
     }
 }

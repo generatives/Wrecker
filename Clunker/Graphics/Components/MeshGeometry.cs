@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Clunker.ECS;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
@@ -8,6 +9,7 @@ using Veldrid.Utilities;
 
 namespace Clunker.Graphics
 {
+    [ClunkerComponent]
     public struct MeshGeometry
     {
         public VertexPositionTextureNormal[] Vertices;

@@ -1,4 +1,5 @@
-﻿using Clunker.Geometry;
+﻿using Clunker.ECS;
+using Clunker.Geometry;
 using DefaultEcs;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Clunker.Core
 {
+    [ClunkerComponent]
     public class Transform
     {
         public Transform Parent { get; private set; }
