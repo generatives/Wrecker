@@ -15,17 +15,25 @@ namespace Clunker.Voxels
     [ClunkerComponent]
     public struct VoxelGrid : IEnumerable<(Vector3, Voxel)>, IVoxels
     {
-        private Voxel[] _voxels;
+        public Voxel[] Voxels { get; private set; }
         public float VoxelSize { get; private set; }
         public int GridSize { get; private set; }
         public bool HasExistingVoxels => this.Any(v => v.Item2.Exists);
 
         public VoxelGrid(int gridSize, float voxelSize)
         {
-            _voxels = new Voxel[gridSize * gridSize * gridSize];
+            VoxelSize = voxelSize;
             GridSize = gridSize;
+            Voxels = new Voxel[gridSize * gridSize * gridSize];
+        }
+
+        public VoxelGrid(float voxelSize, int gridSize, Voxel[] voxels)
+        {
+            Debug.Assert(voxels.Length == gridSize * gridSize * gridSize, "Voxel array must be sized to gridSize");
 
             VoxelSize = voxelSize;
+            GridSize = gridSize;
+            Voxels = voxels;
         }
 
         public Voxel this[Vector3i index]
@@ -44,11 +52,11 @@ namespace Clunker.Voxels
         {
             get
             {
-                return _voxels[x + GridSize * (y + GridSize * z)];
+                return Voxels[x + GridSize * (y + GridSize * z)];
             }
             set
             {
-                _voxels[x + GridSize * (y + GridSize * z)] = value;
+                Voxels[x + GridSize * (y + GridSize * z)] = value;
             }
         }
 

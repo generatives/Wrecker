@@ -1,4 +1,5 @@
-﻿using ImGuiNET;
+﻿using Clunker.Geometry;
+using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -75,6 +76,28 @@ namespace Clunker.Editor.Inspector.PropertyEditor
             var changed = ImGui.DragFloat4(label, ref asVec4, 0.01f);
             quaternion = changed ? Quaternion.Normalize(new Quaternion(asVec4.X, asVec4.Y, asVec4.Z, asVec4.W)) : quaternion;
             return (changed, quaternion);
+        }
+    }
+
+    public class Vector2iEditor : IPropertyEditor
+    {
+        public (bool, object) DrawEditor(string label, object value)
+        {
+            var vector = (Vector2i)value;
+            var asVec = (Vector2)vector;
+            var changed = ImGui.DragFloat2(label, ref asVec, 1);
+            return (changed, new Vector2i((int)asVec.X, (int)asVec.Y));
+        }
+    }
+
+    public class Vector3iEditor : IPropertyEditor
+    {
+        public (bool, object) DrawEditor(string label, object value)
+        {
+            var vector = (Vector3i)value;
+            var asVec = (Vector3)vector;
+            var changed = ImGui.DragFloat3(label, ref asVec);
+            return (changed, new Vector3i((int)asVec.X, (int)asVec.Y, (int)asVec.Z));
         }
     }
 }

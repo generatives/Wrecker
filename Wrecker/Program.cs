@@ -5,6 +5,7 @@ using Clunker.Editor.EditorConsole;
 using Clunker.Editor.Inspector;
 using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Toolbar;
+using Clunker.Editor.VoxelSpaceLoader;
 using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
@@ -96,8 +97,6 @@ namespace ClunkerECSDemo
             scene.LogicSystems.Add(physicsSystem);
             scene.LogicSystems.Add(new DynamicBodyPositionSync(scene.World));
 
-            //scene.LogicSystems.Add(new ClickVoxelRemover(physicsSystem, transform));
-
             var voxelTypes = new VoxelTypes(new[]
             {
                 new VoxelType(
@@ -143,71 +142,13 @@ namespace ClunkerECSDemo
                 new SelectedEntitySystem(scene.World),
                 new PhysicsEntitySelector(scene.World, physicsSystem, cameraTransform),
                 new Inspector(scene.World),
-                new EntityList(scene.World)
+                new EntityList(scene.World),
+                new VoxelSpaceLoader(scene.World, cameraTransform, voxelMaterialInstance)
             }));
-
-            CreateShip(scene.World, voxelMaterialInstance);
 
             var app = new ClunkerApp(resourceLoader, scene);
 
             app.Start(wci, options).Wait();
-        }
-
-        private static void CreateShip(World world, MaterialInstance materialInstance)
-        {
-            var gridLength = 8;
-            var padding = 3;
-            var voxelSize = 1;
-            var voxelSpaceData = new VoxelGrid(gridLength, voxelSize);
-            for (var x = padding; x < gridLength - padding; x++)
-            {
-                for (var y = padding; y < gridLength - padding; y++)
-                {
-                    for (var z = padding; z < gridLength - padding; z++)
-                    {
-                        voxelSpaceData[x, y, z] = new Voxel() { Exists = true };
-                    }
-                }
-            }
-
-            var shipEntity = world.CreateEntity();
-            var gridEntity1 = world.CreateEntity();
-
-            var gridTransform1 = new Transform();
-            gridEntity1.Set(gridTransform1);
-            gridEntity1.Set(materialInstance);
-            gridEntity1.Set(new ExposedVoxels());
-            gridEntity1.Set(voxelSpaceData);
-            gridEntity1.Set(new VoxelSpaceMember() { Parent = shipEntity, Index = new Vector3i(0, 0, 0) });
-            gridEntity1.Set(new VoxelSpaceExpander());
-
-            var gridEntity2 = world.CreateEntity();
-
-            var gridTransform2 = new Transform();
-            gridTransform2.Position = Vector3.UnitX * gridLength * voxelSize;
-            gridEntity2.Set(gridTransform2);
-            gridEntity2.Set(materialInstance);
-            gridEntity2.Set(new ExposedVoxels());
-            gridEntity2.Set(voxelSpaceData);
-            gridEntity2.Set(new VoxelSpaceMember() { Parent = shipEntity, Index = new Vector3i(1, 0, 0) });
-            gridEntity2.Set(new VoxelSpaceExpander());
-
-            var shipTransform = new Transform();
-            shipTransform.AddChild(gridTransform1);
-            shipTransform.AddChild(gridTransform2);
-            shipEntity.Set(shipTransform);
-            shipEntity.Set(new VoxelSpaceDynamicBody());
-            shipEntity.Set(new DynamicBody());
-            shipEntity.Set(new VoxelSpace()
-            {
-                GridSize = gridLength,
-                VoxelSize = voxelSize,
-                Members = new Dictionary<Vector3i, Entity>()
-                {
-                    { new Vector3i(0, 0, 0), gridEntity1 },
-                    { new Vector3i(1, 0, 0), gridEntity2 }
-                }
-            });
         }
     }
 }

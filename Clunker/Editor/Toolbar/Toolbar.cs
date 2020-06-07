@@ -26,7 +26,7 @@ namespace Clunker.Editor.Toolbar
         }
 
         public override string Name => "Voxel Editor";
-        public override string Category => "Entity Editing";
+        public override string Category => "Voxels";
         public override char? HotKey => 'T';
 
         public override void DrawEditor(double deltaTime)

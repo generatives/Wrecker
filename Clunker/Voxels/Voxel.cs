@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MessagePack;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -8,11 +9,16 @@ using Veldrid;
 
 namespace Clunker.Voxels
 {
+    [MessagePackObject]
     public struct Voxel
     {
+        [IgnoreMember]
         public bool Exists { get => Density > 0; set => Density = value ? byte.MaxValue : (byte)0; }
+        [Key(0)]
         public byte Density { get; set; }
+        [Key(1)]
         public ushort BlockType { get; set; }
+        [Key(2)]
         public VoxelSide Orientation { get; set; }
 
         public static bool operator ==(Voxel v, Voxel v1)

@@ -1,14 +1,19 @@
-﻿using System;
+﻿using MessagePack;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
 namespace Clunker.Geometry
 {
+    [MessagePackObject]
     public struct Vector3i
     {
+        [Key(0)]
         public int X;
+        [Key(1)]
         public int Y;
+        [Key(2)]
         public int Z;
 
         public Vector3i(int x, int y, int z)

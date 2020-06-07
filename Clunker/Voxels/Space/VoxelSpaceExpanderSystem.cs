@@ -16,7 +16,7 @@ namespace Clunker.Voxels.Space
     {
         private MaterialInstance _materialInstance;
 
-        public VoxelSpaceExpanderSystem(MaterialInstance materialInstance, World world) : base(world.GetEntities().With<VoxelSpaceMember>().With<VoxelSpaceExpander>().WhenChanged<VoxelGrid>().AsSet())
+        public VoxelSpaceExpanderSystem(MaterialInstance materialInstance, World world) : base(world.GetEntities().With<VoxelSpaceMember>().With<VoxelSpaceExpander>().WhenAddedEither<VoxelGrid>().WhenChangedEither<VoxelGrid>().AsSet())
         {
             _materialInstance = materialInstance;
         }
@@ -47,15 +47,17 @@ namespace Clunker.Voxels.Space
                         var index = new Vector3i(addSurrounding.X + x, addSurrounding.Y + y, addSurrounding.Z + z);
                         if(index != addSurrounding && !space.Members.ContainsKey(index))
                         {
+                            var spaceTransform = voxelSpaceEntity.Get<Transform>();
                             var voxelGridObj = voxelSpaceEntity.World.CreateEntity();
                             var transform = new Transform();
                             transform.Position = new Vector3(index.X * space.GridSize * space.VoxelSize, index.Y * space.GridSize * space.VoxelSize, index.Z * space.GridSize * space.VoxelSize);
+                            spaceTransform.AddChild(transform);
                             voxelGridObj.Set(transform);
                             voxelGridObj.Set(_materialInstance);
                             voxelGridObj.Set(new ExposedVoxels());
-                            voxelGridObj.Set(new VoxelGrid(8, space.VoxelSize));
                             voxelGridObj.Set(new VoxelSpaceMember() { Parent = voxelSpaceEntity, Index = index });
                             voxelGridObj.Set(new VoxelSpaceExpander());
+                            voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize));
 
                             space.Members[index] = voxelGridObj;
                             voxelSpaceEntity.Set(space);
@@ -70,7 +72,7 @@ namespace Clunker.Voxels.Space
                     for (int z = -1; z <= 1; z++)
                     {
                         var index = new Vector3i(removeSurrounding.X + x, removeSurrounding.Y + y, removeSurrounding.Z + z);
-                        if (index != removeSurrounding && !ShouldStay(space, index))
+                        if (index != removeSurrounding && space.Members.ContainsKey(index) && !ShouldStay(space, index))
                         {
                             var voxelGridObj = space.Members[index];
                             space.Members.Remove(index);

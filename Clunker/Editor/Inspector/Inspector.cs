@@ -1,6 +1,7 @@
 ﻿using Clunker.ECS;
 using Clunker.Editor.Inspector.PropertyEditor;
 using Clunker.Editor.SelectedEntity;
+using Clunker.Geometry;
 using DefaultEcs;
 using ImGuiNET;
 using System;
@@ -34,6 +35,8 @@ namespace Clunker.Editor.Inspector
                 { typeof(Vector2), new Vector2Editor() },
                 { typeof(Vector3), new Vector3Editor() },
                 { typeof(Quaternion), new QuaternionEditor() },
+                { typeof(Vector2i), new Vector2iEditor() },
+                { typeof(Vector3i), new Vector3iEditor() },
                 { typeof(Entity), new EntityEditor(world) }
             });
             _world = world;

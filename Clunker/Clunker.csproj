@@ -10,6 +10,7 @@
     <PackageReference Include="Collections.Pooled" Version="1.0.82" />
     <PackageReference Include="DefaultEcs" Version="0.14.3" />
     <PackageReference Include="DynamicExpresso.Core" Version="2.3.1" />
+    <PackageReference Include="MessagePack" Version="2.1.115" />
     <PackageReference Include="Veldrid" Version="4.7.0" />
     <PackageReference Include="Veldrid.ImageSharp" Version="4.7.0" />
     <PackageReference Include="Veldrid.ImGui" Version="5.72.0" />
