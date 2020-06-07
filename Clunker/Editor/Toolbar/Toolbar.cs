@@ -38,14 +38,28 @@ namespace Clunker.Editor.Toolbar
                 _tools[_index].Selected();
             }
 
+            var io = ImGui.GetIO();
+
             ImGui.Begin(Name);
 
-            var index = _index;
-            ImGui.Combo("Tool", ref index, _tools.Select(t => string.IsNullOrWhiteSpace(t.Name) ? t.ToString() : t.Name).ToArray(), _tools.Length);
-            if (index != _index)
+            var oldIndex = _index;
+            _index = Math.Max(Math.Min(_index - (int)io.MouseWheel, _tools.Length - 1), 0);
+            if (ImGui.BeginCombo("Tool", _tools[_index].Name)) // The second parameter is the label previewed before opening the combo.
             {
-                _tools[_index].UnSelected();
-                _index = index;
+                for(int i = 0; i < _tools.Length; i++)
+                {
+                    bool is_selected = (i == _index); // You can store your selection however you want, outside or inside your objects
+                    if (ImGui.Selectable(_tools[i].Name, is_selected))
+                        _index = i;
+                    if (is_selected)
+                        ImGui.SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+                }
+                ImGui.EndCombo();
+            }
+
+            if (oldIndex != _index)
+            {
+                _tools[oldIndex].UnSelected();
                 _tools[_index].Selected();
             }
 

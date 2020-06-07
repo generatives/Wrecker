@@ -16,6 +16,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using Clunker.Resources;
 using DefaultEcs;
 using Clunker.Core;
+using ImGuiNET;
 
 namespace Clunker
 {
@@ -122,6 +123,8 @@ namespace Clunker
 
                     _renderers.ForEach(r => r.Render(Scene, CameraTransform, _graphicsDevice, _commandList, RenderWireframes.NO));
 
+                    var displaySize = ImGui.GetIO().DisplaySize;
+                    ImGui.GetBackgroundDrawList().AddCircleFilled(displaySize / 2, 2, ImGui.GetColorU32(new Vector4(1, 1, 1, 1)));
                     imGuiRenderer.Render(_graphicsDevice, _commandList);
 
                     _commandList.End();

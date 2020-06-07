@@ -137,6 +137,8 @@ namespace ClunkerECSDemo
                     new RemoveVoxelEditingTool(redVoxelMaterialInstance, scene.World, physicsSystem, camera),
                     new BasicVoxelAddingTool("DarkStone", 0, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
                     new BasicVoxelAddingTool("Metal", 1, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
+                    new BasicVoxelAddingTool("Dirt", 3, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
+                    new BasicVoxelAddingTool("Grass", 4, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
                 }),
                 new SelectedEntitySystem(scene.World),
                 new PhysicsEntitySelector(scene.World, physicsSystem, cameraTransform),
