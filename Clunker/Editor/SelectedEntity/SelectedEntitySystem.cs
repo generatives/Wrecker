@@ -50,9 +50,7 @@ namespace Clunker.Editor.SelectedEntity
             var entities = _selectedEntities.GetEntities().ToArray();
             var selected = entities.FirstOrDefault();
 
-            ImGui.Begin(Name);
             ImGui.Text($"Selected: {selected}");
-            ImGui.End();
         }
 
         public override void Dispose()

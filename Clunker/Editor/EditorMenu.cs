@@ -53,7 +53,7 @@ namespace Clunker.Editor
 
             foreach(var editor in Editors.Where(e => e.IsActive))
             {
-                editor.DrawEditor(delta);
+                editor.DrawWindow(delta);
             }
         }
 

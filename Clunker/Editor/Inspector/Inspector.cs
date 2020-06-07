@@ -33,7 +33,8 @@ namespace Clunker.Editor.Inspector
                 { typeof(bool), new BooleanEditor() },
                 { typeof(Vector2), new Vector2Editor() },
                 { typeof(Vector3), new Vector3Editor() },
-                { typeof(Quaternion), new QuaternionEditor()  }
+                { typeof(Quaternion), new QuaternionEditor() },
+                { typeof(Entity), new EntityEditor(world) }
             });
             _world = world;
             _selectedEntities = _world.GetEntities().With<SelectedEntityFlag>().AsSet();
@@ -42,16 +43,14 @@ namespace Clunker.Editor.Inspector
 
         public override void DrawEditor(double delta)
         {
-            ImGui.Begin("Inspector");
-
             var entityNum = 0;
             foreach (var entity in _selectedEntities.GetEntities())
             {
                 ImGui.PushID(entityNum.ToString());
                 ImGui.Text("***" + entity.ToString() + "***");
-                foreach(var componentType in ECSMeta.ComponentTypes)
+                foreach (var componentType in ECSMeta.ComponentTypes)
                 {
-                    if(!_componentEditors.ContainsKey(componentType))
+                    if (!_componentEditors.ContainsKey(componentType))
                     {
                         _componentEditors[componentType] = GetType()
                             .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
@@ -64,7 +63,6 @@ namespace Clunker.Editor.Inspector
                 ImGui.PopID();
                 entityNum++;
             }
-            ImGui.End();
         }
 
         private void DrawComponentEditor<T>(Entity entity)

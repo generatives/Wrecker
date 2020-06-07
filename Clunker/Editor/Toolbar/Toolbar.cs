@@ -26,7 +26,6 @@ namespace Clunker.Editor.Toolbar
         }
 
         public override string Name => "Voxel Editor";
-
         public override string Category => "Entity Editing";
         public override char? HotKey => 'T';
 
@@ -39,8 +38,6 @@ namespace Clunker.Editor.Toolbar
             }
 
             var io = ImGui.GetIO();
-
-            ImGui.Begin(Name);
 
             var oldIndex = _index;
             _index = Math.Max(Math.Min(_index - (int)io.MouseWheel, _tools.Length - 1), 0);
@@ -64,8 +61,6 @@ namespace Clunker.Editor.Toolbar
             }
 
             _tools[_index].Run();
-
-            ImGui.End();
         }
     }
 }

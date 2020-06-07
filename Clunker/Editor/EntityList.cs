@@ -25,8 +25,6 @@ namespace Clunker.Editor
 
         public override void DrawEditor(double delta)
         {
-            ImGui.Begin("Entity List");
-
             var entityNum = 0;
             foreach(var entity in _allEntities.GetEntities())
             {
@@ -48,8 +46,6 @@ namespace Clunker.Editor
                 ImGui.PopID();
                 entityNum++;
             }
-
-            ImGui.End();
         }
 
         public override void Dispose()

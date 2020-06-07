@@ -12,7 +12,7 @@ namespace Clunker.Editor
         string Category { get; }
         char? HotKey { get; }
         bool IsActive { get; set; }
-        void DrawEditor(double delta);
+        void DrawWindow(double delta);
     }
 
     public abstract class Editor : IEditor
@@ -22,6 +22,18 @@ namespace Clunker.Editor
         public virtual char? HotKey { get; } = null;
         public bool IsEnabled { get; set; } = true;
         public bool IsActive { get; set; } = false;
+
+        public void DrawWindow(double delta)
+        {
+            var isActive = IsActive;
+            IsActive = ImGui.Begin(Name, ref isActive);
+            IsActive = isActive;
+
+            if(IsActive)
+            {
+                DrawEditor(delta);
+            }
+        }
 
         public virtual void DrawEditor(double delta)
         {
