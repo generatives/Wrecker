@@ -132,7 +132,7 @@ namespace ClunkerECSDemo
             "brick grey", // 1
             "brick red",  // 2
             "dirt",       // 3
-            "ice",       // 4
+            "ice",        // 4
             "stone",      // 5
             "sand",       // 6
             "cactus top", // 7

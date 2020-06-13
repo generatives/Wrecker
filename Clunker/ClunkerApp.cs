@@ -94,7 +94,6 @@ namespace Clunker
 
                     InputTracker.UpdateFrameInput(_window, inputSnapshot);
 
-                    if (InputTracker.WasKeyDowned(Key.Escape)) break;
                     if (InputTracker.WasKeyDowned(Key.Tilde)) InputTracker.LockMouse = !InputTracker.LockMouse;
                     //if (InputTracker.WasKeyDowned(Key.T)) { StackedTiming.Enabled = !StackedTiming.Enabled; Timing.Enabled = !Timing.Enabled; }
 
