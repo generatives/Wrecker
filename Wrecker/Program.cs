@@ -21,7 +21,10 @@ using DefaultEcs.Threading;
 using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Numerics;
+using System.Xml.Linq;
 using Veldrid;
 using Veldrid.StartupUtilities;
 using Wrecker;
@@ -97,48 +100,20 @@ namespace ClunkerECSDemo
             scene.LogicSystems.Add(physicsSystem);
             scene.LogicSystems.Add(new DynamicBodyPositionSync(scene.World));
 
-            var voxelTypes = new VoxelTypes(new[]
-            {
-                new VoxelType(
-                    "DarkStone",
-                    new Vector2(390, 1690),
-                    new Vector2(390, 1690),
-                    new Vector2(390, 1690)),
-                new VoxelType(
-                    "Metal",
-                    new Vector2(650, 1300),
-                    new Vector2(650, 1300),
-                    new Vector2(650, 1300)),
-                new VoxelType(
-                    "Thruster",
-                    new Vector2(650, 1170),
-                    new Vector2(650, 1300),
-                    new Vector2(650, 1300)),
-                new VoxelType(
-                    "Dirt",
-                    new Vector2(650, 130),
-                    new Vector2(650, 130),
-                    new Vector2(650, 130)),
-                new VoxelType(
-                    "Grass",
-                    new Vector2(389, 909),
-                    new Vector2(389, 909),
-                    new Vector2(389, 909))
-            });
+            var voxelTypes = LoadVoxelTypes();
 
-            scene.LogicSystems.Add(new VoxelGridMesher(scene, voxelTypes, parrallelRunner));
+            scene.LogicSystems.Add(new VoxelGridMesher(scene, new VoxelTypes(voxelTypes), parrallelRunner));
+
+            var tools = new List<ITool>()
+            {
+                new RemoveVoxelEditingTool(redVoxelMaterialInstance, scene.World, physicsSystem, camera)
+            };
+            tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera)));
 
             scene.LogicSystems.Add(new EditorMenu(scene, new List<IEditor>()
             {
                 new EditorConsole(scene),
-                new Toolbar(new ITool[]
-                {
-                    new RemoveVoxelEditingTool(redVoxelMaterialInstance, scene.World, physicsSystem, camera),
-                    new BasicVoxelAddingTool("DarkStone", 0, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
-                    new BasicVoxelAddingTool("Metal", 1, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
-                    new BasicVoxelAddingTool("Dirt", 3, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
-                    new BasicVoxelAddingTool("Grass", 4, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera),
-                }),
+                new Toolbar(tools.ToArray()),
                 new SelectedEntitySystem(scene.World),
                 new PhysicsEntitySelector(scene.World, physicsSystem, cameraTransform),
                 new Inspector(scene.World),
@@ -149,6 +124,41 @@ namespace ClunkerECSDemo
             var app = new ClunkerApp(resourceLoader, scene);
 
             app.Start(wci, options).Wait();
+        }
+
+        private static string[] goodVoxelTypes = new string[]
+        {
+            "wood",       // 0
+            "brick grey", // 1
+            "brick red",  // 2
+            "dirt",       // 3
+            "ice",       // 4
+            "stone",      // 5
+            "sand",       // 6
+            "cactus top", // 7
+            "glass"       // 8
+        };
+
+        private static VoxelType[] LoadVoxelTypes()
+        {
+            var filename = "Assets\\spritesheet_tiles.xml";
+            var currentDirectory = Directory.GetCurrentDirectory();
+            var filePath = Path.Combine(currentDirectory, filename);
+            var doc = XElement.Load(filePath);
+            var byName = doc
+                .Descendants("SubTexture")
+                .Select(st => (st.Attribute("name").Value, new Vector2(int.Parse(st.Attribute("x").Value), int.Parse(st.Attribute("y").Value))))
+                .Select(t => new VoxelType(
+                    t.Value.Substring(0, t.Value.Length - 4).Replace('_', ' '),
+                    t.Item2,
+                    t.Item2,
+                    t.Item2
+                ))
+                .ToDictionary(v => v.Name);
+
+            return goodVoxelTypes
+                .Select(n => byName[n])
+                .ToArray();
         }
     }
 }

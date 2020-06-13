@@ -140,7 +140,7 @@ namespace Clunker.WorldSpace
                         if (voxel.Exists)
                         {
                             var topBlock = !voxels.ContainsIndex(x, y + 1, z) || !voxels[x, y + 1, z].Exists;
-                            voxel.BlockType = (ushort)(topBlock ? 4 : 3);
+                            voxel.BlockType = (ushort)(topBlock ? 7 : 3);
                             voxels[x, y, z] = voxel;
                         }
                     }
