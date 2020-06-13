@@ -26,6 +26,7 @@ namespace Wrecker
         protected override void Update(double deltaSec, in Entity entity)
         {
             ref var transform = ref entity.Get<Transform>();
+            ref var camera = ref entity.Get<Camera>();
 
             var time = (float)deltaSec;
 
@@ -56,12 +57,12 @@ namespace Wrecker
 
             if (GameInputTracker.IsKeyPressed(Key.E))
             {
-                transform.RotateBy(0, 0, time * LookSpeed * 100);
+                camera.Roll += time * LookSpeed * 100;
             }
 
             if (GameInputTracker.IsKeyPressed(Key.Q))
             {
-                transform.RotateBy(0, 0, -time * LookSpeed * 100);
+                camera.Roll += -time * LookSpeed * 100;
             }
 
             if (GameInputTracker.IsKeyPressed(Key.Space))
@@ -74,7 +75,14 @@ namespace Wrecker
                 transform.MoveBy(0, -distance, 0);
             }
 
-            transform.RotateBy(-GameInputTracker.MouseDelta.X * LookSpeed, -GameInputTracker.MouseDelta.Y * LookSpeed, 0);
+            camera.Yaw += -GameInputTracker.MouseDelta.X * LookSpeed;
+            camera.Pitch += -GameInputTracker.MouseDelta.Y * LookSpeed;
+
+            // Limit pitch from -89 to +89 degrees
+            camera.Pitch = MathF.Min(camera.Pitch, MathF.PI / 2f / 90f * 89f);
+            camera.Pitch = MathF.Max(camera.Pitch, -MathF.PI / 2f / 90f * 89f);
+
+            transform.Orientation = Quaternion.CreateFromYawPitchRoll(camera.Yaw, camera.Pitch, camera.Roll);
         }
     }
 }

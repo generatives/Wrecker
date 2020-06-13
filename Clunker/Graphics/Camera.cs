@@ -12,5 +12,8 @@ namespace Clunker.Graphics
     [ClunkerComponent]
     public struct Camera
     {
+        public float Yaw;
+        public float Pitch;
+        public float Roll;
     }
 }
