@@ -58,7 +58,7 @@ namespace ClunkerECSDemo
             var resourceLoader = new ResourceLoader();
             var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
 
-            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode);
+            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode, false);
             var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
             var transparentVoxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = new RgbaFloat(1, 1, 1, 0.85f) });
             var redVoxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.Red });
@@ -124,6 +124,9 @@ namespace ClunkerECSDemo
                 new VoxelSpaceLoader(scene.World, cameraTransform, voxelMaterialInstance)
             }));
 
+            var cylinder = scene.World.CreateEntity();
+            AddCylinder(cylinder, voxelMaterialInstance);
+
             var app = new ClunkerApp(resourceLoader, scene);
 
             app.Start(wci, options).Wait();
@@ -141,6 +144,26 @@ namespace ClunkerECSDemo
             "cactus top", // 7
             "glass"       // 8
         };
+
+        private static void AddCylinder(Entity entity, MaterialInstance materialInstance)
+        {
+            entity.Set(new Transform());
+            entity.Set(materialInstance);
+
+            var cylinder = CylinderMeshGenerator.Generate(1, new List<(float, float)>() { (1, 2), (1, 1), (1, 2), (1, 1) }, 32);
+
+            var mesh = new RenderableMeshGeometry()
+            {
+                Vertices = cylinder
+                    .Select(v => new VertexPositionTextureNormal(v.Vertex, new Vector2(20, 20), v.Normal))
+                    .ToArray(),
+                Indices = cylinder.Select((v, i) => (ushort)i).ToArray(),
+                TransparentIndices = new ushort[0],
+                BoundingSize = null
+            };
+
+            entity.Set(mesh);
+        }
 
         private static VoxelType[] LoadVoxelTypes()
         {

@@ -10,11 +10,11 @@ using Veldrid.Utilities;
 namespace Clunker.Graphics
 {
     [ClunkerComponent]
-    public struct MeshGeometry
+    public struct RenderableMeshGeometry
     {
         public VertexPositionTextureNormal[] Vertices;
         public ushort[] Indices;
         public ushort[] TransparentIndices;
-        public Vector3 BoundingSize;
+        public Vector3? BoundingSize;
     }
 }

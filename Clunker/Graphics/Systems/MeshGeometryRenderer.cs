@@ -17,7 +17,7 @@ namespace Clunker.Graphics
 
         public MeshGeometryRenderer(Transform cameraTransform, World world) : base(world.GetEntities()
             .With<MaterialInstance>()
-            .With<MeshGeometry>()
+            .With<RenderableMeshGeometry>()
             .With<MeshGeometryResources>()
             .With<Transform>().AsSet())
         {
@@ -31,13 +31,15 @@ namespace Clunker.Graphics
             foreach(var entity in entities)
             {
                 ref var materialInstance = ref entity.Get<MaterialInstance>();
-                ref var geometry = ref entity.Get<MeshGeometry>();
+                ref var geometry = ref entity.Get<RenderableMeshGeometry>();
                 ref var geometryResources = ref entity.Get<MeshGeometryResources>();
                 ref var transform = ref entity.Get<Transform>();
 
-                var boundingBox = GetBoundingBox(transform, geometry.BoundingSize);
+                var shouldRender = geometry.BoundingSize.HasValue ?
+                    context.Frustrum.Contains(GetBoundingBox(transform, geometry.BoundingSize.Value)) != ContainmentType.Disjoint :
+                    true;
 
-                if (context.Frustrum.Contains(boundingBox) != ContainmentType.Disjoint)
+                if (shouldRender)
                 {
                     materialInstance.Bind(context);
                     context.CommandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, transform.WorldMatrix);

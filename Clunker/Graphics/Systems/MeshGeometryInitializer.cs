@@ -11,13 +11,13 @@ namespace Clunker.Graphics
 {
     public class MeshGeometryInitializer : ComponentChangeSystem<RenderingContext>
     {
-        public MeshGeometryInitializer(World world) : base(world, typeof(MeshGeometry))
+        public MeshGeometryInitializer(World world) : base(world, typeof(RenderableMeshGeometry))
         {
         }
 
         protected override void Compute(RenderingContext context, in Entity entity)
         {
-            ref var geometry = ref entity.Get<MeshGeometry>();
+            ref var geometry = ref entity.Get<RenderableMeshGeometry>();
 
             var vertexBuffer = default(DeviceBuffer);
             var indexBuffer = default(DeviceBuffer);

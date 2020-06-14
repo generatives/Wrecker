@@ -55,7 +55,7 @@ namespace Clunker.Voxels.Meshing
                 }
             });
 
-            var mesh = new MeshGeometry()
+            var mesh = new RenderableMeshGeometry()
             {
                 Vertices = vertices.ToArray(),
                 Indices = indices.ToArray(),
