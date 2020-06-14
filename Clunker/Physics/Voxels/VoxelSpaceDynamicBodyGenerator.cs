@@ -30,6 +30,7 @@ namespace Clunker.Physics.Voxels
             ref var spaceBody = ref entity.Get<VoxelSpaceDynamicBody>();
             ref var body = ref entity.Get<DynamicBody>();
             body.LockedAxis = (true, false, true);
+            body.Gravity = Vector3.Zero;
 
             using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
             {

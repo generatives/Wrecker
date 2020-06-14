@@ -4,6 +4,7 @@ using BepuUtilities.Memory;
 using Clunker.Core;
 using Clunker.Geometry;
 using Clunker.Physics.Bepu;
+using Clunker.Physics.Character;
 using DefaultEcs;
 using DefaultEcs.System;
 using System;
@@ -24,13 +25,18 @@ namespace Clunker.Physics
         private Dictionary<BodyHandle, object> _dynamicContexts;
         private Dictionary<TypedIndex, object> _shapeContexts;
 
+        public CharacterControllers Characters { get; private set; }
+
         public PhysicsSystem()
         {
             //The buffer pool is a source of raw memory blobs for the engine to use.
             Pool = new BufferPool();
+
+            Characters = new CharacterControllers(Pool);
+
             //Note that you can also control the order of internal stage execution using a different ITimestepper implementation.
             //For the purposes of this demo, we just use the default by passing in nothing (which happens to be PositionFirstTimestepper at the time of writing).
-            Simulation = Simulation.Create(Pool, new NarrowPhaseCallbacks(), new PoseIntegratorCallbacks(new Vector3(0, 0, 0)));
+            Simulation = Simulation.Create(Pool, new CharacterNarrowphaseCallbacks(Characters), new PoseIntegratorCallbacks(this, new Vector3(0, -10, 0)));
             
             _threadDispatcher = new SimpleThreadDispatcher(Environment.ProcessorCount);
 
@@ -141,6 +147,39 @@ namespace Clunker.Physics
             return null;
         }
 
+        public CharacterInput BuildCharacterInput(Vector3 initialPosition, Capsule shape,
+            float speculativeMargin, float mass, float maximumHorizontalForce, float maximumVerticalGlueForce,
+            float jumpVelocity, float speed, float maximumSlope = (float)Math.PI * 0.25f)
+        {
+            var shapeIndex = Simulation.Shapes.Add(shape);
+
+            //Because characters are dynamic, they require a defined BodyInertia. For the purposes of the demos, we don't want them to rotate or fall over, so the inverse inertia tensor is left at its default value of all zeroes.
+            //This is effectively equivalent to giving it an infinite inertia tensor- in other words, no torque will cause it to rotate.
+            var bodyHandle = Simulation.Bodies.Add(BodyDescription.CreateDynamic(initialPosition, new BodyInertia { InverseMass = 1f / mass }, new CollidableDescription(shapeIndex, speculativeMargin), new BodyActivityDescription(shape.Radius * 0.02f)));
+            ref var character = ref Characters.AllocateCharacter(bodyHandle);
+            character.LocalUp = new Vector3(0, 1, 0);
+            character.CosMaximumSlope = (float)Math.Cos(maximumSlope);
+            character.JumpVelocity = jumpVelocity;
+            character.MaximumVerticalForce = maximumVerticalGlueForce;
+            character.MaximumHorizontalForce = maximumHorizontalForce;
+            character.MinimumSupportDepth = shape.Radius * -0.01f;
+            character.MinimumSupportContinuationDepth = -speculativeMargin;
+
+            return new CharacterInput()
+            {
+                BodyHandle = bodyHandle,
+                Shape = shape,
+                Speed = speed,
+            };
+        }
+
+        public void DisposeCharacterInput(CharacterInput characterInput)
+        {
+            RemoveShape(new BodyReference(characterInput.BodyHandle, Simulation.Bodies).Collidable.Shape);
+            RemoveDynamic(new BodyReference(characterInput.BodyHandle, Simulation.Bodies));
+            Characters.RemoveCharacterByBodyHandle(characterInput.BodyHandle);
+        }
+
         public void Update(double time)
         {
             Simulation.Timestep((float)time, _threadDispatcher);
@@ -148,6 +187,7 @@ namespace Clunker.Physics
 
         public void Dispose()
         {
+            Characters.Dispose();
             //If you intend to reuse the BufferPool, disposing the simulation is a good idea- it returns all the buffers to the pool for reuse.
             //Here, we dispose it, but it's not really required; we immediately thereafter clear the BufferPool of all held memory.
             //Note that failing to dispose buffer pools can result in memory leaks.

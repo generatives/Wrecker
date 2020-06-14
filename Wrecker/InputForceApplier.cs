@@ -13,7 +13,7 @@ namespace Wrecker
 {
     public class InputForceApplier : AEntitySystem<double>
     {
-        private float _force = 5;
+        private float _force = 30;
         private PhysicsSystem _physicsSystem;
 
         public InputForceApplier(PhysicsSystem physicsSystem, World world) : base(world.GetEntities().With<DynamicBody>().With<Transform>().AsSet())

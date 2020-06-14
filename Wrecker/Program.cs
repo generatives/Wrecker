@@ -10,6 +10,7 @@ using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
 using Clunker.Physics;
+using Clunker.Physics.Character;
 using Clunker.Physics.Voxels;
 using Clunker.Resources;
 using Clunker.Voxels;
@@ -83,11 +84,11 @@ namespace ClunkerECSDemo
 
             scene.RendererSystems.Add(new MeshGeometryRenderer(cameraTransform, scene.World));
 
-            scene.LogicSystems.Add(new SimpleCameraMover(scene.World));
+            var physicsSystem = new PhysicsSystem();
+
+            scene.LogicSystems.Add(new SimpleCameraMover(physicsSystem, scene.World));
             scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, cameraTransform, 5, 32));
             scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance, 32, 1)));
-
-            var physicsSystem = new PhysicsSystem();
 
             scene.LogicSystems.Add(new InputForceApplier(physicsSystem, scene.World));
 
@@ -103,6 +104,8 @@ namespace ClunkerECSDemo
             var voxelTypes = LoadVoxelTypes();
 
             scene.LogicSystems.Add(new VoxelGridMesher(scene, new VoxelTypes(voxelTypes), parrallelRunner));
+
+            scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, scene.World));
 
             var tools = new List<ITool>()
             {

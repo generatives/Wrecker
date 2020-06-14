@@ -1,4 +1,5 @@
 ﻿using BepuPhysics;
+using DefaultEcs;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -12,15 +13,19 @@ namespace Clunker.Physics.Bepu
     public struct PoseIntegratorCallbacks : IPoseIntegratorCallbacks
     {
         public Vector3 Gravity;
-        Vector3 gravityDt;
+        private Vector3 _gravityDt;
+        private float _dt;
+        private PhysicsSystem _physicsSystem;
 
         /// <summary>
         /// Gets how the pose integrator should handle angular velocity integration.
         /// </summary>
         public AngularIntegrationMode AngularIntegrationMode => AngularIntegrationMode.Nonconserving; //Don't care about fidelity in this demo!
 
-        public PoseIntegratorCallbacks(Vector3 gravity) : this()
+
+        public PoseIntegratorCallbacks(PhysicsSystem physicsSystem, Vector3 gravity) : this()
         {
+            _physicsSystem = physicsSystem;
             Gravity = gravity;
         }
 
@@ -31,7 +36,8 @@ namespace Clunker.Physics.Bepu
         public void PrepareForIntegration(float dt)
         {
             //No reason to recalculate gravity * dt for every body; just cache it ahead of time.
-            gravityDt = Gravity * dt;
+            _gravityDt = Gravity * dt;
+            _dt = dt;
         }
 
         /// <summary>
@@ -48,7 +54,17 @@ namespace Clunker.Physics.Bepu
             //Note that we avoid accelerating kinematics. Kinematics are any body with an inverse mass of zero (so a mass of ~infinity). No force can move them.
             if (localInertia.InverseMass > 0)
             {
-                velocity.Linear = velocity.Linear + gravityDt;
+                var gravityDtThisObj = _gravityDt;
+                var context = _physicsSystem.GetDynamicContext(new BodyHandle(bodyIndex));
+                if (context != null && context is Entity entity && entity.Has<DynamicBody>())
+                {
+                    var dynamicBody = entity.Get<DynamicBody>();
+                    if(dynamicBody.Gravity.HasValue)
+                    {
+                        gravityDtThisObj = dynamicBody.Gravity.Value * _dt;
+                    }
+                }
+                velocity.Linear = velocity.Linear + gravityDtThisObj;
             }
         }
 
