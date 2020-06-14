@@ -13,6 +13,7 @@ namespace Clunker.Physics
     {
         public Vector3 BodyOffset { get; set; }
         public BodyReference Body { get; set; }
+        public (bool X, bool Y, bool Z)? LockedAxis { get; set; }
 
         public Vector3 GetWorldBodyOffset(Transform transform)
         {

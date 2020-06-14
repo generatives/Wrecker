@@ -18,7 +18,7 @@ namespace Clunker.Physics.Voxels
     {
         private PhysicsSystem _physicsSystem;
 
-        public VoxelSpaceDynamicBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(VoxelSpace), typeof(Transform), typeof(VoxelSpaceDynamicBody))
+        public VoxelSpaceDynamicBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(VoxelSpace), typeof(Transform), typeof(VoxelSpaceDynamicBody), typeof(DynamicBody))
         {
             _physicsSystem = physicsSystem;
         }
@@ -29,6 +29,7 @@ namespace Clunker.Physics.Voxels
             ref var space = ref entity.Get<VoxelSpace>();
             ref var spaceBody = ref entity.Get<VoxelSpaceDynamicBody>();
             ref var body = ref entity.Get<DynamicBody>();
+            body.LockedAxis = (true, false, true);
 
             using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
             {
@@ -63,6 +64,21 @@ namespace Clunker.Physics.Voxels
                     spaceBody.VoxelShape = _physicsSystem.AddShape(spaceBody.VoxelCompound, entity);
                     var offsetDiff = offset - body.BodyOffset;
                     body.BodyOffset = offset;
+
+                    if(body.LockedAxis.HasValue)
+                    {
+                        var locked = body.LockedAxis.Value;
+                        var tensor = compoundInertia.InverseInertiaTensor;
+                        compoundInertia.InverseInertiaTensor = new BepuUtilities.Symmetric3x3()
+                        {
+                            XX = locked.X ? 0 : tensor.XX,
+                            YX = 0,
+                            YY = locked.Y ? 0 : tensor.YY,
+                            ZX = 0,
+                            ZY = 0,
+                            ZZ = locked.Z ? 0 : tensor.ZZ,
+                        };
+                    }
 
                     if (body.Body.Exists)
                     {

@@ -35,9 +35,7 @@ namespace Clunker.Graphics
                 ref var geometryResources = ref entity.Get<MeshGeometryResources>();
                 ref var transform = ref entity.Get<Transform>();
 
-                var boundingBox = new BoundingBox(
-                    transform.WorldPosition,
-                    transform.GetWorld(geometry.BoundingSize));
+                var boundingBox = GetBoundingBox(transform, geometry.BoundingSize);
 
                 if (context.Frustrum.Contains(boundingBox) != ContainmentType.Disjoint)
                 {
@@ -66,6 +64,27 @@ namespace Clunker.Graphics
                 context.CommandList.SetIndexBuffer(transparent.resources.TransparentIndexBuffer, IndexFormat.UInt16);
                 context.CommandList.DrawIndexed(transparent.numIndices, 1, 0, 0, 0);
             }
+        }
+
+        private BoundingBox GetBoundingBox(Transform transform, Vector3 size)
+        {
+            var positions = new Vector3[]
+            {
+                transform.GetWorld(new Vector3(0, 0, 0)),
+                transform.GetWorld(new Vector3(size.X, 0, 0)),
+                transform.GetWorld(new Vector3(size.X, 0, size.Z)),
+                transform.GetWorld(new Vector3(0, 0, size.Z)),
+
+                transform.GetWorld(new Vector3(0, size.Y, 0)),
+                transform.GetWorld(new Vector3(size.X, size.Y, 0)),
+                transform.GetWorld(new Vector3(size.X, size.Y, size.Z)),
+                transform.GetWorld(new Vector3(0, size.Y, size.Z)),
+            };
+
+            var min = new Vector3(positions.Min(p => p.X), positions.Min(p => p.Y), positions.Min(p => p.Z));
+            var max = new Vector3(positions.Max(p => p.X), positions.Max(p => p.Y), positions.Max(p => p.Z));
+
+            return new BoundingBox(min, max);
         }
     }
 }

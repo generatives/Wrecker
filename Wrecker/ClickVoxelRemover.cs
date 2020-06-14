@@ -54,11 +54,11 @@ namespace Wrecker
                 object context;
                 if (handler.Collidable.Mobility == CollidableMobility.Dynamic)
                 {
-                    context = _physicsSystem.GetDynamicContext(handler.Collidable.Handle);
+                    context = _physicsSystem.GetDynamicContext(handler.Collidable.BodyHandle);
                 }
                 else
                 {
-                    context = _physicsSystem.GetStaticContext(handler.Collidable.Handle);
+                    context = _physicsSystem.GetStaticContext(handler.Collidable.StaticHandle);
                 }
 
                 if(context is Entity entity)

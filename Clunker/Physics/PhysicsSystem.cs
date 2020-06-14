@@ -20,8 +20,8 @@ namespace Clunker.Physics
         public BufferPool Pool { get; private set; }
         public bool IsEnabled { get; set; } = true;
 
-        private Dictionary<int, object> _staticContexts;
-        private Dictionary<int, object> _dynamicContexts;
+        private Dictionary<StaticHandle, object> _staticContexts;
+        private Dictionary<BodyHandle, object> _dynamicContexts;
         private Dictionary<TypedIndex, object> _shapeContexts;
 
         public PhysicsSystem()
@@ -34,8 +34,8 @@ namespace Clunker.Physics
             
             _threadDispatcher = new SimpleThreadDispatcher(Environment.ProcessorCount);
 
-            _staticContexts = new Dictionary<int, object>();
-            _dynamicContexts = new Dictionary<int, object>();
+            _staticContexts = new Dictionary<StaticHandle, object>();
+            _dynamicContexts = new Dictionary<BodyHandle, object>();
             _shapeContexts = new Dictionary<TypedIndex, object>();
         }
 
@@ -49,7 +49,7 @@ namespace Clunker.Physics
             return new StaticReference(handle, Simulation.Statics);
         }
 
-        public object GetStaticContext(int handle) => _staticContexts.ContainsKey(handle) ? _staticContexts[handle] : null;
+        public object GetStaticContext(StaticHandle handle) => _staticContexts.ContainsKey(handle) ? _staticContexts[handle] : null;
         public object GetStaticContext(StaticReference reference) => GetStaticContext(reference.Handle);
 
         public BodyReference AddDynamic(BodyDescription description, object context = null)
@@ -62,7 +62,7 @@ namespace Clunker.Physics
             return new BodyReference(handle, Simulation.Bodies);
         }
 
-        public object GetDynamicContext(int handle) => _dynamicContexts.ContainsKey(handle) ? _dynamicContexts[handle] : null;
+        public object GetDynamicContext(BodyHandle handle) => _dynamicContexts.ContainsKey(handle) ? _dynamicContexts[handle] : null;
         public object GetDynamicContext(BodyReference reference) => GetDynamicContext(reference.Handle);
 
         public TypedIndex AddShape<TShape>(TShape shape, object context = null) where TShape : unmanaged, IShape
@@ -95,12 +95,12 @@ namespace Clunker.Physics
             _shapeContexts.Remove(shapeIndex);
         }
 
-        public BodyReference GetBodyReference(int handle)
+        public BodyReference GetBodyReference(BodyHandle handle)
         {
             return new BodyReference(handle, Simulation.Bodies);
         }
 
-        public StaticReference GetStaticReference(int handle)
+        public StaticReference GetStaticReference(StaticHandle handle)
         {
             return new StaticReference(handle, Simulation.Statics);
         }
@@ -125,11 +125,11 @@ namespace Clunker.Physics
                 object context;
                 if (handler.Collidable.Mobility == CollidableMobility.Dynamic)
                 {
-                    context = GetDynamicContext(handler.Collidable.Handle);
+                    context = GetDynamicContext(handler.Collidable.BodyHandle);
                 }
                 else
                 {
-                    context = GetStaticContext(handler.Collidable.Handle);
+                    context = GetStaticContext(handler.Collidable.StaticHandle);
                 }
 
                 if (context is Entity entity)

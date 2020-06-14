@@ -40,11 +40,11 @@ namespace Clunker.Editor.Toolbar
                 object context;
                 if (handler.Collidable.Mobility == CollidableMobility.Dynamic)
                 {
-                    context = PhysicsSystem.GetDynamicContext(handler.Collidable.Handle);
+                    context = PhysicsSystem.GetDynamicContext(handler.Collidable.BodyHandle);
                 }
                 else
                 {
-                    context = PhysicsSystem.GetStaticContext(handler.Collidable.Handle);
+                    context = PhysicsSystem.GetStaticContext(handler.Collidable.StaticHandle);
                 }
                 if(context is Entity hitEntity)
                 {
