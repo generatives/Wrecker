@@ -14,6 +14,7 @@ namespace Clunker.Graphics
     {
         public VertexPositionTextureNormal[] Vertices;
         public ushort[] Indices;
+        public ushort[] TransparentIndices;
         public Vector3 BoundingSize;
     }
 }

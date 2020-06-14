@@ -11,5 +11,6 @@ namespace Clunker.Graphics
     {
         public DeviceBuffer VertexBuffer;
         public DeviceBuffer IndexBuffer;
+        public DeviceBuffer TransparentIndexBuffer;
     }
 }

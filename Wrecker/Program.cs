@@ -81,7 +81,7 @@ namespace ClunkerECSDemo
             var nz = Image.Load("Assets\\skybox_nz.png");
             //scene.RendererSystems.Add(new SkyboxRenderer(px, nx, py, ny, pz, nz));
 
-            scene.RendererSystems.Add(new MeshGeometryRenderer(scene.World));
+            scene.RendererSystems.Add(new MeshGeometryRenderer(cameraTransform, scene.World));
 
             scene.LogicSystems.Add(new SimpleCameraMover(scene.World));
             scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, cameraTransform, 5, 32));
@@ -147,12 +147,13 @@ namespace ClunkerECSDemo
             var doc = XElement.Load(filePath);
             var byName = doc
                 .Descendants("SubTexture")
-                .Select(st => (st.Attribute("name").Value, new Vector2(int.Parse(st.Attribute("x").Value), int.Parse(st.Attribute("y").Value))))
+                .Select(st => (st.Attribute("name").Value, st.Attribute("transparent") != null, new Vector2(int.Parse(st.Attribute("x").Value), int.Parse(st.Attribute("y").Value))))
                 .Select(t => new VoxelType(
-                    t.Value.Substring(0, t.Value.Length - 4).Replace('_', ' '),
+                    t.Item1.Substring(0, t.Item1.Length - 4).Replace('_', ' '),
                     t.Item2,
-                    t.Item2,
-                    t.Item2
+                    t.Item3,
+                    t.Item3,
+                    t.Item3
                 ))
                 .ToDictionary(v => v.Name);
 

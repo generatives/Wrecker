@@ -21,12 +21,14 @@ namespace Clunker.Graphics
 
             var vertexBuffer = default(DeviceBuffer);
             var indexBuffer = default(DeviceBuffer);
+            var transIndexBuffer = default(DeviceBuffer);
 
-            if(entity.Has<MeshGeometryResources>())
+            if (entity.Has<MeshGeometryResources>())
             {
                 ref var resources = ref entity.Get<MeshGeometryResources>();
                 vertexBuffer = resources.VertexBuffer;
                 indexBuffer = resources.IndexBuffer;
+                transIndexBuffer = resources.TransparentIndexBuffer;
             }
 
             var device = context.GraphicsDevice;
@@ -45,13 +47,21 @@ namespace Clunker.Graphics
                 if (indexBuffer != null) device.DisposeWhenIdle(indexBuffer);
                 indexBuffer = factory.CreateBuffer(new BufferDescription(indexBufferSize, BufferUsage.IndexBuffer));
             }
-
             device.UpdateBuffer(indexBuffer, 0, geometry.Indices);
+
+            var transIndexBufferSize = sizeof(ushort) * (uint)geometry.TransparentIndices.Length;
+            if (transIndexBuffer == null || transIndexBuffer.SizeInBytes < transIndexBufferSize)
+            {
+                if (transIndexBuffer != null) device.DisposeWhenIdle(transIndexBuffer);
+                transIndexBuffer = factory.CreateBuffer(new BufferDescription(transIndexBufferSize, BufferUsage.IndexBuffer));
+            }
+            device.UpdateBuffer(transIndexBuffer, 0, geometry.TransparentIndices);
 
             entity.Set(new MeshGeometryResources()
             {
                 VertexBuffer = vertexBuffer,
-                IndexBuffer = indexBuffer
+                IndexBuffer = indexBuffer,
+                TransparentIndexBuffer = transIndexBuffer
             });
         }
 
@@ -61,6 +71,7 @@ namespace Clunker.Graphics
 
             resource.VertexBuffer.Dispose();
             resource.IndexBuffer.Dispose();
+            resource.TransparentIndexBuffer.Dispose();
         }
     }
 }

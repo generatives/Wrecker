@@ -13,6 +13,7 @@ using DefaultEcs.System;
 using DefaultEcs;
 using DefaultEcs.Threading;
 using Clunker.Voxels.Meshing;
+using Collections.Pooled;
 
 namespace Clunker.Voxels.Meshing
 {
@@ -35,63 +36,48 @@ namespace Clunker.Voxels.Meshing
             ref var data = ref entity.Get<VoxelGrid>();
             ref var materialInstance = ref entity.Get<MaterialInstance>();
 
-            var vertices = new List<VertexPositionTextureNormal>(data.GridSize * data.GridSize * data.GridSize);
-            var indices = new List<ushort>(data.GridSize * data.GridSize * data.GridSize);
+            using var vertices = new PooledList<VertexPositionTextureNormal>(data.GridSize * data.GridSize * data.GridSize);
+            using var indices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
+            using var transIndices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
             var imageSize = new Vector2(materialInstance.ImageWidth, materialInstance.ImageHeight);
 
-            //GreedyMeshGenerator.GenerateMesh(data, (typeNum, orientation, side, quad, size) =>
-            //{
-            //    var type = _types[typeNum];
-            //    var textureOffset = GetTexCoords(type, orientation, side);
-            //    indices.Add((ushort)(vertices.Count + 0));
-            //    indices.Add((ushort)(vertices.Count + 1));
-            //    indices.Add((ushort)(vertices.Count + 3));
-            //    indices.Add((ushort)(vertices.Count + 1));
-            //    indices.Add((ushort)(vertices.Count + 2));
-            //    indices.Add((ushort)(vertices.Count + 3));
-            //    vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / imageSize, quad.Normal));
-            //    vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
-            //    vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
-            //    vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
-            //});
-
-            MeshGenerator.GenerateMesh(data, (voxel, side, quad) =>
+            MeshGenerator.GenerateMesh(data, _types, (voxel, side, quad) =>
             {
                 var type = _types[voxel.BlockType];
                 var textureOffset = GetTexCoords(type, voxel.Orientation, side);
-                indices.Add((ushort)(vertices.Count + 0));
-                indices.Add((ushort)(vertices.Count + 1));
-                indices.Add((ushort)(vertices.Count + 3));
-                indices.Add((ushort)(vertices.Count + 1));
-                indices.Add((ushort)(vertices.Count + 2));
-                indices.Add((ushort)(vertices.Count + 3));
-                vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / imageSize, quad.Normal));
-                vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
-                vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
-                vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
+                if(type.Transparent)
+                {
+                    AddQuad(quad, vertices, transIndices, textureOffset, imageSize);
+                }
+                else
+                {
+                    AddQuad(quad, vertices, indices, textureOffset, imageSize);
+                }
             });
-
-            //MarchingCubesGenerator.GenerateMesh(data, (triangle) =>
-            //{
-            //    //var type = _types[voxel.BlockType];
-            //    //var textureOffset = GetTexCoords(type, voxel.Orientation, side);
-            //    var textureOffset = new Vector2(650, 130);
-            //    indices.Add((ushort)(vertices.Count + 0));
-            //    indices.Add((ushort)(vertices.Count + 1));
-            //    indices.Add((ushort)(vertices.Count + 2));
-            //    vertices.Add(new VertexPositionTextureNormal(triangle.A, (textureOffset + new Vector2(0, 128)) / imageSize, triangle.Normal));
-            //    vertices.Add(new VertexPositionTextureNormal(triangle.B, (textureOffset + new Vector2(0, 0)) / imageSize, triangle.Normal));
-            //    vertices.Add(new VertexPositionTextureNormal(triangle.C, (textureOffset + new Vector2(128, 0)) / imageSize, triangle.Normal));
-            //});
 
             var mesh = new MeshGeometry()
             {
                 Vertices = vertices.ToArray(),
                 Indices = indices.ToArray(),
+                TransparentIndices = transIndices.ToArray(),
                 BoundingSize = new Vector3(data.GridSize * data.VoxelSize)
             };
             var entityRecord = _scene.CommandRecorder.Record(entity);
             entityRecord.Set(mesh);
+        }
+
+        private void AddQuad(Geometry.Quad quad, PooledList<VertexPositionTextureNormal> vertices, PooledList<ushort> indices, Vector2 textureOffset, Vector2 imageSize)
+        {
+            indices.Add((ushort)(vertices.Count + 0));
+            indices.Add((ushort)(vertices.Count + 1));
+            indices.Add((ushort)(vertices.Count + 3));
+            indices.Add((ushort)(vertices.Count + 1));
+            indices.Add((ushort)(vertices.Count + 2));
+            indices.Add((ushort)(vertices.Count + 3));
+            vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
         }
 
         private Vector2 GetTexCoords(VoxelType type, VoxelSide orientation, VoxelSide side)

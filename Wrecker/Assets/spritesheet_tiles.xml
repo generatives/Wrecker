@@ -14,7 +14,7 @@
 	<SubTexture name="dirt_snow.png" x="520" y="1690" width="128" height="128"/>
 	<SubTexture name="fence_stone.png" x="520" y="1560" width="128" height="128"/>
 	<SubTexture name="fence_wood.png" x="520" y="1430" width="128" height="128"/>
-	<SubTexture name="glass.png" x="520" y="1300" width="128" height="128"/>
+	<SubTexture name="glass.png" transparent="true" x="520" y="1300" width="128" height="128"/>
 	<SubTexture name="glass_frame.png" x="520" y="1170" width="128" height="128"/>
 	<SubTexture name="grass1.png" x="520" y="650" width="128" height="128"/>
 	<SubTexture name="grass2.png" x="520" y="520" width="128" height="128"/>
