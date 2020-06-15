@@ -121,9 +121,9 @@ namespace Clunker.Physics
             Simulation.RayCast(origin, direction, maximumT, ref hitHandler, id);
         }
 
-        public Entity? Raycast(Transform transform)
+        public RaycastResult Raycast(Transform transform, BodyHandle? bodyHandleFilter = null)
         {
-            var handler = new FirstHitHandler(CollidableMobility.Static | CollidableMobility.Dynamic);
+            var handler = new MobilityBodyHitHandler(CollidableMobility.Static | CollidableMobility.Dynamic, bodyHandleFilter);
             var forward = transform.Orientation.GetForwardVector();
             Raycast(transform.WorldPosition, forward, float.MaxValue, ref handler);
             if (handler.Hit)
@@ -140,11 +140,18 @@ namespace Clunker.Physics
 
                 if (context is Entity entity)
                 {
-                    return entity;
+                    return new RaycastResult()
+                    {
+                        Hit = true,
+                        Collidable = handler.Collidable,
+                        Entity = entity,
+                        T = handler.T,
+                        ChildIndex = handler.ChildIndex
+                    };
                 }
             }
 
-            return null;
+            return default;
         }
 
         public CharacterInput BuildCharacterInput(Vector3 initialPosition, Capsule shape,
@@ -195,5 +202,14 @@ namespace Clunker.Physics
             _threadDispatcher.Dispose();
             Pool.Clear();
         }
+    }
+
+    public struct RaycastResult
+    {
+        public bool Hit;
+        public CollidableReference Collidable;
+        public Entity Entity;
+        public float T;
+        public int ChildIndex;
     }
 }

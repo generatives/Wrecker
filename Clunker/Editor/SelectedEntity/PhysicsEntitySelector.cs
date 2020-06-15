@@ -32,10 +32,10 @@ namespace Clunker.Editor.SelectedEntity
         {
             if(ImGui.IsMouseClicked(0))
             {
-                var entity = _physicsSystem.Raycast(_transform);
-                if(entity.HasValue)
+                var result = _physicsSystem.Raycast(_transform);
+                if(result.Hit)
                 {
-                    _world.Publish(new SelectEntityRequest() { Entity = entity.Value });
+                    _world.Publish(new SelectEntityRequest() { Entity = result.Entity });
                 }
             }
         }

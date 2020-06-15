@@ -29,47 +29,34 @@ namespace Clunker.Editor.Toolbar
 
         public override void Run()
         {
-            var handler = new FirstHitHandler(CollidableMobility.Static | CollidableMobility.Dynamic);
             ref var transform = ref Entity.Get<Transform>();
-            var forward = transform.WorldOrientation.GetForwardVector();
-            PhysicsSystem.Raycast(transform.WorldPosition, forward, float.MaxValue, ref handler);
-            if (handler.Hit)
+            var result = PhysicsSystem.Raycast(transform);
+            if(result.Hit)
             {
-                var t = handler.T;
-                var hitLocation = transform.WorldPosition + forward * t;
-                object context;
-                if (handler.Collidable.Mobility == CollidableMobility.Dynamic)
+                var forward = transform.WorldOrientation.GetForwardVector();
+                var hitLocation = transform.WorldPosition + forward * result.T;
+                var hitEntity = result.Entity;
+                if (hitEntity.Has<VoxelStaticBody>())
                 {
-                    context = PhysicsSystem.GetDynamicContext(handler.Collidable.BodyHandle);
+                    ref var voxels = ref hitEntity.Get<VoxelGrid>();
+                    ref var exposedVoxels = ref hitEntity.Get<ExposedVoxels>();
+                    var hitTransform = hitEntity.Get<Transform>();
+                    var index = exposedVoxels.Exposed[result.ChildIndex];
+
+                    Hit(voxels, hitTransform, hitLocation, index);
+                    hitEntity.Set(voxels);
                 }
-                else
+                if (hitEntity.Has<VoxelSpaceDynamicBody>())
                 {
-                    context = PhysicsSystem.GetStaticContext(handler.Collidable.StaticHandle);
-                }
-                if(context is Entity hitEntity)
-                {
-                    if (hitEntity.Has<VoxelStaticBody>())
+                    ref var voxelSpaceDynamicBody = ref hitEntity.Get<VoxelSpaceDynamicBody>();
+                    ref var space = ref hitEntity.Get<VoxelSpace>();
+                    var hitTransform = hitEntity.Get<Transform>();
+
+                    if (space.Members != null)
                     {
-                        ref var voxels = ref hitEntity.Get<VoxelGrid>();
-                        ref var exposedVoxels = ref hitEntity.Get<ExposedVoxels>();
-                        var hitTransform = hitEntity.Get<Transform>();
-                        var index = exposedVoxels.Exposed[handler.ChildIndex];
+                        var spaceIndex = voxelSpaceDynamicBody.VoxelIndicesByChildIndex[result.ChildIndex];
 
-                        Hit(voxels, hitTransform, hitLocation, index);
-                        hitEntity.Set(voxels);
-                    }
-                    if (hitEntity.Has<VoxelSpaceDynamicBody>())
-                    {
-                        ref var voxelSpaceDynamicBody = ref hitEntity.Get<VoxelSpaceDynamicBody>();
-                        ref var space = ref hitEntity.Get<VoxelSpace>();
-                        var hitTransform = hitEntity.Get<Transform>();
-
-                        if (space.Members != null)
-                        {
-                            var spaceIndex = voxelSpaceDynamicBody.VoxelIndicesByChildIndex[handler.ChildIndex];
-
-                            Hit(space, hitTransform, hitLocation, spaceIndex);
-                        }
+                        Hit(space, hitTransform, hitLocation, spaceIndex);
                     }
                 }
             }

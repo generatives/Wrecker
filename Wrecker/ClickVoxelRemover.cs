@@ -46,55 +46,41 @@ namespace Wrecker
 
         public void OnClick()
         {
-            var handler = new FirstHitHandler(CollidableMobility.Static | CollidableMobility.Dynamic);
-            var forward = _player.Orientation.GetForwardVector();
-            _physicsSystem.Raycast(_player.WorldPosition, forward, float.MaxValue, ref handler);
-            if (handler.Hit)
+            var result = _physicsSystem.Raycast(_player);
+            if(result.Hit)
             {
-                object context;
-                if (handler.Collidable.Mobility == CollidableMobility.Dynamic)
+                var entity = result.Entity;
+                if (entity.Has<VoxelStaticBody>() && entity.Has<VoxelGrid>())
                 {
-                    context = _physicsSystem.GetDynamicContext(handler.Collidable.BodyHandle);
-                }
-                else
-                {
-                    context = _physicsSystem.GetStaticContext(handler.Collidable.StaticHandle);
-                }
+                    ref var body = ref entity.Get<VoxelStaticBody>();
+                    ref var voxels = ref entity.Get<VoxelGrid>();
+                    ref var exposedVoxels = ref entity.Get<ExposedVoxels>();
 
-                if(context is Entity entity)
-                {
-                    if(entity.Has<VoxelStaticBody>() && entity.Has<VoxelGrid>())
+                    var gridIndex = exposedVoxels.Exposed[result.ChildIndex];
+
+                    foreach (var index in GeometricIterators.Rectangle(gridIndex, 2))
                     {
-                        ref var body = ref entity.Get<VoxelStaticBody>();
-                        ref var voxels = ref entity.Get<VoxelGrid>();
-                        ref var exposedVoxels = ref entity.Get<ExposedVoxels>();
-
-                        var gridIndex = exposedVoxels.Exposed[handler.ChildIndex];
-
-                        foreach (var index in GeometricIterators.Rectangle(gridIndex, 2))
+                        if (voxels.ContainsIndex(index))
                         {
-                            if (voxels.ContainsIndex(index))
-                            {
-                                voxels[index] = new Voxel() { Exists = false };
-                            }
+                            voxels[index] = new Voxel() { Exists = false };
                         }
-
-                        entity.Set(voxels);
                     }
-                    else if(entity.Has<VoxelSpaceDynamicBody>() && entity.Has<VoxelSpace>())
+
+                    entity.Set(voxels);
+                }
+                else if (entity.Has<VoxelSpaceDynamicBody>() && entity.Has<VoxelSpace>())
+                {
+                    ref var body = ref entity.Get<VoxelSpaceDynamicBody>();
+                    ref var space = ref entity.Get<VoxelSpace>();
+
+                    var spaceIndex = body.VoxelIndicesByChildIndex[result.ChildIndex];
+
+                    foreach (var index in GeometricIterators.Rectangle(spaceIndex, 2))
                     {
-                        ref var body = ref entity.Get<VoxelSpaceDynamicBody>();
-                        ref var space = ref entity.Get<VoxelSpace>();
-
-                        var spaceIndex = body.VoxelIndicesByChildIndex[handler.ChildIndex];
-
-                        foreach (var index in GeometricIterators.Rectangle(spaceIndex, 2))
-                        {
-                            space.SetVoxel(index, new Voxel() { Exists = false });
-                        }
-
-                        entity.Set(space);
+                        space.SetVoxel(index, new Voxel() { Exists = false });
                     }
+
+                    entity.Set(space);
                 }
             }
         }

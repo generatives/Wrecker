@@ -30,26 +30,31 @@ namespace Clunker.Geometry
                 CapType.FLAT,
                 CapType.FLAT);
 
-        public static List<(Vector3 Vertex, Vector3 Normal)> GenerateCapsule(float cylinderHeight, float radius, int sphereSections = 6, int radialSections = 16)
+        public static List<(Vector3 Vertex, Vector3 Normal)> GenerateCapsule(float cylinderHeight, float radius, int sphereSections = 8, int radialSections = 16)
         {
             var sections = new List<(float Height, float Radius)>();
             var capRadius = 0.01f;
-            var sphereVertDiff = radius / sphereSections;
+            var sphereCapAngle = (float)Math.Asin(capRadius / radius);
+            var sphereAngleDiff = (float)(Math.PI / 2f - sphereCapAngle) / sphereSections;
 
-            for(int i = 0; i < sphereSections; i++)
+            var sumHeight = radius - (float)Math.Cos(sphereCapAngle) * radius;
+            for (int i = 1; i <= sphereSections; i++)
             {
-                var height = (i + 1) * sphereVertDiff;
-                var sphereRadius = (float)Math.Sqrt(radius * radius - Math.Pow(radius - height, 2));
-                sections.Add((sphereVertDiff, sphereRadius));
+                var angle = i * sphereAngleDiff + sphereCapAngle;
+                var sectionRadius = (float)Math.Sin(angle) * radius;
+                var sectionHeight = radius - (float)Math.Cos(angle) * radius - sumHeight;
+                sections.Add((sectionHeight, sectionRadius));
+                sumHeight += sectionHeight;
             }
 
             sections.Add((cylinderHeight, radius));
 
             for (int i = 1; i <= sphereSections; i++)
             {
-                sections.Add((sphereVertDiff, sections[sphereSections - i].Radius));
+                var sectionHeight = sections[sphereSections - i].Height;
+                var sectionRadius = (i == sphereSections) ? capRadius : sections[sphereSections - (i + 1)].Radius;
+                sections.Add((sectionHeight, sectionRadius));
             }
-            sections.Add((sphereVertDiff, capRadius));
 
             return GenerateSectionalCylinder(capRadius, sections, radialSections, CapType.FLAT, CapType.FLAT);
         }
@@ -63,14 +68,14 @@ namespace Clunker.Geometry
 
             var x1Norm = (float)Math.Sin(angle);
             var z1Norm = (float)Math.Cos(angle);
-            var n1 = new Vector3(x1Norm, 0, z1Norm);
+            var n1Radial = new Vector3(x1Norm, 0, z1Norm);
 
             for (int i = 0; i < radialSections; i++)
             {
                 var x2Norm = (float)Math.Sin(angle + angleDiff);
                 var z2Norm = (float)Math.Cos(angle + angleDiff);
 
-                var n2 = new Vector3(x2Norm, 0, z2Norm);
+                var n2Radial = new Vector3(x2Norm, 0, z2Norm);
 
                 var height = 0f;
                 var r1 = baseRadius;
@@ -85,6 +90,12 @@ namespace Clunker.Geometry
                 foreach(var section in verticalSections)
                 {
                     var r2 = section.Radius;
+
+                    var parrallelVector = new Vector2(r2 - r1, section.Height);
+                    var normalVector = parrallelVector.PerpendicularClockwise();
+
+                    var n1 = Vector3.Normalize((n1Radial * normalVector.X) + new Vector3(0, normalVector.Y, 0));
+                    var n2 = Vector3.Normalize((n2Radial * normalVector.X) + new Vector3(0, normalVector.Y, 0));
 
                     var v1 = (new Vector3(x1Norm * r1, height, z1Norm * r1), n1);
                     var v2 = (new Vector3(x2Norm * r1, height, z2Norm * r1), n2);
@@ -117,7 +128,7 @@ namespace Clunker.Geometry
 
                 x1Norm = x2Norm;
                 z1Norm = z2Norm;
-                n1 = n2;
+                n1Radial = n2Radial;
             }
 
             return vertices;
