@@ -150,7 +150,7 @@ namespace ClunkerECSDemo
             entity.Set(new Transform());
             entity.Set(materialInstance);
 
-            var cylinder = CylinderMeshGenerator.Generate(1, new List<(float, float)>() { (1, 2), (1, 1), (1, 2), (1, 1) }, 32);
+            var cylinder = CylinderMeshGenerator.Generate(1, new List<(float, float)>() { (1, 2), (1, 1), (1, 2), (1, 1) }, 32, CapType.FLAT, CapType.FLAT);
 
             var mesh = new RenderableMeshGeometry()
             {

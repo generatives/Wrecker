@@ -5,12 +5,18 @@ using System.Text;
 
 namespace Clunker.Geometry
 {
+    public enum CapType
+    {
+        NONE,
+        FLAT
+    }
+
     public static class CylinderMeshGenerator
     {
         public static List<(Vector3 Vertex, Vector3 Normal)> Generate(float height, float radius, int radialSections) =>
-            Generate(radius, new List<(float, float)>() { (height, radius) }, radialSections);
+            Generate(radius, new List<(float, float)>() { (height, radius) }, radialSections, CapType.FLAT, CapType.FLAT);
 
-        public static List<(Vector3 Vertex, Vector3 Normal)> Generate(float baseRadius, List<(float Height, float Radius)> verticalSections, int radialSections)
+        public static List<(Vector3 Vertex, Vector3 Normal)> Generate(float baseRadius, List<(float Height, float Radius)> verticalSections, int radialSections, CapType bottomCap, CapType topCap)
         {
             var vertices = new List<(Vector3, Vector3)>();
 
@@ -30,6 +36,14 @@ namespace Clunker.Geometry
 
                 var height = 0f;
                 var r1 = baseRadius;
+
+                if(bottomCap == CapType.FLAT)
+                {
+                    vertices.Add((new Vector3(0, 0, 0), -Vector3.UnitY));
+                    vertices.Add((new Vector3(x1Norm * baseRadius, 0, z1Norm * baseRadius), -Vector3.UnitY));
+                    vertices.Add((new Vector3(x2Norm * baseRadius, 0, z2Norm * baseRadius), -Vector3.UnitY));
+                }
+
                 foreach(var section in verticalSections)
                 {
                     var r2 = section.Radius;
@@ -51,6 +65,12 @@ namespace Clunker.Geometry
                     r1 = r2;
                 }
 
+                if (topCap == CapType.FLAT)
+                {
+                    vertices.Add((new Vector3(0, height, 0), Vector3.UnitY));
+                    vertices.Add((new Vector3(x2Norm * baseRadius, height, z2Norm * baseRadius), Vector3.UnitY));
+                    vertices.Add((new Vector3(x1Norm * baseRadius, height, z1Norm * baseRadius), Vector3.UnitY));
+                }
 
                 angle += angleDiff;
 
