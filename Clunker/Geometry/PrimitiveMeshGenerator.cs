@@ -105,10 +105,12 @@ namespace Clunker.Geometry
 
                 if (topCap == CapType.FLAT && verticalSections.Any())
                 {
-                    var topSection = verticalSections.Last();
+                    var radius = verticalSections.Any() ?
+                        verticalSections.Last().Radius :
+                        baseRadius;
                     vertices.Add((new Vector3(0, height, 0), Vector3.UnitY));
-                    vertices.Add((new Vector3(x2Norm * topSection.Radius, height, z2Norm * topSection.Radius), Vector3.UnitY));
-                    vertices.Add((new Vector3(x1Norm * topSection.Radius, height, z1Norm * topSection.Radius), Vector3.UnitY));
+                    vertices.Add((new Vector3(x2Norm * radius, height, z2Norm * radius), Vector3.UnitY));
+                    vertices.Add((new Vector3(x1Norm * radius, height, z1Norm * radius), Vector3.UnitY));
                 }
 
                 angle += angleDiff;
