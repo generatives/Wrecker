@@ -1,4 +1,5 @@
-﻿using DefaultEcs;
+﻿using Clunker.Voxels;
+using DefaultEcs;
 using DefaultEcs.System;
 using DefaultEcs.Threading;
 using System;
@@ -21,8 +22,9 @@ namespace Clunker.WorldSpace
         protected override void Update(double state, in Entity entity)
         {
             ref var chunk = ref entity.Get<Chunk>();
+            ref var grid = ref entity.Get<VoxelGrid>();
 
-            _generator.GenerateChunk(_scene.CommandRecorder.Record(entity), chunk.Coordinates);
+            _generator.GenerateChunk(entity, _scene.CommandRecorder.Record(entity), grid.SpaceIndex);
         }
     }
 }

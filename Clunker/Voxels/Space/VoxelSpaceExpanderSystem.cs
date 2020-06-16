@@ -16,7 +16,7 @@ namespace Clunker.Voxels.Space
     {
         private MaterialInstance _materialInstance;
 
-        public VoxelSpaceExpanderSystem(MaterialInstance materialInstance, World world) : base(world.GetEntities().With<VoxelSpaceMember>().With<VoxelSpaceExpander>().WhenAddedEither<VoxelGrid>().WhenChangedEither<VoxelGrid>().AsSet())
+        public VoxelSpaceExpanderSystem(MaterialInstance materialInstance, World world) : base(world.GetEntities().With<VoxelSpaceExpander>().WhenAddedEither<VoxelGrid>().WhenChangedEither<VoxelGrid>().AsSet())
         {
             _materialInstance = materialInstance;
         }
@@ -24,17 +24,16 @@ namespace Clunker.Voxels.Space
         protected override void Update(double state, in Entity entity)
         {
             ref var grid = ref entity.Get<VoxelGrid>();
-            ref var spaceMember = ref entity.Get<VoxelSpaceMember>();
-            var spaceEntity = spaceMember.Parent;
+            var spaceEntity = grid.VoxelSpace;
             ref var space = ref spaceEntity.Get<VoxelSpace>();
 
             if (grid.HasExistingVoxels)
             {
-                AddSurrounding(spaceEntity, space, spaceMember.Index);
+                AddSurrounding(spaceEntity, space, grid.SpaceIndex);
             }
             else
             {
-                RemoveSurrounding(spaceEntity, space, spaceMember.Index);
+                RemoveSurrounding(spaceEntity, space, grid.SpaceIndex);
             }
         }
 
@@ -55,9 +54,8 @@ namespace Clunker.Voxels.Space
                             voxelGridObj.Set(transform);
                             voxelGridObj.Set(_materialInstance);
                             voxelGridObj.Set(new ExposedVoxels());
-                            voxelGridObj.Set(new VoxelSpaceMember() { Parent = voxelSpaceEntity, Index = index });
                             voxelGridObj.Set(new VoxelSpaceExpander());
-                            voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize));
+                            voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize, voxelSpaceEntity, index));
 
                             space.Members[index] = voxelGridObj;
                             voxelSpaceEntity.Set(space);

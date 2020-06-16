@@ -16,23 +16,19 @@ namespace Clunker.WorldSpace
     public class ChunkGenerator
     {
         private MaterialInstance _materialInstance;
-        private int _chunkSize;
-        private int _voxelSize;
         private FastNoise _noise;
 
-        public ChunkGenerator(MaterialInstance materialInstance, int chunkSize, int voxelSize)
+        public ChunkGenerator(MaterialInstance materialInstance)
         {
             _materialInstance = materialInstance;
-            _chunkSize = chunkSize;
-            _voxelSize = voxelSize;
             _noise = new FastNoise(DateTime.Now.Second);
             _noise.SetFrequency(0.08f);
         }
 
-        public void GenerateChunk(EntityRecord entity, Vector3i coordinates)
+        public void GenerateChunk(Entity entity, EntityRecord entityRecord, Vector3i coordinates)
         {
             var random = new Random((coordinates.X << 20) ^ (coordinates.Y << 10) ^ (coordinates.Z));
-            var voxelSpaceData = new VoxelGrid(_chunkSize, _voxelSize);
+            ref var voxelSpaceData = ref entity.Get<VoxelGrid>();
 
             GenerateSpheres(voxelSpaceData, random);
             SetTypes(voxelSpaceData);
@@ -80,14 +76,10 @@ namespace Clunker.WorldSpace
 
             if (anyExist)
             {
-                var transform = new Transform();
-                transform.Position = new Vector3(coordinates.X * _chunkSize * _voxelSize, coordinates.Y * _chunkSize * _voxelSize, coordinates.Z * _chunkSize * _voxelSize);
-                entity.Set(transform);
-
-                entity.Set(_materialInstance);
-                entity.Set(new VoxelStaticBody());
-                entity.Set(new ExposedVoxels());
-                entity.Set(voxelSpaceData);
+                entityRecord.Set(_materialInstance);
+                entityRecord.Set(new VoxelStaticBody());
+                entityRecord.Set(new ExposedVoxels());
+                entityRecord.Set(voxelSpaceData);
             }
         }
 
@@ -98,15 +90,15 @@ namespace Clunker.WorldSpace
             for (var a = 0; a < numAstroids; a++)
             {
                 int r = random.Next(4, 6);
-                int aX = random.Next(r, _chunkSize - r);
-                int aY = random.Next(r, _chunkSize - r);
-                int aZ = random.Next(r, _chunkSize - r);
+                int aX = random.Next(r, voxels.GridSize - r);
+                int aY = random.Next(r, voxels.GridSize - r);
+                int aZ = random.Next(r, voxels.GridSize - r);
                 locations[a] = (new Vector3i(aX, aY, aZ), r);
             }
 
-            for (int x = 0; x < _chunkSize; x++)
-                for (int y = 0; y < _chunkSize; y++)
-                    for (int z = 0; z < _chunkSize; z++)
+            for (int x = 0; x < voxels.GridSize; x++)
+                for (int y = 0; y < voxels.GridSize; y++)
+                    for (int z = 0; z < voxels.GridSize; z++)
                     {
                         var strength = 0f;
                         for (byte a = 0; a < numAstroids; a++)
@@ -132,9 +124,9 @@ namespace Clunker.WorldSpace
 
         public void SetTypes(VoxelGrid voxels)
         {
-            for (int x = 0; x < _chunkSize; x++)
-                for (int y = 0; y < _chunkSize; y++)
-                    for (int z = 0; z < _chunkSize; z++)
+            for (int x = 0; x < voxels.GridSize; x++)
+                for (int y = 0; y < voxels.GridSize; y++)
+                    for (int z = 0; z < voxels.GridSize; z++)
                     {
                         var voxel = voxels[x, y, z];
                         if (voxel.Exists)
@@ -152,9 +144,9 @@ namespace Clunker.WorldSpace
             for (int a = 0; a < numHoles; a++)
             {
                 int r = random.Next(1, 3);
-                int aX = random.Next(r, _chunkSize - r);
-                int aY = random.Next(r, _chunkSize - r);
-                int aZ = random.Next(r, _chunkSize - r);
+                int aX = random.Next(r, voxels.GridSize - r);
+                int aY = random.Next(r, voxels.GridSize - r);
+                int aZ = random.Next(r, voxels.GridSize - r);
                 for (int xOffset = -r; xOffset <= r; xOffset++)
                     for (int yOffset = -r; yOffset <= r; yOffset++)
                         for (int zOffset = -r; zOffset <= r; zOffset++)

@@ -1,5 +1,6 @@
 ﻿using Clunker.ECS;
 using Clunker.Geometry;
+using DefaultEcs;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,24 +16,30 @@ namespace Clunker.Voxels
     [ClunkerComponent]
     public struct VoxelGrid : IEnumerable<(Vector3, Voxel)>, IVoxels
     {
+        public Entity VoxelSpace { get; set; }
+        public Vector3i SpaceIndex { get; set; }
         public Voxel[] Voxels { get; private set; }
         public float VoxelSize { get; private set; }
         public int GridSize { get; private set; }
         public bool HasExistingVoxels => this.Any(v => v.Item2.Exists);
 
-        public VoxelGrid(int gridSize, float voxelSize)
+        public VoxelGrid(int gridSize, float voxelSize, Entity voxelSpace, Vector3i spaceIndex)
         {
             VoxelSize = voxelSize;
             GridSize = gridSize;
+            VoxelSpace = voxelSpace;
+            SpaceIndex = spaceIndex;
             Voxels = new Voxel[gridSize * gridSize * gridSize];
         }
 
-        public VoxelGrid(float voxelSize, int gridSize, Voxel[] voxels)
+        public VoxelGrid(float voxelSize, int gridSize, Entity voxelSpace, Vector3i spaceIndex, Voxel[] voxels)
         {
             Debug.Assert(voxels.Length == gridSize * gridSize * gridSize, "Voxel array must be sized to gridSize");
 
             VoxelSize = voxelSize;
             GridSize = gridSize;
+            VoxelSpace = voxelSpace;
+            SpaceIndex = spaceIndex;
             Voxels = voxels;
         }
 

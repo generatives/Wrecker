@@ -10,6 +10,8 @@ using Clunker.Voxels;
 using DefaultEcs.System;
 using Clunker.Core;
 using DefaultEcs;
+using Clunker.Voxels.Space;
+using System.Numerics;
 
 namespace Clunker.WorldSpace
 {
@@ -17,46 +19,22 @@ namespace Clunker.WorldSpace
     {
         public bool IsEnabled { get; set; } = true;
 
-        private Dictionary<Vector3i, Entity> _chunkMap { get; set; }
-
-        public Entity this[int x, int y, int z]
-        {
-            get
-            {
-                return this[new Vector3i(x, y, z)];
-            }
-            protected set
-            {
-                this[new Vector3i(x, y, z)] = value;
-            }
-        }
-
-        public Entity this[Vector3i position]
-        {
-            get
-            {
-                return _chunkMap[position];
-            }
-            protected set
-            {
-                _chunkMap[position] = value;
-            }
-        }
+        private VoxelSpace WorldSpace => _worldVoxelSpace.Get<VoxelSpace>();
 
         private World _world;
         private Transform _player;
+        private Entity _worldVoxelSpace;
         private int _chunkLength;
         public Vector3i CenterChunk { get; private set; }
         public int LoadRadius { get; set; }
 
-        public WorldSpaceLoader(World world, Transform player, int loadRadius, int chunkLength)
+        public WorldSpaceLoader(World world, Transform player, Entity worldVoxelSpace, int loadRadius, int chunkLength)
         {
             _world = world;
             _player = player;
+            _worldVoxelSpace = worldVoxelSpace;
             LoadRadius = loadRadius;
             _chunkLength = chunkLength;
-
-            _chunkMap = new Dictionary<Vector3i, Entity>();
         }
         
         public void Update(double deltaSec)
@@ -70,7 +48,7 @@ namespace Clunker.WorldSpace
         {
             CenterChunk = new Vector3i(x, y, z);
 
-            foreach (var coordinates in _chunkMap.Keys.ToList())
+            foreach (var coordinates in WorldSpace.Members.Keys.ToList())
             {
                 if (!AreaContainsChunk(coordinates))
                 {
@@ -88,11 +66,16 @@ namespace Clunker.WorldSpace
                         if ((xOffset * xOffset + yOffset * yOffset + zOffset * zOffset) <= LoadRadius * LoadRadius)
                         {
                             var coordinates = new Vector3i(x + xOffset, y + yOffset, z + zOffset);
-                            if (!_chunkMap.ContainsKey(coordinates))
+                            if (!WorldSpace.Members.ContainsKey(coordinates))
                             {
                                 var chunk = _world.CreateEntity();
-                                chunk.Set(new Chunk() { Coordinates = coordinates });
-                                _chunkMap[coordinates] = chunk;
+                                chunk.Set(new Transform()
+                                {
+                                    Position = new Vector3(coordinates.X * _chunkLength * 1, coordinates.Y * _chunkLength * 1, coordinates.Z * _chunkLength * 1)
+                                });
+                                chunk.Set(new VoxelGrid(_chunkLength, 1, _worldVoxelSpace, coordinates));
+                                chunk.Set(new Chunk());
+                                WorldSpace.Members[coordinates] = chunk;
 
                                 chunksLoaded++;
                                 if (chunksLoaded == Environment.ProcessorCount) return;
@@ -105,11 +88,11 @@ namespace Clunker.WorldSpace
 
         private void UnloadChunk(Vector3i coordinates)
         {
-            if(_chunkMap.ContainsKey(coordinates))
+            if(WorldSpace.Members.ContainsKey(coordinates))
             {
-                var chunk = _chunkMap[coordinates];
+                var chunk = WorldSpace.Members[coordinates];
                 chunk.Dispose();
-                _chunkMap.Remove(coordinates);
+                WorldSpace.Members.Remove(coordinates);
             }
         }
 
@@ -125,14 +108,6 @@ namespace Clunker.WorldSpace
                 CenterChunk.Z - LoadRadius <= z && CenterChunk.Z + LoadRadius >= z;
         }
 
-        public void Dispose()
-        {
-            foreach(var chunk in _chunkMap.Values)
-            {
-                chunk.Dispose();
-            }
-
-            _chunkMap.Clear();
-        }
+        public void Dispose() { }
     }
 }

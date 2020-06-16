@@ -119,5 +119,7 @@ namespace Clunker.Geometry
         {
             return (X, Y, Z).GetHashCode();
         }
+
+        public static Vector3i Zero => new Vector3i(0, 0, 0);
     }
 }

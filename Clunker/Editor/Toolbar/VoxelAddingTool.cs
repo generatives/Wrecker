@@ -23,7 +23,7 @@ namespace Clunker.Editor.Toolbar
             VoxelType = voxelType;
 
             _displayGridEntity = world.CreateEntity();
-            _displayGridEntity.Set(new VoxelGrid(1, 1));
+            _displayGridEntity.Set(new VoxelGrid(1, 1, default(Entity), Vector3i.Zero));
             _displayGridEntity.Set(materialInstance);
             _displayGridEntity.Set(new Transform());
             _displayGridEntity.Disable();

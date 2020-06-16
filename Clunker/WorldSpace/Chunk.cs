@@ -9,6 +9,5 @@ namespace Clunker.WorldSpace
     [ClunkerComponent]
     public struct Chunk
     {
-        public Vector3i Coordinates;
     }
 }

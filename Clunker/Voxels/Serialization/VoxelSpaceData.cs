@@ -14,6 +14,6 @@ namespace Clunker.Voxels.Serialization
         [Key(1)]
         public float VoxelSize { get; set; }
         [Key(2)]
-        public (Vector3i, Voxel[])[] Grids { get; set; }
+        public (Vector3i Index, Voxel[] Voxels)[] Grids { get; set; }
     }
 }

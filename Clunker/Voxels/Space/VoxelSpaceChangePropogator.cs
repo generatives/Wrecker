@@ -9,7 +9,7 @@ namespace Clunker.Voxels.Space
 {
     public class VoxelSpaceChangePropogator : ComponentChangeSystem<double>
     {
-        public VoxelSpaceChangePropogator(World world) : base(world, typeof(VoxelGrid), typeof(VoxelSpaceMember))
+        public VoxelSpaceChangePropogator(World world) : base(world, typeof(VoxelGrid))
         {
         }
 
@@ -25,9 +25,12 @@ namespace Clunker.Voxels.Space
 
         private void Propogate(in Entity entity)
         {
-            var member = entity.Get<VoxelSpaceMember>();
-            var parent = member.Parent.Get<VoxelSpace>();
-            member.Parent.Set(parent);
+            var grid = entity.Get<VoxelGrid>();
+            if(grid.VoxelSpace.IsAlive)
+            {
+                var parent = grid.VoxelSpace.Get<VoxelSpace>();
+                grid.VoxelSpace.Set(parent);
+            }
         }
     }
 }

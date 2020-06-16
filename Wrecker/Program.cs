@@ -72,6 +72,15 @@ namespace ClunkerECSDemo
             camera.Set(cameraTransform);
             camera.Set(new Camera());
 
+            var worldVoxelSpace = scene.World.CreateEntity();
+            worldVoxelSpace.Set(new Transform());
+            worldVoxelSpace.Set(new VoxelSpace()
+            {
+                GridSize = 32,
+                VoxelSize = 1,
+                Members = new Dictionary<Vector3i, Entity>()
+            });
+
             scene.RendererSystems.Add(new MeshGeometryInitializer(scene.World));
 
             var px = Image.Load("Assets\\skybox_px.png");
@@ -87,8 +96,8 @@ namespace ClunkerECSDemo
             var physicsSystem = new PhysicsSystem();
 
             scene.LogicSystems.Add(new SimpleCameraMover(physicsSystem, scene.World));
-            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, cameraTransform, 5, 32));
-            scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance, 32, 1)));
+            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, cameraTransform, worldVoxelSpace, 5, 32));
+            scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance)));
 
             scene.LogicSystems.Add(new InputForceApplier(physicsSystem, scene.World));
 
@@ -124,8 +133,8 @@ namespace ClunkerECSDemo
                 new VoxelSpaceLoader(scene.World, cameraTransform, voxelMaterialInstance)
             }));
 
-            var cylinder = scene.World.CreateEntity();
-            AddCylinder(cylinder, voxelMaterialInstance);
+            //var cylinder = scene.World.CreateEntity();
+            //AddCylinder(cylinder, voxelMaterialInstance);
 
             var app = new ClunkerApp(resourceLoader, scene);
 

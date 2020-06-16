@@ -116,15 +116,13 @@ namespace Clunker.Editor.VoxelSpaceLoader
                     var gridEntity = _world.CreateEntity();
 
                     var gridTransform = new Transform();
-                    gridTransform.Position = Vector3.One * voxelSpaceData.GridSize * voxelSpaceData.VoxelSize * t.Item1;
+                    gridTransform.Position = Vector3.One * voxelSpaceData.GridSize * voxelSpaceData.VoxelSize * t.Index;
                     spaceTransform.AddChild(gridTransform);
                     gridEntity.Set(gridTransform);
                     gridEntity.Set(_voxelMaterialInstance);
                     gridEntity.Set(new ExposedVoxels());
-                    gridEntity.Set(new VoxelSpaceMember() { Parent = spaceEntity, Index = t.Item1 });
                     gridEntity.Set(new VoxelSpaceExpander());
-                    var grid = new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, t.Item2);
-                    gridEntity.Set(grid);
+                    gridEntity.Set(new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, spaceEntity, t.Index, t.Voxels));
 
                     return (t.Item1, gridEntity);
                 })
