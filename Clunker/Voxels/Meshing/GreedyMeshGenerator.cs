@@ -265,7 +265,7 @@ namespace Clunker.Voxels.Meshing
             var endX = x;
 
             var y = startY + 1;
-            while(y < yLength)
+            while (y < yLength)
             {
                 x = startX;
                 while (x < endX && plane[x, y].Voxel.Exists && !plane[x, y].Processed && plane[x, y].Voxel.BlockType == type && plane[x, y].Voxel.Orientation == orientation)
@@ -284,9 +284,9 @@ namespace Clunker.Voxels.Meshing
                 }
             }
 
-            for(var px = rect.Left; px < rect.Right; px++)
+            for (var px = rect.Left; px < rect.Right; px++)
             {
-                for(var py = rect.Top; py < rect.Bottom; py++)
+                for (var py = rect.Top; py < rect.Bottom; py++)
                 {
                     plane[px, py].Processed = true;
                 }
@@ -294,11 +294,11 @@ namespace Clunker.Voxels.Meshing
 
             return (endX, type, orientation, rect);
         }
-    }
 
-    struct VoxelPoint
-    {
-        public Voxel Voxel;
-        public bool Processed;
+        struct VoxelPoint
+        {
+            public Voxel Voxel;
+            public bool Processed;
+        }
     }
 }

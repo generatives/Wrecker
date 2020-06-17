@@ -95,6 +95,25 @@ namespace Clunker.Voxels
             }
         }
 
+        public bool Exposed(int x, int y, int z)
+        {
+            Voxel voxel = this[x, y, z];
+            if (voxel.Exists)
+            {
+                if (!Exists(x, y - 1, z) ||
+                    !Exists(x + 1, y, z) ||
+                    !Exists(x - 1, y, z) ||
+                    !Exists(x, y + 1, z) ||
+                    !Exists(x, y, z - 1) ||
+                    !Exists(x, y, z + 1))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void FindExposedSides(Action<Voxel, int, int, int, VoxelSide> sideProcessor)
         {
             for(int x = 0; x < GridSize; x++)
@@ -143,18 +162,10 @@ namespace Clunker.Voxels
                 for (int y = 0; y < GridSize; y++)
                     for (int z = 0; z < GridSize; z++)
                     {
-                        Voxel voxel = this[x, y, z];
-                        if (voxel.Exists)
+                        if(Exposed(x, y, z))
                         {
-                            if (!Exists(x, y - 1, z) ||
-                                !Exists(x + 1, y, z) ||
-                                !Exists(x - 1, y, z) ||
-                                !Exists(x, y + 1, z) ||
-                                !Exists(x, y, z - 1) ||
-                                !Exists(x, y, z + 1))
-                            {
-                                blockProcessor(voxel, x, y, z);
-                            }
+                            Voxel voxel = this[x, y, z];
+                            blockProcessor(voxel, x, y, z);
                         }
                     }
         }

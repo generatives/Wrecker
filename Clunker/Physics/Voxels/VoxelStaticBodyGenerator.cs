@@ -4,11 +4,13 @@ using Clunker.Core;
 using Clunker.ECS;
 using Clunker.Geometry;
 using Clunker.Voxels;
+using Clunker.Voxels.Meshing;
 using DefaultEcs;
 using DefaultEcs.System;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -25,30 +27,31 @@ namespace Clunker.Physics.Voxels
 
         protected override void Compute(double time, in Entity entity)
         {
-            ref var exposedVoxels = ref entity.Get<ExposedVoxels>();
+            ref var voxels = ref entity.Get<VoxelGrid>();
+            ref var body = ref entity.Get<VoxelStaticBody>();
+            var transform = entity.Get<Transform>();
 
-            if (exposedVoxels.Exposed.Count > 0)
+            var size = voxels.VoxelSize;
+
+            using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
             {
-                ref var voxels = ref entity.Get<VoxelGrid>();
-                ref var body = ref entity.Get<VoxelStaticBody>();
-                var transform = entity.Get<Transform>();
-
-                var size = voxels.VoxelSize;
-                var exposed = exposedVoxels.Exposed;
-
-                using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
+                var any = false;
+                var num = 0;
+                GreedyBlockFinder.GenerateMesh(voxels, (blockType, position, size) =>
                 {
-                    for (int i = 0; i < exposed.Count; ++i)
-                    {
-                        var position = exposed[i];
-                        var box = new Box(size, size, size);
-                        var pose = new RigidPose(new Vector3(
-                            position.X * size + size / 2,
-                            position.Y * size + size / 2,
-                            position.Z * size + size / 2));
-                        compoundBuilder.Add(box, pose, 1);
-                    }
+                    var box = new Box(size.X, size.Y, size.Z);
+                    var pose = new RigidPose(new Vector3(
+                        position.X + size.X / 2f,
+                        position.Y + size.Y / 2f,
+                        position.Z + size.Z / 2f));
+                    compoundBuilder.Add(box, pose, size.X * size.Y * size.Z);
+                    any = true;
+                    num++;
+                });
+                _numShapes.Add(num);
 
+                if (any)
+                {
                     compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var offset);
 
                     var shape = new BigCompound(compoundChildren, _physicsSystem.Simulation.Shapes, _physicsSystem.Pool);
