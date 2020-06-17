@@ -20,6 +20,9 @@ namespace Clunker.Physics.Voxels
     {
         private PhysicsSystem _physicsSystem;
 
+        //List<double> _times = new List<double>();
+        //List<int> _shapes = new List<int>();
+
         public VoxelStaticBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(ExposedVoxels), typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
         {
             _physicsSystem = physicsSystem;
@@ -27,6 +30,8 @@ namespace Clunker.Physics.Voxels
 
         protected override void Compute(double time, in Entity entity)
         {
+            var watch = Stopwatch.StartNew();
+
             ref var voxels = ref entity.Get<VoxelGrid>();
             ref var body = ref entity.Get<VoxelStaticBody>();
             var transform = entity.Get<Transform>();
@@ -35,6 +40,7 @@ namespace Clunker.Physics.Voxels
 
             using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
             {
+                //var num = 0;
                 var any = false;
                 GreedyBlockFinder.GenerateMesh(voxels, (blockType, position, size) =>
                 {
@@ -45,7 +51,9 @@ namespace Clunker.Physics.Voxels
                         position.Z + size.Z / 2f));
                     compoundBuilder.Add(box, pose, size.X * size.Y * size.Z);
                     any = true;
+                    //num++;
                 });
+                //_shapes.Add(num);
 
                 if (any)
                 {
@@ -70,6 +78,10 @@ namespace Clunker.Physics.Voxels
                     body.VoxelStatic = _physicsSystem.AddStatic(new StaticDescription(transform.WorldPosition + transformedOffset, new CollidableDescription(body.VoxelShape, 0.1f)), entity);
                 }
             }
+
+            //watch.Stop();
+            //_times.Add(watch.Elapsed.TotalMilliseconds);
+            //Console.WriteLine($"{_shapes.Average()} {_times.Average()}");
         }
 
         protected override void Remove(in Entity entity)

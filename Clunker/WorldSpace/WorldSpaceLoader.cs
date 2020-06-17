@@ -78,7 +78,7 @@ namespace Clunker.WorldSpace
                                 WorldSpace.Members[coordinates] = chunk;
 
                                 chunksLoaded++;
-                                if (chunksLoaded == Environment.ProcessorCount) return;
+                                if (chunksLoaded == Environment.ProcessorCount * 3) return;
                             }
                         }
                     }

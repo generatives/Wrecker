@@ -15,8 +15,8 @@ namespace Clunker.Voxels.Meshing
         {
             var stopwatch = Stopwatch.StartNew();
             var plane = new byte[voxels.GridSize, voxels.GridSize];
-            MeshPosZ(voxels, plane, blockProcessor);
-            MeshPosX(voxels, plane, blockProcessor);
+            //MeshPosZ(voxels, plane, blockProcessor);
+            //MeshPosX(voxels, plane, blockProcessor);
             MeshPosY(voxels, plane, blockProcessor);
         }
 
