@@ -30,7 +30,7 @@ namespace Clunker.Editor.VoxelSpaceLoader
         private Transform _transform;
         private MaterialInstance _voxelMaterialInstance;
 
-        private string _fileLocation = "C:\\";
+        private string _fileLocation = "C:\\Clunker";
 
         public VoxelSpaceLoader(World world, Transform transform, MaterialInstance voxelMaterialInstance)
         {

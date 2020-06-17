@@ -42,6 +42,15 @@ namespace Clunker.Graphics
                 if (shouldRender)
                 {
                     materialInstance.Bind(context);
+
+                    context.CommandList.UpdateBuffer(context.Renderer.SceneLightingBuffer, 0, new SceneLighting()
+                    {
+                        AmbientLightColour = RgbaFloat.White,
+                        AmbientLightStrength = 0.4f,
+                        DiffuseLightColour = RgbaFloat.White,
+                        DiffuseLightDirection = Vector3.Normalize(Vector3.Transform(new Vector3(2, 5, -1), Quaternion.Inverse(transform.WorldOrientation)))
+                    });
+
                     context.CommandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, transform.WorldMatrix);
 
                     context.CommandList.SetVertexBuffer(0, geometryResources.VertexBuffer);

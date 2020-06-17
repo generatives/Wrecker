@@ -151,7 +151,8 @@ namespace ClunkerECSDemo
             "stone",      // 5
             "sand",       // 6
             "cactus top", // 7
-            "glass"       // 8
+            "glass",      // 8
+            "greysand"    // 9
         };
 
         private static void AddCylinder(Entity entity, MaterialInstance materialInstance)

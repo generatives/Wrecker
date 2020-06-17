@@ -105,13 +105,13 @@ namespace Clunker.Graphics
             var viewMatrix = camera.GetViewMatrix();
             commandList.UpdateBuffer(ViewBuffer, 0, viewMatrix);
 
-            commandList.UpdateBuffer(SceneLightingBuffer, 0, new SceneLighting()
-            {
-                AmbientLightColour = RgbaFloat.White,
-                AmbientLightStrength = 0.4f,
-                DiffuseLightColour = RgbaFloat.White,
-                DiffuseLightDirection = Vector3.Normalize(new Vector3(2, 5, -1))
-            });
+            //commandList.UpdateBuffer(SceneLightingBuffer, 0, new SceneLighting()
+            //{
+            //    AmbientLightColour = RgbaFloat.White,
+            //    AmbientLightStrength = 0.4f,
+            //    DiffuseLightColour = RgbaFloat.White,
+            //    DiffuseLightDirection = Vector3.Normalize(new Vector3(2, 5, -1))
+            //});
 
             var frustrum = new BoundingFrustum(viewMatrix * _projectionMatrix);
 
