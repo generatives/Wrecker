@@ -36,7 +36,6 @@ namespace Clunker.Physics.Voxels
             using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
             {
                 var any = false;
-                var num = 0;
                 GreedyBlockFinder.GenerateMesh(voxels, (blockType, position, size) =>
                 {
                     var box = new Box(size.X, size.Y, size.Z);
@@ -46,9 +45,7 @@ namespace Clunker.Physics.Voxels
                         position.Z + size.Z / 2f));
                     compoundBuilder.Add(box, pose, size.X * size.Y * size.Z);
                     any = true;
-                    num++;
                 });
-                _numShapes.Add(num);
 
                 if (any)
                 {
