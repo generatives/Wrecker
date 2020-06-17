@@ -64,11 +64,11 @@ namespace ClunkerECSDemo
             var redVoxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.Red });
 
             var scene = new Scene();
-            var parrallelRunner = new DefaultParallelRunner(1);
+            var parrallelRunner = new DefaultParallelRunner(8);
 
             var camera = scene.World.CreateEntity();
             var cameraTransform = new Transform();
-            cameraTransform.Position = new Vector3(0, 0, 3);
+            cameraTransform.Position = new Vector3(0, 40, 0);
             camera.Set(cameraTransform);
             camera.Set(new Camera());
 

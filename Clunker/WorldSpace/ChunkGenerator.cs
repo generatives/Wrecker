@@ -21,58 +21,49 @@ namespace Clunker.WorldSpace
         public ChunkGenerator(MaterialInstance materialInstance)
         {
             _materialInstance = materialInstance;
-            _noise = new FastNoise(DateTime.Now.Second);
+            _noise = new FastNoise();
             _noise.SetFrequency(0.08f);
         }
 
         public void GenerateChunk(Entity entity, EntityRecord entityRecord, Vector3i coordinates)
         {
             var random = new Random((coordinates.X << 20) ^ (coordinates.Y << 10) ^ (coordinates.Z));
-            ref var voxelSpaceData = ref entity.Get<VoxelGrid>();
+            var biome = _noise.GetPerlin(coordinates.X, coordinates.Z);
+            var biomeBlockType =
+                biome > -1 && biome < -0.5 ? 3 :
+                biome > -0.5 && biome < 0 ? 5 :
+                biome > 0 && biome < 0.5 ? 6 :
+                biome > 0.5 && biome < 1 ? 7 : 0;
 
-            GenerateSpheres(voxelSpaceData, random);
-            SetTypes(voxelSpaceData);
-            SplatterHoles(voxelSpaceData, random);
+            ref var voxelSpaceData = ref entity.Get<VoxelGrid>();
             bool anyExist = true;
 
-            //bool anyExist = false;
+            if(voxelSpaceData.SpaceIndex.Y >= 2 && voxelSpaceData.SpaceIndex.Y <= 5)
+            {
+                if(random.Next(0, 29) == 0)
+                {
+                    GenerateSpheres(voxelSpaceData, random);
+                    SetTypes(voxelSpaceData);
+                }
+            }
+            else if (voxelSpaceData.SpaceIndex.Y >= 0)
+            {
+                for (int x = 0; x < voxelSpaceData.GridSize; x++)
+                    for (int y = 0; y < voxelSpaceData.GridSize; y++)
+                        for (int z = 0; z < voxelSpaceData.GridSize; z++)
+                        {
+                            var voxelPosition = new Vector3(coordinates.X * voxelSpaceData.GridSize + x, coordinates.Y * voxelSpaceData.GridSize + y, coordinates.Z * voxelSpaceData.GridSize + z);
 
-            //var planetPosition = new Vector3(_chunkSize / 2f);
-            //var planetSize = _chunkSize * 0.75f / 2f;
+                            var exists = ((_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f) + 1f) * 15) > voxelPosition.Y;
+                            anyExist = anyExist || exists;
+                            var water = voxelPosition.Y < 8 && !exists;
+                            var blockType = water ? 4 : biomeBlockType;
+                            exists = exists || water;
+                            voxelSpaceData[x, y, z] = new Voxel() { Exists = exists, BlockType = (ushort)blockType };
+                        }
+            }
 
-            //if (coordinates == new Vector3i())
-            //{
-            //    for (int x = 0; x < _chunkSize; x++)
-            //        for (int y = 0; y < _chunkSize; y++)
-            //            for (int z = 0; z < _chunkSize; z++)
-            //            {
-            //                var voxelPosition = new Vector3(x, y, z);
 
-            //                //var exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f;
-            //                //var exists = planetPosition == voxelPosition;
-            //                var density = Math.Max(1 - (Vector3.Distance(planetPosition, voxelPosition) / planetSize), 0) * byte.MaxValue;
-            //                anyExist = anyExist || density > 0;
-            //                if (density != 0)
-            //                {
-
-            //                }
-            //                voxelSpaceData[x, y, z] = new Voxel() { Density = (byte)density };
-            //            }
-            //}
-
-            //for (int x = 0; x < _chunkSize; x++)
-            //    for (int y = 0; y < _chunkSize; y++)
-            //        for (int z = 0; z < _chunkSize; z++)
-            //        {
-            //            var planetPosition = new Vector3(0, 0, -350);
-            //            var planetSize = 300;
-            //            var voxelPosition = new Vector3(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z);
-
-            //            //var exists = _noise.GetPerlin(coordinates.X * _chunkSize + x, coordinates.Y * _chunkSize + y, coordinates.Z * _chunkSize + z) > 0f;
-            //            var exists = Vector3.Distance(planetPosition, voxelPosition) < planetSize;
-            //            anyExist = anyExist || exists;
-            //            voxelSpaceData[x, y, z] = new Voxel() { Exists = exists };
-            //        }
 
             if (anyExist)
             {
@@ -82,14 +73,13 @@ namespace Clunker.WorldSpace
                 entityRecord.Set(voxelSpaceData);
             }
         }
-
         public void GenerateSpheres(VoxelGrid voxels, Random random)
         {
-            var numAstroids = random.Next(0, 4);
+            var numAstroids = random.Next(1, 3);
             var locations = new (Vector3i, int)[numAstroids];
-            for (var a = 0; a < numAstroids; a++)
+            for (var a = 0; a < locations.Length; a++)
             {
-                int r = random.Next(4, 6);
+                int r = random.Next(5, 7);
                 int aX = random.Next(r, voxels.GridSize - r);
                 int aY = random.Next(r, voxels.GridSize - r);
                 int aZ = random.Next(r, voxels.GridSize - r);
@@ -104,7 +94,7 @@ namespace Clunker.WorldSpace
                         for (byte a = 0; a < numAstroids; a++)
                         {
                             var (location, radius) = locations[a];
-                            if(y <= location.Y + 2)
+                            if (y <= location.Y + 2)
                             {
                                 var rSq = ((x - location.X) * (x - location.X)) + ((y - location.Y) * (y - location.Y)) + ((z - location.Z) * (z - location.Z));
                                 if (rSq == 0)
@@ -136,27 +126,6 @@ namespace Clunker.WorldSpace
                             voxels[x, y, z] = voxel;
                         }
                     }
-        }
-
-        public void SplatterHoles(VoxelGrid voxels, Random random)
-        {
-            var numHoles = random.Next(15, 35);
-            for (int a = 0; a < numHoles; a++)
-            {
-                int r = random.Next(1, 3);
-                int aX = random.Next(r, voxels.GridSize - r);
-                int aY = random.Next(r, voxels.GridSize - r);
-                int aZ = random.Next(r, voxels.GridSize - r);
-                for (int xOffset = -r; xOffset <= r; xOffset++)
-                    for (int yOffset = -r; yOffset <= r; yOffset++)
-                        for (int zOffset = -r; zOffset <= r; zOffset++)
-                        {
-                            if ((xOffset * xOffset + yOffset * yOffset + zOffset * zOffset) <= r * r)
-                            {
-                                voxels[aX + xOffset, aY + yOffset, aZ + zOffset] = new Voxel() { Exists = false };
-                            }
-                        }
-            }
         }
     }
 }
