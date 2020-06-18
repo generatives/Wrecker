@@ -39,12 +39,15 @@ namespace Clunker.Editor.Toolbar
                 if (hitEntity.Has<VoxelStaticBody>())
                 {
                     ref var voxels = ref hitEntity.Get<VoxelGrid>();
-                    ref var exposedVoxels = ref hitEntity.Get<ExposedVoxels>();
-                    var hitTransform = hitEntity.Get<Transform>();
-                    var index = exposedVoxels.Exposed[result.ChildIndex];
 
-                    Hit(voxels, hitTransform, hitLocation, index);
-                    hitEntity.Set(voxels);
+                    // Nudge forward a little so we are inside the block
+                    var insideHitLocation = transform.WorldPosition + forward * result.T + forward * 0.01f;
+                    var index = new Vector3i(
+                        (int)Math.Floor(insideHitLocation.X),
+                        (int)Math.Floor(insideHitLocation.Y),
+                        (int)Math.Floor(insideHitLocation.Z));
+
+                    Hit(voxels.VoxelSpace.Get<VoxelSpace>(), voxels.VoxelSpace.Get<Transform>(), hitLocation, index);
                 }
                 if (hitEntity.Has<VoxelSpaceDynamicBody>())
                 {
