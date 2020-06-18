@@ -96,7 +96,7 @@ namespace ClunkerECSDemo
             var physicsSystem = new PhysicsSystem();
 
             scene.LogicSystems.Add(new SimpleCameraMover(physicsSystem, scene.World));
-            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, cameraTransform, worldVoxelSpace, 5, 32));
+            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, cameraTransform, worldVoxelSpace, 8, 32));
             scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance)));
 
             scene.LogicSystems.Add(new InputForceApplier(physicsSystem, scene.World));

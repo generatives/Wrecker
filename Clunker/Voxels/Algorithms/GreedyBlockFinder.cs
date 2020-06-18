@@ -11,59 +11,15 @@ namespace Clunker.Voxels.Meshing
 {
     public class GreedyBlockFinder
     {
-        public static void GenerateMesh(VoxelGrid voxels, Action<ushort, Vector3i, Vector3i> blockProcessor)
+        public static void FindBlocks(VoxelGrid voxels, Action<ushort, Vector3i, Vector3i> blockProcessor)
         {
             var stopwatch = Stopwatch.StartNew();
-            var plane = new byte[voxels.GridSize, voxels.GridSize];
-            //MeshPosZ(voxels, plane, blockProcessor);
-            //MeshPosX(voxels, plane, blockProcessor);
-            MeshPosY(voxels, plane, blockProcessor);
-        }
-
-        private static void MeshPosZ(VoxelGrid voxels, byte[,] processed, Action<ushort, Vector3i, Vector3i> blockProcessor)
-        {
             var gridSize = voxels.GridSize;
-
-            for (int z = 0; z < gridSize; z++)
-            {
-                FindPlaneRects(gridSize, gridSize,
-                    (x, y) => voxels[x, y, z],
-                    (x, y) => processed[x, y] == z + 1,
-                    (x, y) => processed[x, y] = (byte)(z + 1),
-                    (blockType, pos, size) =>
-                    {
-                        blockProcessor(blockType, new Vector3i(pos.X, pos.Y, z), new Vector3i(size.X, size.Y, 1));
-                    });
-            }
-        }
-
-        private static void MeshPosX(VoxelGrid voxels, byte[,] processed, Action<ushort, Vector3i, Vector3i> blockProcessor)
-        {
-            var gridSize = voxels.GridSize;
-
-            for (int x = 0; x < gridSize; x++)
-            {
-                FindPlaneRects(gridSize, gridSize,
-                    (z, y) => voxels[x, y, z],
-                    (z, y) => processed[z, y] == x + 1 + gridSize,
-                    (z, y) => processed[z, y] = (byte)(x + 1 + gridSize),
-                    (blockType, pos, size) =>
-                    {
-                        blockProcessor(blockType, new Vector3i(x, pos.Y, pos.X), new Vector3i(1, size.Y, size.X));
-                    });
-            }
-        }
-
-        private static void MeshPosY(VoxelGrid voxels, byte[,] processed, Action<ushort, Vector3i, Vector3i> blockProcessor)
-        {
-            var gridSize = voxels.GridSize;
+            var processed = new byte[voxels.GridSize, voxels.GridSize];
 
             for (int y = 0; y < gridSize; y++)
             {
-                FindPlaneRects(gridSize, gridSize,
-                    (x, z) => voxels[x, y, z],
-                    (x, z) => processed[x, z] == y + 1 + gridSize * 2,
-                    (x, z) => processed[x, z] = (byte)(y + 1 + gridSize * 2),
+                FindPlaneRects(y, voxels, processed,
                     (blockType, pos, size) =>
                     {
                         blockProcessor(blockType, new Vector3i(pos.X, y, pos.Y), new Vector3i(size.X, 1, size.Y));
@@ -71,16 +27,15 @@ namespace Clunker.Voxels.Meshing
             }
         }
 
-        private static void FindPlaneRects(int xLength, int yLength,
-            Func<int, int, Voxel> plane, Func<int, int, bool> processed, Action<int, int> setProcessed, Action<ushort, Vector2i, Vector2i> blockProcessor)
+        private static void FindPlaneRects(int y, VoxelGrid voxels, byte[,] processed, Action<ushort, Vector2i, Vector2i> blockProcessor)
         {
-            for (int y = 0; y < yLength; y++)
+            for (int z = 0; z < voxels.GridSize; z++)
             {
-                for (int x = 0; x < xLength; x++)
+                for (int x = 0; x < voxels.GridSize; x++)
                 {
-                    if (!processed(x, y) && plane(x, y).Exists)
+                    if (processed[x, z] != y + 1 && voxels[x, y, z].Exists)
                     {
-                        var (newX, typeNum, orientation, rect) = FindRectangle(xLength, yLength, x, y, plane, processed, setProcessed);
+                        var (newX, typeNum, orientation, rect) = FindRectangle(x, z, y, voxels, processed);
                         blockProcessor(typeNum, orientation, rect);
                         x = newX;
                     }
@@ -88,15 +43,14 @@ namespace Clunker.Voxels.Meshing
             }
         }
 
-        private static (int, ushort, Vector2i, Vector2i) FindRectangle(int xLength, int yLength, int startX, int startY,
-            Func<int, int, Voxel> plane, Func<int, int, bool> getProcessed, Action<int, int> setProcessed)
+        private static (int, ushort, Vector2i, Vector2i) FindRectangle(int startX, int startZ, int yy, VoxelGrid voxels, byte[,] processed)
         {
-            var type = plane(startX, startY).BlockType;
-            var start = new Vector2i(startX, startY);
+            var type = voxels[startX, yy, startZ].BlockType;
+            var start = new Vector2i(startX, startZ);
             var size = new Vector2i(1, 1);
 
             var x = startX + 1;
-            while (x < xLength && plane(x, startY).Exists && !getProcessed(x, startY) && plane(x, startY).BlockType == type)
+            while (x < voxels.GridSize && voxels[x, yy, startZ].Exists && processed[x, startZ] != yy + 1 && voxels[x, yy, startZ].BlockType == type)
             {
                 size.X++;
                 x++;
@@ -104,11 +58,11 @@ namespace Clunker.Voxels.Meshing
 
             var endX = x;
 
-            var y = startY + 1;
-            while(y < yLength)
+            var z = startZ + 1;
+            while(z < voxels.GridSize)
             {
                 x = startX;
-                while (x < endX && plane(x, y).Exists && !getProcessed(x, y) && plane(x, y).BlockType == type)
+                while (x < endX && voxels[x, yy, z].Exists && processed[x, z] != yy + 1 && voxels[x, yy, z].BlockType == type)
                 {
                     x++;
                 }
@@ -116,7 +70,7 @@ namespace Clunker.Voxels.Meshing
                 if (x == endX)
                 {
                     size.Y++;
-                    y++;
+                    z++;
                 }
                 else
                 {
@@ -128,7 +82,7 @@ namespace Clunker.Voxels.Meshing
             {
                 for(var py = start.Y; py < size.Y; py++)
                 {
-                    setProcessed(px, py);
+                    processed[px, py] = (byte)(yy + 1);
                 }
             }
 
