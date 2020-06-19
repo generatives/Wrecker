@@ -43,14 +43,14 @@ namespace Clunker.Voxels.Meshing
             }
         }
 
-        private static (int, ushort, Vector2i, Vector2i) FindRectangle(int startX, int startZ, int yy, VoxelGrid voxels, byte[,] processed)
+        private static (int, ushort, Vector2i, Vector2i) FindRectangle(int startX, int startZ, int y, VoxelGrid voxels, byte[,] processed)
         {
-            var type = voxels[startX, yy, startZ].BlockType;
+            var type = voxels[startX, y, startZ].BlockType;
             var start = new Vector2i(startX, startZ);
             var size = new Vector2i(1, 1);
 
             var x = startX + 1;
-            while (x < voxels.GridSize && voxels[x, yy, startZ].Exists && processed[x, startZ] != yy + 1 && voxels[x, yy, startZ].BlockType == type)
+            while (x < voxels.GridSize && voxels[x, y, startZ].Exists && processed[x, startZ] != y + 1 && voxels[x, y, startZ].BlockType == type)
             {
                 size.X++;
                 x++;
@@ -62,7 +62,7 @@ namespace Clunker.Voxels.Meshing
             while(z < voxels.GridSize)
             {
                 x = startX;
-                while (x < endX && voxels[x, yy, z].Exists && processed[x, z] != yy + 1 && voxels[x, yy, z].BlockType == type)
+                while (x < endX && voxels[x, y, z].Exists && processed[x, z] != y + 1 && voxels[x, y, z].BlockType == type)
                 {
                     x++;
                 }
@@ -78,11 +78,11 @@ namespace Clunker.Voxels.Meshing
                 }
             }
 
-            for(var px = start.X; px < size.X; px++)
+            for(var px = start.X; px < start.X + size.X; px++)
             {
-                for(var py = start.Y; py < size.Y; py++)
+                for(var py = start.Y; py < start.Y + size.Y; py++)
                 {
-                    processed[px, py] = (byte)(yy + 1);
+                    processed[px, py] = (byte)(y + 1);
                 }
             }
 

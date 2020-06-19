@@ -7,7 +7,9 @@ using DefaultEcs;
 using DefaultEcs.System;
 using DefaultEcs.Threading;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Clunker.Physics.Voxels
@@ -26,14 +28,15 @@ namespace Clunker.Physics.Voxels
             ref var voxels = ref entity.Get<VoxelGrid>();
             ref var physicsBlocks = ref entity.Get<PhysicsBlocks>();
 
-            var exposed = physicsBlocks.Blocks ?? new PooledList<PhysicsBlock>();
+            var blocks = physicsBlocks.Blocks ?? new PooledList<PhysicsBlock>();
+            blocks.Clear();
 
             GreedyBlockFinder.FindBlocks(voxels, (blockType, position, size) =>
             {
-                exposed.Add(new PhysicsBlock() { BlockType = blockType, Index = position, Size = size });
+                blocks.Add(new PhysicsBlock() { BlockType = blockType, Index = position, Size = size });
             });
 
-            physicsBlocks.Blocks = exposed;
+            physicsBlocks.Blocks = blocks;
             entity.Set(physicsBlocks);
         }
     }
