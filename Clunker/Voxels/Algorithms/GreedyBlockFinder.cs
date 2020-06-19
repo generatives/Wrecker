@@ -13,47 +13,44 @@ namespace Clunker.Voxels.Meshing
     {
         public static void FindBlocks(VoxelGrid voxels, Action<ushort, Vector3i, Vector3i> blockProcessor)
         {
-            var stopwatch = Stopwatch.StartNew();
             var gridSize = voxels.GridSize;
             var processed = new byte[voxels.GridSize, voxels.GridSize];
 
             for (int y = 0; y < gridSize; y++)
             {
-                FindPlaneRects(y, voxels, processed,
-                    (blockType, pos, size) =>
-                    {
-                        blockProcessor(blockType, new Vector3i(pos.X, y, pos.Y), new Vector3i(size.X, 1, size.Y));
-                    });
-            }
-        }
-
-        private static void FindPlaneRects(int y, VoxelGrid voxels, byte[,] processed, Action<ushort, Vector2i, Vector2i> blockProcessor)
-        {
-            for (int z = 0; z < voxels.GridSize; z++)
-            {
-                for (int x = 0; x < voxels.GridSize; x++)
+                for (int z = 0; z < gridSize; z++)
                 {
-                    if (processed[x, z] != y + 1 && voxels[x, y, z].Exists)
+                    for (int x = 0; x < gridSize; x++)
                     {
-                        var (newX, typeNum, orientation, rect) = FindRectangle(x, z, y, voxels, processed);
-                        blockProcessor(typeNum, orientation, rect);
-                        x = newX;
+                        if (processed[x, z] != y + 1 && voxels[x, y, z].Exists)
+                        {
+                            var (endX, blockType, size) = FindRectangle(x, z, y, voxels, processed);
+                            blockProcessor(blockType, new Vector3i(x, y, z), new Vector3i(size.X, 1, size.Y));
+                            // Minus 1 since the x loop will add one right away
+                            x = endX - 1;
+                        }
                     }
                 }
             }
         }
 
-        private static (int, ushort, Vector2i, Vector2i) FindRectangle(int startX, int startZ, int y, VoxelGrid voxels, byte[,] processed)
+        private static (int endX, ushort blockType, Vector2i size) FindRectangle(int startX, int startZ, int y, VoxelGrid voxels, byte[,] processed)
         {
             var type = voxels[startX, y, startZ].BlockType;
             var start = new Vector2i(startX, startZ);
-            var size = new Vector2i(1, 1);
+            var sizeX = 1;
+            var sizeZ = 1;
 
             var x = startX + 1;
             while (x < voxels.GridSize && voxels[x, y, startZ].Exists && processed[x, startZ] != y + 1 && voxels[x, y, startZ].BlockType == type)
             {
-                size.X++;
+                sizeX++;
                 x++;
+
+                if (voxels[x - 1, y, startZ].BlockType == 0 && voxels[x, y, startZ].BlockType == 1)
+                {
+
+                }
             }
 
             var endX = x;
@@ -69,7 +66,7 @@ namespace Clunker.Voxels.Meshing
 
                 if (x == endX)
                 {
-                    size.Y++;
+                    sizeZ++;
                     z++;
                 }
                 else
@@ -78,15 +75,15 @@ namespace Clunker.Voxels.Meshing
                 }
             }
 
-            for(var px = start.X; px < start.X + size.X; px++)
+            for(var px = start.X; px < startX + sizeX; px++)
             {
-                for(var py = start.Y; py < start.Y + size.Y; py++)
+                for(var py = start.Y; py < startZ + sizeZ; py++)
                 {
                     processed[px, py] = (byte)(y + 1);
                 }
             }
 
-            return (endX, type, start, size);
+            return (endX, type, new Vector2i(sizeX, sizeZ));
         }
     }
 }

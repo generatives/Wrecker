@@ -31,9 +31,9 @@ namespace Clunker.Physics.Voxels
             var blocks = physicsBlocks.Blocks ?? new PooledList<PhysicsBlock>();
             blocks.Clear();
 
-            GreedyBlockFinder.FindBlocks(voxels, (blockType, position, size) =>
+            GreedyBlockFinder.FindBlocks(voxels, (blockType, index, size) =>
             {
-                blocks.Add(new PhysicsBlock() { BlockType = blockType, Index = position, Size = size });
+                blocks.Add(new PhysicsBlock() { BlockType = blockType, Index = index, Size = size });
             });
 
             physicsBlocks.Blocks = blocks;
