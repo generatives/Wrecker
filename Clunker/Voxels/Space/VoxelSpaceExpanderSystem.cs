@@ -9,6 +9,7 @@ using DefaultEcs;
 using Clunker.Voxels.Space;
 using Clunker.Core;
 using System.Numerics;
+using Clunker.Physics.Voxels;
 
 namespace Clunker.Voxels.Space
 {
@@ -53,7 +54,7 @@ namespace Clunker.Voxels.Space
                             spaceTransform.AddChild(transform);
                             voxelGridObj.Set(transform);
                             voxelGridObj.Set(_materialInstance);
-                            voxelGridObj.Set(new ExposedVoxels());
+                            voxelGridObj.Set(new PhysicsBlocks());
                             voxelGridObj.Set(new VoxelSpaceExpander());
                             voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize, voxelSpaceEntity, index));
 

@@ -20,10 +20,7 @@ namespace Clunker.Physics.Voxels
     {
         private PhysicsSystem _physicsSystem;
 
-        List<double> _times = new List<double>();
-        List<int> _shapes = new List<int>();
-
-        public VoxelStaticBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(ExposedVoxels), typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
+        public VoxelStaticBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(PhysicsBlocks), typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
         {
             _physicsSystem = physicsSystem;
         }
@@ -34,29 +31,25 @@ namespace Clunker.Physics.Voxels
 
             ref var voxels = ref entity.Get<VoxelGrid>();
             ref var body = ref entity.Get<VoxelStaticBody>();
+            ref var physicsBlocks = ref entity.Get<PhysicsBlocks>();
             var transform = entity.Get<Transform>();
 
             var size = voxels.VoxelSize;
 
-            var num = 0;
-            using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
+            if(physicsBlocks.Blocks.Any())
             {
-                var any = false;
-                GreedyBlockFinder.FindBlocks(voxels, (blockType, position, size) =>
+                using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
                 {
-                    var box = new Box(size.X, size.Y, size.Z);
-                    var pose = new RigidPose(new Vector3(
-                        position.X + size.X / 2f,
-                        position.Y + size.Y / 2f,
-                        position.Z + size.Z / 2f));
-                    compoundBuilder.Add(box, pose, size.X * size.Y * size.Z);
-                    any = true;
-                    num++;
-                });
+                    foreach (var block in physicsBlocks.Blocks)
+                    {
+                        var box = new Box(block.Size.X, block.Size.Y, block.Size.Z);
+                        var pose = new RigidPose(new Vector3(
+                            block.Index.X + block.Size.X / 2f,
+                            block.Index.Y + block.Size.Y / 2f,
+                            block.Index.Z + block.Size.Z / 2f));
+                        compoundBuilder.Add(box, pose, block.Size.X * block.Size.Y * block.Size.Z);
+                    }
 
-                if (any)
-                {
-                    //_shapes.Add(num);
                     compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var offset);
 
                     var shape = new BigCompound(compoundChildren, _physicsSystem.Simulation.Shapes, _physicsSystem.Pool);
@@ -77,16 +70,6 @@ namespace Clunker.Physics.Voxels
                     var transformedOffset = Vector3.Transform(offset, transform.WorldOrientation);
                     body.VoxelStatic = _physicsSystem.AddStatic(new StaticDescription(transform.WorldPosition + transformedOffset, new CollidableDescription(body.VoxelShape, 0.1f)), entity);
                 }
-            }
-
-            watch.Stop();
-            if(num > 0)
-            {
-                //_times.Add(watch.Elapsed.TotalMilliseconds);
-                //var avgNum = _shapes.Any() ? _shapes.Average() : 0;
-                //var avgTime = _times.Skip(10).Any() ? _times.Skip(10).Average() : 0;
-
-                //Console.WriteLine($"{avgNum} {avgTime}");
             }
         }
 

@@ -4,6 +4,7 @@ using Clunker.Core;
 using Clunker.ECS;
 using Clunker.Geometry;
 using Clunker.Voxels;
+using Clunker.Voxels.Meshing;
 using Clunker.Voxels.Space;
 using Collections.Pooled;
 using DefaultEcs;
@@ -34,31 +35,33 @@ namespace Clunker.Physics.Voxels
 
             using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
             {
-                spaceBody.VoxelIndicesByChildIndex = spaceBody.VoxelIndicesByChildIndex ?? new PooledList<Vector3i>();
-                spaceBody.VoxelIndicesByChildIndex.Clear();
+                var any = false;
                 foreach (var kvp in space.Members)
                 {
                     var memberIndex = kvp.Key;
                     var member = kvp.Value;
-                    if(member.Has<ExposedVoxels>() && member.Has<Transform>())
+                    if(member.Has<PhysicsBlocks>() && member.Has<Transform>())
                     {
+                        var voxels = member.Get<VoxelGrid>();
                         var memberTransform = member.Get<Transform>();
-                        var exposedVoxels = member.Get<ExposedVoxels>().Exposed;
+                        var physicsBlocks = member.Get<PhysicsBlocks>();
 
                         var size = space.VoxelSize;
-                        for (int i = 0; i < exposedVoxels.Count; ++i)
+                        foreach(var block in physicsBlocks.Blocks)
                         {
-                            var voxelIndex = exposedVoxels[i];
-                            var box = new Box(size, size, size);
-                            var position = memberTransform.Position + new Vector3(voxelIndex.X * size + size / 2, voxelIndex.Y * size + size / 2, voxelIndex.Z * size + size / 2);
+                            var box = new Box(block.Size.X, block.Size.Y, block.Size.Z);
+                            var position = memberTransform.Position + new Vector3(
+                                block.Index.X + block.Size.X / 2f,
+                                block.Index.Y + block.Size.Y / 2f,
+                                block.Index.Z + block.Size.Z / 2f);
                             var pose = new RigidPose(position);
-                            compoundBuilder.Add(box, pose, 10);
-                            spaceBody.VoxelIndicesByChildIndex.Add(space.GetSpaceIndexFromVoxelIndex(memberIndex, voxelIndex));
+                            compoundBuilder.Add(box, pose, block.Size.X * block.Size.Y * block.Size.Z);
+                            any = true;
                         }
                     }
                 }
 
-                if(spaceBody.VoxelIndicesByChildIndex.Count > 0)
+                if(any)
                 {
                     compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var offset);
                     spaceBody.VoxelCompound = new BigCompound(compoundChildren, _physicsSystem.Simulation.Shapes, _physicsSystem.Pool);
@@ -103,7 +106,6 @@ namespace Clunker.Physics.Voxels
                     spaceBody.VoxelCompound.Dispose(_physicsSystem.Pool);
                     _physicsSystem.RemoveShape(spaceBody.VoxelShape);
                     _physicsSystem.RemoveDynamic(body.Body);
-                    spaceBody.VoxelIndicesByChildIndex.Clear();
                 }
             }
         }
@@ -118,7 +120,6 @@ namespace Clunker.Physics.Voxels
                 spaceBody.VoxelCompound.Dispose(_physicsSystem.Pool);
                 _physicsSystem.RemoveShape(spaceBody.VoxelShape);
                 _physicsSystem.RemoveDynamic(body.Body);
-                spaceBody.VoxelIndicesByChildIndex.Clear();
             }
         }
     }

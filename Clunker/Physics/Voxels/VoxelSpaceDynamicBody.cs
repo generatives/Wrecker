@@ -15,6 +15,5 @@ namespace Clunker.Physics.Voxels
     {
         public BigCompound VoxelCompound { get; set; }
         public TypedIndex VoxelShape { get; set; }
-        public PooledList<Vector3i> VoxelIndicesByChildIndex { get; set; }
     }
 }

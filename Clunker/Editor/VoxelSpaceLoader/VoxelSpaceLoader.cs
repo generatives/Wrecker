@@ -120,7 +120,7 @@ namespace Clunker.Editor.VoxelSpaceLoader
                     spaceTransform.AddChild(gridTransform);
                     gridEntity.Set(gridTransform);
                     gridEntity.Set(_voxelMaterialInstance);
-                    gridEntity.Set(new ExposedVoxels());
+                    gridEntity.Set(new PhysicsBlocks());
                     gridEntity.Set(new VoxelSpaceExpander());
                     gridEntity.Set(new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, spaceEntity, t.Index, t.Voxels));
 

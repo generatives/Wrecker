@@ -36,31 +36,36 @@ namespace Clunker.Editor.Toolbar
                 var forward = transform.WorldOrientation.GetForwardVector();
                 var hitLocation = transform.WorldPosition + forward * result.T;
                 var hitEntity = result.Entity;
-                if (hitEntity.Has<VoxelStaticBody>())
+                if (hitEntity.Has<VoxelSpace>())
                 {
-                    ref var voxels = ref hitEntity.Get<VoxelGrid>();
-
-                    // Nudge forward a little so we are inside the block
-                    var insideHitLocation = transform.WorldPosition + forward * result.T + forward * 0.01f;
-                    var index = new Vector3i(
-                        (int)Math.Floor(insideHitLocation.X),
-                        (int)Math.Floor(insideHitLocation.Y),
-                        (int)Math.Floor(insideHitLocation.Z));
-
-                    Hit(voxels.VoxelSpace.Get<VoxelSpace>(), voxels.VoxelSpace.Get<Transform>(), hitLocation, index);
-                }
-                if (hitEntity.Has<VoxelSpaceDynamicBody>())
-                {
-                    ref var voxelSpaceDynamicBody = ref hitEntity.Get<VoxelSpaceDynamicBody>();
                     ref var space = ref hitEntity.Get<VoxelSpace>();
                     var hitTransform = hitEntity.Get<Transform>();
 
                     if (space.Members != null)
                     {
-                        var spaceIndex = voxelSpaceDynamicBody.VoxelIndicesByChildIndex[result.ChildIndex];
+                        // Nudge forward a little so we are inside the block
+                        var insideHitLocation = hitTransform.GetLocal(transform.WorldPosition + forward * result.T + forward * 0.01f);
+                        var index = new Vector3i(
+                            (int)Math.Floor(insideHitLocation.X),
+                            (int)Math.Floor(insideHitLocation.Y),
+                            (int)Math.Floor(insideHitLocation.Z));
 
-                        Hit(space, hitTransform, hitLocation, spaceIndex);
+                        Hit(space, hitTransform, hitLocation, index);
                     }
+                }
+                if (hitEntity.Has<VoxelGrid>())
+                {
+                    ref var voxels = ref hitEntity.Get<VoxelGrid>();
+
+                    var hitTransform = voxels.VoxelSpace.Get<Transform>();
+                    // Nudge forward a little so we are inside the block
+                    var insideHitLocation = hitTransform.GetLocal(transform.WorldPosition + forward * result.T + forward * 0.01f);
+                    var index = new Vector3i(
+                        (int)Math.Floor(insideHitLocation.X),
+                        (int)Math.Floor(insideHitLocation.Y),
+                        (int)Math.Floor(insideHitLocation.Z));
+
+                    Hit(voxels.VoxelSpace.Get<VoxelSpace>(), hitTransform, hitLocation, index);
                 }
             }
         }

@@ -101,7 +101,7 @@ namespace ClunkerECSDemo
 
             scene.LogicSystems.Add(new InputForceApplier(physicsSystem, scene.World));
 
-            scene.LogicSystems.Add(new ExposedVoxelFinder(scene.World));
+            scene.LogicSystems.Add(new PhysicsBlockFinder(scene.World, parrallelRunner));
             scene.LogicSystems.Add(new VoxelSpaceChangePropogator(scene.World));
             scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, scene.World));
             scene.LogicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, scene.World));

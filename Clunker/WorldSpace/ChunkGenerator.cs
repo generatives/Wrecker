@@ -69,7 +69,7 @@ namespace Clunker.WorldSpace
             {
                 entityRecord.Set(_materialInstance);
                 entityRecord.Set(new VoxelStaticBody());
-                entityRecord.Set(new ExposedVoxels());
+                entityRecord.Set(new PhysicsBlocks());
                 entityRecord.Set(voxelSpaceData);
             }
         }
