@@ -23,9 +23,9 @@ namespace Clunker.Graphics
             var indexBuffer = default(DeviceBuffer);
             var transIndexBuffer = default(DeviceBuffer);
 
-            if (entity.Has<MeshGeometryResources>())
+            if (entity.Has<RenderableMeshGeometryResources>())
             {
-                ref var resources = ref entity.Get<MeshGeometryResources>();
+                ref var resources = ref entity.Get<RenderableMeshGeometryResources>();
                 vertexBuffer = resources.VertexBuffer;
                 indexBuffer = resources.IndexBuffer;
                 transIndexBuffer = resources.TransparentIndexBuffer;
@@ -57,7 +57,7 @@ namespace Clunker.Graphics
             }
             device.UpdateBuffer(transIndexBuffer, 0, geometry.TransparentIndices);
 
-            entity.Set(new MeshGeometryResources()
+            entity.Set(new RenderableMeshGeometryResources()
             {
                 VertexBuffer = vertexBuffer,
                 IndexBuffer = indexBuffer,
@@ -67,7 +67,7 @@ namespace Clunker.Graphics
 
         protected override void Remove(in Entity entity)
         {
-            ref var resource = ref entity.Get<MeshGeometryResources>();
+            ref var resource = ref entity.Get<RenderableMeshGeometryResources>();
 
             resource.VertexBuffer.Dispose();
             resource.IndexBuffer.Dispose();

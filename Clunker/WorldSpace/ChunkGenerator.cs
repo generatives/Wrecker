@@ -15,12 +15,10 @@ namespace Clunker.WorldSpace
 {
     public class ChunkGenerator
     {
-        private MaterialInstance _materialInstance;
         private FastNoise _noise;
 
-        public ChunkGenerator(MaterialInstance materialInstance)
+        public ChunkGenerator()
         {
-            _materialInstance = materialInstance;
             _noise = new FastNoise();
             _noise.SetFrequency(0.08f);
         }
@@ -67,9 +65,6 @@ namespace Clunker.WorldSpace
 
             if (anyExist)
             {
-                entityRecord.Set(_materialInstance);
-                entityRecord.Set(new VoxelStaticBody());
-                entityRecord.Set(new PhysicsBlocks());
                 entityRecord.Set(voxelSpaceData);
             }
         }

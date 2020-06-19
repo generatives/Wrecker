@@ -18,13 +18,13 @@ namespace Clunker.Editor.Toolbar
         protected VoxelSide Orientation { get; private set; }
         protected ushort VoxelType { get; private set; }
 
-        public VoxelAddingTool(ushort voxelType, MaterialInstance materialInstance, World world, PhysicsSystem physicsSystem, Entity entity) : base(world, physicsSystem, entity)
+        public VoxelAddingTool(ushort voxelType, Action<Entity> setVoxelRender, World world, PhysicsSystem physicsSystem, Entity entity) : base(world, physicsSystem, entity)
         {
             VoxelType = voxelType;
 
             _displayGridEntity = world.CreateEntity();
             _displayGridEntity.Set(new VoxelGrid(1, 1, default(Entity), Vector3i.Zero));
-            _displayGridEntity.Set(materialInstance);
+            setVoxelRender(_displayGridEntity);
             _displayGridEntity.Set(new Transform());
             _displayGridEntity.Disable();
         }

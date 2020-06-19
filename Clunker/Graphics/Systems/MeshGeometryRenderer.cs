@@ -1,4 +1,5 @@
 ﻿using Clunker.Core;
+using Clunker.Graphics;
 using DefaultEcs;
 using DefaultEcs.System;
 using System;
@@ -13,68 +14,101 @@ namespace Clunker.Graphics
 {
     public class MeshGeometryRenderer : AEntitySystem<RenderingContext>
     {
-        private Transform _cameraTransform;
+        // World Transform
+        public ResourceSet WorldTransformResourceSet;
+        public DeviceBuffer WorldMatrixBuffer { get; private set; }
 
-        public MeshGeometryRenderer(Transform cameraTransform, World world) : base(world.GetEntities()
-            .With<MaterialInstance>()
+        // Scene Inputs
+        public ResourceSet SceneInputsResourceSet;
+        public DeviceBuffer ProjectionMatrixBuffer { get; private set; }
+        public DeviceBuffer ViewMatrixBuffer { get; private set; }
+        public DeviceBuffer SceneLightingBuffer { get; private set; }
+
+        public MeshGeometryRenderer(GraphicsDevice device, MaterialInputLayouts materialInputLayouts, World world) : base(world.GetEntities()
+            .With<Material>()
+            .With<MaterialTexture>()
             .With<RenderableMeshGeometry>()
-            .With<MeshGeometryResources>()
+            .With<RenderableMeshGeometryResources>()
             .With<Transform>().AsSet())
         {
-            _cameraTransform = cameraTransform;
+            var factory = device.ResourceFactory;
+
+            WorldMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            WorldTransformResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["WorldTransform"], WorldMatrixBuffer));
+
+            ProjectionMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            ViewMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            SceneLightingBuffer = factory.CreateBuffer(new BufferDescription(SceneLighting.Size, BufferUsage.UniformBuffer));
+            SceneInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["SceneInputs"], ProjectionMatrixBuffer, ViewMatrixBuffer, SceneLightingBuffer));
         }
 
         protected override void Update(RenderingContext context, ReadOnlySpan<Entity> entities)
         {
-            var transparents = new List<(MaterialInstance matInst, MeshGeometryResources resources, uint numIndices, Transform transform)>();
+            var commandList = context.CommandList;
+            var cameraTransform = context.CameraTransform;
+
+            commandList.UpdateBuffer(ProjectionMatrixBuffer, 0, context.ProjectionMatrix);
+
+            var viewMatrix = cameraTransform.GetViewMatrix();
+            commandList.UpdateBuffer(ViewMatrixBuffer, 0, viewMatrix);
+
+            var frustrum = new BoundingFrustum(viewMatrix * context.ProjectionMatrix);
+
+            var transparents = new List<(Material mat, MaterialTexture texture, DeviceBuffer vertices, DeviceBuffer indices, uint numIndices, Transform transform)>();
+
+            var materialInputs = new MaterialInputs();
+            materialInputs.ResouceSets["SceneInputs"] = SceneInputsResourceSet;
 
             foreach(var entity in entities)
             {
-                ref var materialInstance = ref entity.Get<MaterialInstance>();
+                ref var material = ref entity.Get<Material>();
+                ref var texture = ref entity.Get<MaterialTexture>();
                 ref var geometry = ref entity.Get<RenderableMeshGeometry>();
-                ref var geometryResources = ref entity.Get<MeshGeometryResources>();
+                ref var resources = ref entity.Get<RenderableMeshGeometryResources>();
                 ref var transform = ref entity.Get<Transform>();
 
                 var shouldRender = geometry.BoundingSize.HasValue ?
-                    context.Frustrum.Contains(GetBoundingBox(transform, geometry.BoundingSize.Value)) != ContainmentType.Disjoint :
+                    frustrum.Contains(GetBoundingBox(transform, geometry.BoundingSize.Value)) != ContainmentType.Disjoint :
                     true;
 
                 if (shouldRender)
                 {
-                    materialInstance.Bind(context);
+                    RenderObject(commandList, materialInputs, material, texture, resources.VertexBuffer, resources.IndexBuffer, (uint)geometry.Indices.Length, transform);
 
-                    context.CommandList.UpdateBuffer(context.Renderer.SceneLightingBuffer, 0, new SceneLighting()
+                    if (geometry.TransparentIndices.Length > 0)
                     {
-                        AmbientLightColour = RgbaFloat.White,
-                        AmbientLightStrength = 0.4f,
-                        DiffuseLightColour = RgbaFloat.White,
-                        DiffuseLightDirection = Vector3.Normalize(Vector3.Transform(new Vector3(2, 5, -1), Quaternion.Inverse(transform.WorldOrientation)))
-                    });
-
-                    context.CommandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, transform.WorldMatrix);
-
-                    context.CommandList.SetVertexBuffer(0, geometryResources.VertexBuffer);
-                    context.CommandList.SetIndexBuffer(geometryResources.IndexBuffer, IndexFormat.UInt16);
-                    context.CommandList.DrawIndexed((uint)geometry.Indices.Length, 1, 0, 0, 0);
-
-                    if(geometry.TransparentIndices.Length > 0)
-                    {
-                        transparents.Add((materialInstance, geometryResources, (uint)geometry.TransparentIndices.Length, transform));
+                        transparents.Add((material, texture, resources.VertexBuffer, resources.TransparentIndexBuffer, (uint)geometry.TransparentIndices.Length, transform));
                     }
                 }
             }
 
-            var sorted = transparents.OrderByDescending(t => Vector3.Distance(_cameraTransform.WorldPosition, t.transform.WorldPosition));
+            var sorted = transparents.OrderByDescending(t => Vector3.Distance(cameraTransform.WorldPosition, t.transform.WorldPosition));
 
-            foreach(var transparent in sorted)
+            foreach(var (material, texture, vertices, indices, numIndices, transform) in sorted)
             {
-                transparent.matInst.Bind(context);
-                context.CommandList.UpdateBuffer(context.Renderer.WorldBuffer, 0, transparent.transform.WorldMatrix);
-
-                context.CommandList.SetVertexBuffer(0, transparent.resources.VertexBuffer);
-                context.CommandList.SetIndexBuffer(transparent.resources.TransparentIndexBuffer, IndexFormat.UInt16);
-                context.CommandList.DrawIndexed(transparent.numIndices, 1, 0, 0, 0);
+                RenderObject(commandList, materialInputs, material, texture, vertices, indices, numIndices, transform);
             }
+        }
+
+        private void RenderObject(CommandList commandList, MaterialInputs inputs, Material material, MaterialTexture texture, DeviceBuffer vertices, DeviceBuffer indices, uint numIndices, Transform transform)
+        {
+            commandList.UpdateBuffer(SceneLightingBuffer, 0, new SceneLighting()
+            {
+                AmbientLightColour = RgbaFloat.White,
+                AmbientLightStrength = 0.4f,
+                DiffuseLightColour = RgbaFloat.White,
+                DiffuseLightDirection = Vector3.Normalize(Vector3.Transform(new Vector3(2, 5, -1), Quaternion.Inverse(transform.WorldOrientation)))
+            });
+
+            commandList.UpdateBuffer(WorldMatrixBuffer, 0, transform.WorldMatrix);
+
+            inputs.ResouceSets["WorldTransform"] = WorldTransformResourceSet;
+            inputs.ResouceSets["Texture"] = texture.ResourceSet;
+
+            inputs.VertexBuffers["Model"] = vertices;
+            inputs.IndexBuffer = indices;
+
+            material.RunPipeline(commandList, inputs, (uint)numIndices);
         }
 
         private BoundingBox GetBoundingBox(Transform transform, Vector3 size)

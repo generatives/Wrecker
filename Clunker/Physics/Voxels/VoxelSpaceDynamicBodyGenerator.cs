@@ -10,6 +10,7 @@ using Collections.Pooled;
 using DefaultEcs;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -46,17 +47,20 @@ namespace Clunker.Physics.Voxels
                         var memberTransform = member.Get<Transform>();
                         var physicsBlocks = member.Get<PhysicsBlocks>();
 
-                        var size = space.VoxelSize;
-                        foreach(var block in physicsBlocks.Blocks)
+                        if(physicsBlocks.Blocks?.Any() ?? false)
                         {
-                            var box = new Box(block.Size.X, block.Size.Y, block.Size.Z);
-                            var position = memberTransform.Position + new Vector3(
-                                block.Index.X + block.Size.X / 2f,
-                                block.Index.Y + block.Size.Y / 2f,
-                                block.Index.Z + block.Size.Z / 2f);
-                            var pose = new RigidPose(position);
-                            compoundBuilder.Add(box, pose, block.Size.X * block.Size.Y * block.Size.Z);
-                            any = true;
+                            var size = space.VoxelSize;
+                            foreach (var block in physicsBlocks.Blocks)
+                            {
+                                var box = new Box(block.Size.X, block.Size.Y, block.Size.Z);
+                                var position = memberTransform.Position + new Vector3(
+                                    block.Index.X + block.Size.X / 2f,
+                                    block.Index.Y + block.Size.Y / 2f,
+                                    block.Index.Z + block.Size.Z / 2f);
+                                var pose = new RigidPose(position);
+                                compoundBuilder.Add(box, pose, block.Size.X * block.Size.Y * block.Size.Z);
+                                any = true;
+                            }
                         }
                     }
                 }

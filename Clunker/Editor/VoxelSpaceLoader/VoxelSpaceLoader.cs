@@ -28,16 +28,16 @@ namespace Clunker.Editor.VoxelSpaceLoader
         private World _world;
         private EntitySet _selectedEntities;
         private Transform _transform;
-        private MaterialInstance _voxelMaterialInstance;
+        private Action<Entity> _setVoxelRender;
 
         private string _fileLocation = "C:\\Clunker";
 
-        public VoxelSpaceLoader(World world, Transform transform, MaterialInstance voxelMaterialInstance)
+        public VoxelSpaceLoader(World world, Transform transform, Action<Entity> setVoxelRender)
         {
             _world = world;
             _selectedEntities = _world.GetEntities().With<SelectedEntityFlag>().AsSet();
             _transform = transform;
-            _voxelMaterialInstance = voxelMaterialInstance;
+            _setVoxelRender = setVoxelRender;
         }
 
         public override void DrawEditor(double delta)
@@ -119,7 +119,7 @@ namespace Clunker.Editor.VoxelSpaceLoader
                     gridTransform.Position = Vector3.One * voxelSpaceData.GridSize * voxelSpaceData.VoxelSize * t.Index;
                     spaceTransform.AddChild(gridTransform);
                     gridEntity.Set(gridTransform);
-                    gridEntity.Set(_voxelMaterialInstance);
+                    _setVoxelRender(gridEntity);
                     gridEntity.Set(new PhysicsBlocks());
                     gridEntity.Set(new VoxelSpaceExpander());
                     gridEntity.Set(new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, spaceEntity, t.Index, t.Voxels));

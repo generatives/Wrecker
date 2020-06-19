@@ -15,7 +15,7 @@ namespace Clunker.Editor.Toolbar
         private readonly string _name;
         public override string Name => _name;
 
-        public BasicVoxelAddingTool(string name, ushort voxelType, MaterialInstance materialInstance, World world, PhysicsSystem physicsSystem, Entity entity) : base(voxelType, materialInstance, world, physicsSystem, entity)
+        public BasicVoxelAddingTool(string name, ushort voxelType, Action<Entity> setVoxelRender, World world, PhysicsSystem physicsSystem, Entity entity) : base(voxelType, setVoxelRender, world, physicsSystem, entity)
         {
             _name = name;
         }

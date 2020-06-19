@@ -55,24 +55,71 @@ namespace ClunkerECSDemo
             options.Debug = true;
 #endif
 
-            var resourceLoader = new ResourceLoader();
-            var voxelTexturesResource = resourceLoader.LoadImage("Assets\\spritesheet_tiles.png");
+            var app = new WreckerApp(new ResourceLoader(), new Scene());
 
-            var mesh3dMaterial = new Material(Mesh3d.VertexCode, Mesh3d.FragmentCode, false);
-            var voxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.White });
-            var transparentVoxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = new RgbaFloat(1, 1, 1, 0.85f) });
-            var redVoxelMaterialInstance = new MaterialInstance(mesh3dMaterial, voxelTexturesResource, new ObjectProperties() { Colour = RgbaFloat.Red });
+            app.Start(wci, options).Wait();
+        }
+    }
 
-            var scene = new Scene();
+    public class WreckerApp : ClunkerApp
+    {
+        public WreckerApp(ResourceLoader resourceLoader, Scene initialScene) : base(resourceLoader, initialScene)
+        {
+        }
+
+        protected override void Initialize()
+        {
+            var factory = GraphicsDevice.ResourceFactory;
+
+            var materialInputLayouts = new MaterialInputLayouts();
+
+            var textureLayout = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("SurfaceTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("TextureColour", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
+
+            var worldTransformLayout = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
+
+            var sceneInputsLayout = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("ProjectionBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                    new ResourceLayoutElementDescription("ViewBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                    new ResourceLayoutElementDescription("SceneLighting", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
+
+            materialInputLayouts.ResourceLayouts["Texture"] = textureLayout;
+            materialInputLayouts.ResourceLayouts["WorldTransform"] = worldTransformLayout;
+            materialInputLayouts.ResourceLayouts["SceneInputs"] = sceneInputsLayout;
+
+            materialInputLayouts.VertexLayouts["Model"] = new VertexLayoutDescription(
+                    new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
+                    new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+                    new VertexElementDescription("Normal", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3));
+
+            var mesh3dMaterial = Mesh3dMaterial.Build(GraphicsDevice, materialInputLayouts);
+
+            var voxelTexturesResource = Resources.LoadImage("Assets\\spritesheet_tiles.png");
+            var voxelTexture = new MaterialTexture(GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.White);
+            var redVoxelTexture = new MaterialTexture(GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.Red);
+            var semiTransVoxelColour = new MaterialTexture(GraphicsDevice, textureLayout, voxelTexturesResource, new RgbaFloat(1.0f, 1.0f, 1.0f, 0.8f));
+
+            Action<Entity> setVoxelRender = (Entity e) =>
+            {
+                e.Set(mesh3dMaterial);
+                e.Set(voxelTexture);
+            };
+
             var parrallelRunner = new DefaultParallelRunner(8);
 
-            var camera = scene.World.CreateEntity();
+            var camera = Scene.World.CreateEntity();
             var cameraTransform = new Transform();
             cameraTransform.Position = new Vector3(0, 40, 0);
             camera.Set(cameraTransform);
             camera.Set(new Camera());
 
-            var worldVoxelSpace = scene.World.CreateEntity();
+            var worldVoxelSpace = Scene.World.CreateEntity();
             worldVoxelSpace.Set(new Transform());
             worldVoxelSpace.Set(new VoxelSpace()
             {
@@ -81,64 +128,60 @@ namespace ClunkerECSDemo
                 Members = new Dictionary<Vector3i, Entity>()
             });
 
-            scene.RendererSystems.Add(new MeshGeometryInitializer(scene.World));
+            Scene.RendererSystems.Add(new MeshGeometryInitializer(Scene.World));
 
-            var px = Image.Load("Assets\\skybox_px.png");
-            var nx = Image.Load("Assets\\skybox_nx.png");
-            var py = Image.Load("Assets\\skybox_py.png");
-            var ny = Image.Load("Assets\\skybox_ny.png");
-            var pz = Image.Load("Assets\\skybox_pz.png");
-            var nz = Image.Load("Assets\\skybox_nz.png");
-            //scene.RendererSystems.Add(new SkyboxRenderer(px, nx, py, ny, pz, nz));
+            //var px = Image.Load("Assets\\skybox_px.png");
+            //var nx = Image.Load("Assets\\skybox_nx.png");
+            //var py = Image.Load("Assets\\skybox_py.png");
+            //var ny = Image.Load("Assets\\skybox_ny.png");
+            //var pz = Image.Load("Assets\\skybox_pz.png");
+            //var nz = Image.Load("Assets\\skybox_nz.png");
+            //Scene.RendererSystems.Add(new SkyboxRenderer(px, nx, py, ny, pz, nz));
 
-            scene.RendererSystems.Add(new MeshGeometryRenderer(cameraTransform, scene.World));
+            Scene.RendererSystems.Add(new MeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));
 
             var physicsSystem = new PhysicsSystem();
 
-            scene.LogicSystems.Add(new SimpleCameraMover(physicsSystem, scene.World));
-            scene.LogicSystems.Add(new WorldSpaceLoader(scene.World, cameraTransform, worldVoxelSpace, 5, 32));
-            scene.LogicSystems.Add(new ChunkGeneratorSystem(scene, parrallelRunner, new ChunkGenerator(voxelMaterialInstance)));
+            Scene.LogicSystems.Add(new SimpleCameraMover(physicsSystem, Scene.World));
+            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, cameraTransform, worldVoxelSpace, 5, 32));
+            Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parrallelRunner, new ChunkGenerator()));
 
-            scene.LogicSystems.Add(new InputForceApplier(physicsSystem, scene.World));
+            Scene.LogicSystems.Add(new InputForceApplier(physicsSystem, Scene.World));
 
-            scene.LogicSystems.Add(new PhysicsBlockFinder(scene.World, parrallelRunner));
-            scene.LogicSystems.Add(new VoxelSpaceChangePropogator(scene.World));
-            scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, scene.World));
-            scene.LogicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, scene.World));
-            scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(voxelMaterialInstance, scene.World));
+            Scene.LogicSystems.Add(new PhysicsBlockFinder(Scene.World, parrallelRunner));
+            Scene.LogicSystems.Add(new VoxelSpaceChangePropogator(Scene.World));
+            Scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, Scene.World));
+            Scene.LogicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, Scene.World));
+            Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(setVoxelRender, Scene.World));
 
-            scene.LogicSystems.Add(physicsSystem);
-            scene.LogicSystems.Add(new DynamicBodyPositionSync(scene.World));
+            Scene.LogicSystems.Add(physicsSystem);
+            Scene.LogicSystems.Add(new DynamicBodyPositionSync(Scene.World));
 
             var voxelTypes = LoadVoxelTypes();
 
-            scene.LogicSystems.Add(new VoxelGridMesher(scene, new VoxelTypes(voxelTypes), parrallelRunner));
+            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), parrallelRunner));
 
-            scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, scene.World));
+            Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, Scene.World));
 
             var tools = new List<ITool>()
             {
-                new RemoveVoxelEditingTool(redVoxelMaterialInstance, scene.World, physicsSystem, camera)
+                new RemoveVoxelEditingTool((e) => { e.Set(mesh3dMaterial); e.Set(redVoxelTexture); }, Scene.World, physicsSystem, camera)
             };
-            tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, transparentVoxelMaterialInstance, scene.World, physicsSystem, camera)));
+            tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, (e) => { e.Set(mesh3dMaterial); e.Set(semiTransVoxelColour); }, Scene.World, physicsSystem, camera)));
 
-            scene.LogicSystems.Add(new EditorMenu(scene, new List<IEditor>()
+            Scene.LogicSystems.Add(new EditorMenu(Scene, new List<IEditor>()
             {
-                new EditorConsole(scene),
+                new EditorConsole(Scene),
                 new Toolbar(tools.ToArray()),
-                new SelectedEntitySystem(scene.World),
-                new PhysicsEntitySelector(scene.World, physicsSystem, cameraTransform),
-                new Inspector(scene.World),
-                new EntityList(scene.World),
-                new VoxelSpaceLoader(scene.World, cameraTransform, voxelMaterialInstance)
+                new SelectedEntitySystem(Scene.World),
+                new PhysicsEntitySelector(Scene.World, physicsSystem, cameraTransform),
+                new Inspector(Scene.World),
+                new EntityList(Scene.World),
+                new VoxelSpaceLoader(Scene.World, cameraTransform, setVoxelRender)
             }));
 
-            //var cylinder = scene.World.CreateEntity();
-            //AddCylinder(cylinder, voxelMaterialInstance);
-
-            var app = new ClunkerApp(resourceLoader, scene);
-
-            app.Start(wci, options).Wait();
+            //var cylinder = Scene.World.CreateEntity();
+            //AddCylinder(cylinder, mesh3dMaterial, voxelTexture);
         }
 
         private static string[] goodVoxelTypes = new string[]
@@ -155,10 +198,11 @@ namespace ClunkerECSDemo
             "greysand"    // 9
         };
 
-        private static void AddCylinder(Entity entity, MaterialInstance materialInstance)
+        private static void AddCylinder(Entity entity, Material material, MaterialTexture materialTexture)
         {
             entity.Set(new Transform());
-            entity.Set(materialInstance);
+            entity.Set(material);
+            entity.Set(materialTexture);
 
             var cylinder = PrimitiveMeshGenerator.GenerateCapsule(1, 0.3f);
 

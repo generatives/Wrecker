@@ -7,7 +7,7 @@ using Veldrid;
 namespace Clunker.Graphics
 {
     [ClunkerComponent]
-    public struct MeshGeometryResources
+    public struct RenderableMeshGeometryResources
     {
         public DeviceBuffer VertexBuffer;
         public DeviceBuffer IndexBuffer;

@@ -27,14 +27,15 @@ namespace Clunker
 
         private Sdl2Window _window;
         private bool _windowResized;
-        private GraphicsDevice _graphicsDevice;
-        private CommandList _commandList;
+        public GraphicsDevice GraphicsDevice { get; private set; }
+        public CommandList CommandList { get; private set; }
+
         private EntitySet _cameras;
         public Entity CameraEntity => _cameras.GetEntities().ToArray().FirstOrDefault();
         public Transform CameraTransform => CameraEntity.World == Scene.World ? CameraEntity.Get<Transform>() : null;
-        private Scene Scene { get; set; }
+        public Scene Scene { get; private set; }
 
-        private List<IRenderer> _renderers;
+        private Matrix4x4 _projectionMatrix;
 
         public ResourceLoader Resources { get; private set; }
 
@@ -42,46 +43,29 @@ namespace Clunker
         {
             Resources = resourceLoader;
             Scene = initialScene;
-            _renderers = new List<IRenderer>();
             _cameras = Scene.World.GetEntities().With<Camera>().With<Transform>().AsSet();
         }
 
-        public void AddRenderer(IRenderer renderer)
+        protected virtual void Initialize()
         {
-            _renderers.Add(renderer);
-            _renderers = _renderers.OrderBy(r => r.Order).ToList();
-            if(_graphicsDevice != null && _commandList != null && _window != null)
-            {
-                renderer.Initialize(_graphicsDevice, _commandList, _window.Width, _window.Height);
-            }
-        }
 
-        public void RemoveRenderer(IRenderer renderer)
-        {
-            _renderers.Remove(renderer);
-            _renderers = _renderers.OrderBy(r => r.Order).ToList();
-        }
-
-        public T GetRenderer<T>() where T : class, IRenderer
-        {
-            var type = typeof(T);
-            return _renderers.FirstOrDefault(r => r is T) as T;
         }
 
         public Task Start(WindowCreateInfo wci, GraphicsDeviceOptions graphicsDeviceOptions)
         {
             return Task.Factory.StartNew(() =>
             {
-                AddRenderer(new Renderer());
-
                 _window = VeldridStartup.CreateWindow(ref wci);
                 //Window.CursorVisible = false;
                 //Window.SetMousePosition(Window.Width / 2, Window.Height / 2);
                 _window.Resized += () => _windowResized = true;
-                _graphicsDevice = VeldridStartup.CreateGraphicsDevice(_window, graphicsDeviceOptions, GraphicsBackend.Vulkan);
-                _commandList = _graphicsDevice.ResourceFactory.CreateCommandList();
-                _renderers.ForEach(r => r.Initialize(_graphicsDevice, _commandList, _window.Width, _window.Height));
-                var imGuiRenderer = new ImGuiRenderer(_graphicsDevice, _graphicsDevice.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
+                GraphicsDevice = VeldridStartup.CreateGraphicsDevice(_window, graphicsDeviceOptions, GraphicsBackend.Vulkan);
+                CommandList = GraphicsDevice.ResourceFactory.CreateCommandList();
+                var imGuiRenderer = new ImGuiRenderer(GraphicsDevice, GraphicsDevice.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
+
+                Initialize();
+
+                _windowResized = true;
 
                 Started?.Invoke();
                 var frameWatch = Stopwatch.StartNew();
@@ -100,8 +84,18 @@ namespace Clunker
                     if (_windowResized)
                     {
                         _windowResized = false;
-                        _graphicsDevice.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
-                        _renderers.ForEach(r => r.WindowResized(_window.Width, _window.Height));
+                        GraphicsDevice.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
+
+                        _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
+                            1.0f,
+                            (float)_window.Width / _window.Height,
+                            0.05f,
+                            1024f);
+                        if (GraphicsDevice.IsClipSpaceYInverted)
+                        {
+                            _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);
+                        }
+
                         imGuiRenderer.WindowResized(_window.Width, _window.Height);
                     }
 
@@ -114,23 +108,30 @@ namespace Clunker
 
                     Tick?.Invoke();
 
-                    _commandList.Begin();
-                    _commandList.SetFramebuffer(_graphicsDevice.MainSwapchain.Framebuffer);
+                    CommandList.Begin();
+                    CommandList.SetFramebuffer(GraphicsDevice.MainSwapchain.Framebuffer);
                     //commandList.ClearColorTarget(0, new RgbaFloat(25f / 255, 25f / 255, 112f / 255, 1.0f));
-                    _commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
-                    _commandList.ClearDepthStencil(1f);
+                    CommandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
+                    CommandList.ClearDepthStencil(1f);
 
-                    _renderers.ForEach(r => r.Render(Scene, CameraTransform, _graphicsDevice, _commandList, RenderWireframes.NO));
+                    var context = new RenderingContext()
+                    {
+                        GraphicsDevice = GraphicsDevice,
+                        CommandList = CommandList,
+                        CameraTransform = CameraTransform,
+                        ProjectionMatrix = _projectionMatrix
+                    };
+                    Scene.Render(context);
 
                     var displaySize = ImGui.GetIO().DisplaySize;
                     ImGui.GetBackgroundDrawList().AddCircleFilled(displaySize / 2, 2, ImGui.GetColorU32(new Vector4(1, 1, 1, 1)));
-                    imGuiRenderer.Render(_graphicsDevice, _commandList);
+                    imGuiRenderer.Render(GraphicsDevice, CommandList);
 
-                    _commandList.End();
-                    _graphicsDevice.SubmitCommands(_commandList);
-                    _graphicsDevice.SwapBuffers(_graphicsDevice.MainSwapchain);
+                    CommandList.End();
+                    GraphicsDevice.SubmitCommands(CommandList);
+                    GraphicsDevice.SwapBuffers(GraphicsDevice.MainSwapchain);
 
-                    _graphicsDevice.WaitForIdle();
+                    GraphicsDevice.WaitForIdle();
                 }
             }, TaskCreationOptions.LongRunning);
         }

@@ -12,6 +12,7 @@ using Clunker.Core;
 using DefaultEcs;
 using Clunker.Voxels.Space;
 using System.Numerics;
+using Clunker.Physics.Voxels;
 
 namespace Clunker.WorldSpace
 {
@@ -28,8 +29,11 @@ namespace Clunker.WorldSpace
         public Vector3i CenterChunk { get; private set; }
         public int LoadRadius { get; set; }
 
-        public WorldSpaceLoader(World world, Transform player, Entity worldVoxelSpace, int loadRadius, int chunkLength)
+        private Action<Entity> _setVoxelRendering;
+
+        public WorldSpaceLoader(Action<Entity> setVoxelRendering, World world, Transform player, Entity worldVoxelSpace, int loadRadius, int chunkLength)
         {
+            _setVoxelRendering = setVoxelRendering;
             _world = world;
             _player = player;
             _worldVoxelSpace = worldVoxelSpace;
@@ -73,8 +77,11 @@ namespace Clunker.WorldSpace
                                 {
                                     Position = new Vector3(coordinates.X * _chunkLength * 1, coordinates.Y * _chunkLength * 1, coordinates.Z * _chunkLength * 1)
                                 });
-                                chunk.Set(new VoxelGrid(_chunkLength, 1, _worldVoxelSpace, coordinates));
+                                _setVoxelRendering(chunk);
                                 chunk.Set(new Chunk());
+                                chunk.Set(new VoxelStaticBody());
+                                chunk.Set(new PhysicsBlocks());
+                                chunk.Set(new VoxelGrid(_chunkLength, 1, _worldVoxelSpace, coordinates));
                                 WorldSpace.Members[coordinates] = chunk;
 
                                 chunksLoaded++;

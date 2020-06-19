@@ -15,11 +15,11 @@ namespace Clunker.Voxels.Space
 {
     public class VoxelSpaceExpanderSystem : AEntitySystem<double>
     {
-        private MaterialInstance _materialInstance;
+        private Action<Entity> _setVoxelRender;
 
-        public VoxelSpaceExpanderSystem(MaterialInstance materialInstance, World world) : base(world.GetEntities().With<VoxelSpaceExpander>().WhenAddedEither<VoxelGrid>().WhenChangedEither<VoxelGrid>().AsSet())
+        public VoxelSpaceExpanderSystem(Action<Entity> setVoxelRender, World world) : base(world.GetEntities().With<VoxelSpaceExpander>().WhenAddedEither<VoxelGrid>().WhenChangedEither<VoxelGrid>().AsSet())
         {
-            _materialInstance = materialInstance;
+            _setVoxelRender = setVoxelRender;
         }
 
         protected override void Update(double state, in Entity entity)
@@ -53,7 +53,7 @@ namespace Clunker.Voxels.Space
                             transform.Position = new Vector3(index.X * space.GridSize * space.VoxelSize, index.Y * space.GridSize * space.VoxelSize, index.Z * space.GridSize * space.VoxelSize);
                             spaceTransform.AddChild(transform);
                             voxelGridObj.Set(transform);
-                            voxelGridObj.Set(_materialInstance);
+                            _setVoxelRender(voxelGridObj);
                             voxelGridObj.Set(new PhysicsBlocks());
                             voxelGridObj.Set(new VoxelSpaceExpander());
                             voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize, voxelSpaceEntity, index));

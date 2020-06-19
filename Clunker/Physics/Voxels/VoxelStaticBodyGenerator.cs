@@ -36,7 +36,7 @@ namespace Clunker.Physics.Voxels
 
             var size = voxels.VoxelSize;
 
-            if(physicsBlocks.Blocks.Any())
+            if(physicsBlocks.Blocks?.Any() ?? false)
             {
                 using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
                 {

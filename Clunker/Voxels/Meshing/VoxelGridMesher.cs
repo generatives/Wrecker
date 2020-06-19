@@ -25,7 +25,7 @@ namespace Clunker.Voxels.Meshing
         private Scene _scene;
         private VoxelTypes _types;
 
-        public VoxelGridMesher(Scene scene, VoxelTypes types, IParallelRunner runner) : base(scene.World.GetEntities().With<MaterialInstance>().WhenAdded<VoxelGrid>().WhenChanged<VoxelGrid>().AsSet(), runner)
+        public VoxelGridMesher(Scene scene, VoxelTypes types, IParallelRunner runner) : base(scene.World.GetEntities().With<MaterialTexture>().WhenAdded<VoxelGrid>().WhenChanged<VoxelGrid>().AsSet(), runner)
         {
             _scene = scene;
             _types = types;
@@ -34,18 +34,18 @@ namespace Clunker.Voxels.Meshing
         protected override void Update(double state, in Entity entity)
         {
             ref var data = ref entity.Get<VoxelGrid>();
-            ref var materialInstance = ref entity.Get<MaterialInstance>();
+            ref var materialTexture = ref entity.Get<MaterialTexture>();
 
             using var vertices = new PooledList<VertexPositionTextureNormal>(data.GridSize * data.GridSize * data.GridSize);
             using var indices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
             using var transIndices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
-            var imageSize = new Vector2(materialInstance.ImageWidth, materialInstance.ImageHeight);
+            var imageSize = new Vector2(materialTexture.ImageWidth, materialTexture.ImageHeight);
 
             MeshGenerator.GenerateMesh(data, _types, (voxel, side, quad) =>
             {
                 var type = _types[voxel.BlockType];
                 var textureOffset = GetTexCoords(type, voxel.Orientation, side);
-                if(type.Transparent)
+                if (type.Transparent)
                 {
                     AddQuad(quad, vertices, transIndices, textureOffset, imageSize);
                 }
