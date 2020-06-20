@@ -16,59 +16,64 @@ using Veldrid;
 
 namespace Wrecker
 {
-    public class SimpleCameraMover : AEntitySystem<double>
+    public class SimpleCameraMover : ISystem<double>
     {
         public float LookSpeed { get; set; } = 0.001f;
         public float FreeMoveSpeed { get; set; } = 6f;
+        public bool IsEnabled { get; set; } = true;
 
         private PhysicsSystem _physicsSystem;
 
-        public SimpleCameraMover(PhysicsSystem physicsSystem, World world) : base(world.GetEntities().With<Transform>().With<Camera>().AsSet())
+        private Entity _playerEntity;
+
+        public SimpleCameraMover(Entity playerEntity, PhysicsSystem physicsSystem, World world)
         {
+            _playerEntity = playerEntity;
             _physicsSystem = physicsSystem;
         }
 
-        protected override void Update(double deltaSec, in Entity entity)
+        public void Update(double deltaSec)
         {
-            ref var transform = ref entity.Get<Transform>();
-            ref var camera = ref entity.Get<Camera>();
+            ref var playerTransform = ref _playerEntity.Get<Transform>();
 
             var time = (float)deltaSec;
 
             if (GameInputTracker.WasKeyDowned(Key.C))
             {
-                if (entity.Has<CharacterInput>())
+                if (_playerEntity.Has<CharacterInput>())
                 {
-                    ref var input = ref entity.Get<CharacterInput>();
+                    ref var input = ref _playerEntity.Get<CharacterInput>();
                     _physicsSystem.DisposeCharacterInput(input);
-                    entity.Remove<CharacterInput>();
+                    _playerEntity.Remove<CharacterInput>();
                 }
                 else
                 {
-                    var input = _physicsSystem.BuildCharacterInput(transform.WorldPosition, new Capsule(0.5f, 1), 0.1f, 1.25f, 50, 100, 8, 4, MathF.PI * 0.4f);
-                    entity.Set(input);
+                    var input = _physicsSystem.BuildCharacterInput(playerTransform.WorldPosition, new Capsule(0.5f, 1), 0.1f, 1.25f, 50, 100, 8, 4, MathF.PI * 0.4f);
+                    _playerEntity.Set(input);
                 }
             }
 
-            if (entity.Has<CharacterInput>())
+            if (_playerEntity.Has<CharacterInput>())
             {
-                UpdateCharacterMovement(time, ref entity.Get<CharacterInput>());
+                UpdateCharacterMovement(time, ref _playerEntity.Get<CharacterInput>());
             }
             else
             {
-                UpdateFreeMovement(time, transform);
+                UpdateFreeMovement(time, playerTransform);
             }
 
+
+            ref var camera = ref _playerEntity.Get<Camera>();
             camera.Yaw += -GameInputTracker.MouseDelta.X * LookSpeed;
             camera.Pitch += -GameInputTracker.MouseDelta.Y * LookSpeed;
 
             // Limit pitch from -89 to +89 degrees
             camera.Pitch = MathF.Min(camera.Pitch, MathF.PI / 2f / 90f * 89f);
             camera.Pitch = MathF.Max(camera.Pitch, -MathF.PI / 2f / 90f * 89f);
-            entity.Set(camera);
+            _playerEntity.Set(camera);
 
-            transform.Orientation = Quaternion.CreateFromYawPitchRoll(camera.Yaw, camera.Pitch, camera.Roll);
-            entity.Set(transform);
+            playerTransform.WorldOrientation = Quaternion.CreateFromYawPitchRoll(camera.Yaw, camera.Pitch, camera.Roll);
+            _playerEntity.Set(playerTransform);
         }
 
         public void UpdateCharacterMovement(float time, ref CharacterInput character)
@@ -117,6 +122,10 @@ namespace Wrecker
             {
                 transform.MoveBy(0, -distance, 0);
             }
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

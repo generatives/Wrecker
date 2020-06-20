@@ -16,10 +16,12 @@ namespace Clunker.Physics.Character
     [With(typeof(Transform))]
     public class CharacterInputSystem : AEntitySystem<double>
     {
+        private PhysicsSystem _physicsSystem;
         private CharacterControllers _characters;
 
         public CharacterInputSystem(PhysicsSystem physicsSystem, World world) : base(world)
         {
+            _physicsSystem = physicsSystem;
             _characters = physicsSystem.Characters;
         }
 
@@ -56,6 +58,25 @@ namespace Clunker.Physics.Character
             if (movementDirectionLengthSquared > 0)
             {
                 movementDirection /= (float)Math.Sqrt(movementDirectionLengthSquared);
+            }
+
+            if(character.Supported)
+            {
+                var context = _physicsSystem.GetCollidableContext(character.Support);
+                if(context is Entity supportEntity)
+                {
+                    var supportOrientation = supportEntity.Get<Transform>().WorldOrientation;
+                    if (characterInput.SupportLastOrientation.HasValue)
+                    {
+                        transform.WorldOrientation += supportOrientation - characterInput.SupportLastOrientation.Value;
+                    }
+
+                    characterInput.SupportLastOrientation = supportOrientation;
+                }
+            }
+            else
+            {
+                characterInput.SupportLastOrientation = null;
             }
 
             character.TryJump = characterInput.Jump;

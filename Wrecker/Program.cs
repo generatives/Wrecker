@@ -119,11 +119,11 @@ namespace ClunkerECSDemo
 
             var parrallelRunner = new DefaultParallelRunner(8);
 
-            var camera = Scene.World.CreateEntity();
-            var cameraTransform = new Transform();
-            cameraTransform.Position = new Vector3(0, 40, 0);
-            camera.Set(cameraTransform);
-            camera.Set(new Camera());
+            var player = Scene.World.CreateEntity();
+            var playerTransform = new Transform();
+            playerTransform.Position = new Vector3(0, 40, 0);
+            player.Set(playerTransform);
+            player.Set(new Camera());
 
             var worldVoxelSpace = Scene.World.CreateEntity();
             worldVoxelSpace.Set(new Transform());
@@ -147,8 +147,8 @@ namespace ClunkerECSDemo
 
             var physicsSystem = new PhysicsSystem();
 
-            Scene.LogicSystems.Add(new SimpleCameraMover(physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, cameraTransform, worldVoxelSpace, 5, 32));
+            Scene.LogicSystems.Add(new SimpleCameraMover(player, physicsSystem, Scene.World));
+            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 5, 32));
             Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parrallelRunner, new ChunkGenerator()));
 
             Scene.LogicSystems.Add(new InputForceApplier(physicsSystem, Scene.World));
@@ -175,19 +175,19 @@ namespace ClunkerECSDemo
 
             var tools = new List<ITool>()
             {
-                new RemoveVoxelEditingTool((e) => { e.Set(mesh3dMaterial); e.Set(redVoxelTexture); }, Scene.World, physicsSystem, camera)
+                new RemoveVoxelEditingTool((e) => { e.Set(mesh3dMaterial); e.Set(redVoxelTexture); }, Scene.World, physicsSystem, player)
             };
-            tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, (e) => { e.Set(mesh3dMaterial); e.Set(semiTransVoxelColour); }, Scene.World, physicsSystem, camera)));
+            tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, (e) => { e.Set(mesh3dMaterial); e.Set(semiTransVoxelColour); }, Scene.World, physicsSystem, player)));
 
             Scene.LogicSystems.Add(new EditorMenu(Scene, new List<IEditor>()
             {
                 new EditorConsole(Scene),
                 new Toolbar(tools.ToArray()),
                 new SelectedEntitySystem(Scene.World),
-                new PhysicsEntitySelector(Scene.World, physicsSystem, cameraTransform),
+                new PhysicsEntitySelector(Scene.World, physicsSystem, playerTransform),
                 new Inspector(Scene.World),
                 new EntityList(Scene.World),
-                new VoxelSpaceLoader(Scene.World, cameraTransform, setVoxelRender)
+                new VoxelSpaceLoader(Scene.World, playerTransform, setVoxelRender)
             }));
 
             //var cylinder = Scene.World.CreateEntity();

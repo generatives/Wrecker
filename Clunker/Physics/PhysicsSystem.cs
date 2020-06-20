@@ -55,6 +55,20 @@ namespace Clunker.Physics
             return new StaticReference(handle, Simulation.Statics);
         }
 
+        public object GetCollidableContext(CollidableReference collidable)
+        {
+            switch(collidable.Mobility)
+            {
+                case CollidableMobility.Dynamic:
+                    return GetDynamicContext(collidable.BodyHandle);
+                case CollidableMobility.Static:
+                    return GetStaticContext(collidable.StaticHandle);
+                case CollidableMobility.Kinematic:
+                default:
+                    return null;
+            }
+        }
+
         public object GetStaticContext(StaticHandle handle) => _staticContexts.ContainsKey(handle) ? _staticContexts[handle] : null;
         public object GetStaticContext(StaticReference reference) => GetStaticContext(reference.Handle);
 
