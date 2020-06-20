@@ -13,7 +13,8 @@ namespace Wrecker
 {
     public class InputForceApplier : AEntitySystem<double>
     {
-        private float _force = 30;
+        private float _inputForce = 60;
+        private float _inertialCompensationForce = 30;
         private PhysicsSystem _physicsSystem;
 
         public InputForceApplier(PhysicsSystem physicsSystem, World world) : base(world.GetEntities().With<DynamicBody>().With<Transform>().AsSet())
@@ -30,38 +31,64 @@ namespace Wrecker
 
                 var worldOffset = Vector3.Zero;
 
+                var intendedDirection = Vector3.Zero;
+                var intendedRotation = Vector3.Zero;
+
                 if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad4))
                 {
-                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitX * -_force, transform.WorldOrientation), worldOffset);
+                    intendedDirection += -Vector3.UnitX;
                 }
                 if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad6))
                 {
-                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitX * _force, transform.WorldOrientation), worldOffset);
+                    intendedDirection += Vector3.UnitX;
                 }
                 if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad8))
                 {
-                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitZ * -_force, transform.WorldOrientation), worldOffset);
+                    intendedDirection += -Vector3.UnitZ;
                 }
                 if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad2))
                 {
-                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitZ * _force, transform.WorldOrientation), worldOffset);
+                    intendedDirection += Vector3.UnitZ;
                 }
                 if (GameInputTracker.IsKeyPressed(Veldrid.Key.KeypadPlus))
                 {
-                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitY * _force, transform.WorldOrientation), worldOffset);
+                    intendedDirection += Vector3.UnitY;
                 }
                 if (GameInputTracker.IsKeyPressed(Veldrid.Key.KeypadMinus))
                 {
-                    body.Body.ApplyImpulse(Vector3.Transform(Vector3.UnitY * -_force, transform.WorldOrientation), worldOffset);
+                    intendedDirection += -Vector3.UnitY;
                 }
                 if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad7))
                 {
-                    body.Body.ApplyAngularImpulse(Vector3.UnitY * _force);
+                    intendedRotation += Vector3.UnitY;
                 }
                 if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad9))
                 {
-                    body.Body.ApplyAngularImpulse(Vector3.UnitY * -_force);
+                    intendedRotation += -Vector3.UnitY;
                 }
+
+                intendedDirection = intendedDirection == Vector3.Zero ? intendedDirection : Vector3.Normalize(intendedDirection);
+
+                var worldIntendedDirection = Vector3.Transform(intendedDirection, transform.WorldOrientation);
+
+                var currentVelocity = body.Body.Velocity.Linear;
+                var actualDirection = currentVelocity == Vector3.Zero ? currentVelocity : Vector3.Normalize(currentVelocity);
+
+                var compensationDirection = worldIntendedDirection - actualDirection;
+
+                body.Body.ApplyImpulse(compensationDirection * _inertialCompensationForce, worldOffset);
+                body.Body.ApplyImpulse(worldIntendedDirection * _inputForce, worldOffset);
+
+
+                intendedRotation = intendedRotation == Vector3.Zero ? intendedRotation : Vector3.Normalize(intendedRotation);
+
+                var currentRotation = body.Body.Velocity.Angular;
+                var actualRotataionDirection = currentRotation == Vector3.Zero ? currentRotation : Vector3.Normalize(currentRotation);
+
+                var compensationRotation = intendedRotation - actualRotataionDirection;
+
+                body.Body.ApplyAngularImpulse(compensationRotation * _inertialCompensationForce);
+                body.Body.ApplyAngularImpulse(intendedRotation * _inputForce);
 
                 if (!body.Body.Awake && body.Body.Velocity.Linear != Vector3.Zero)
                 {
