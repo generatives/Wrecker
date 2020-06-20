@@ -61,7 +61,7 @@ namespace Clunker.Voxels.Space
             }
         }
 
-        public Vector3i GetGridIndexFromLocalPosition(Vector3 position)
+        public Vector3i GetMemberIndexFromLocalPosition(Vector3 position)
         {
             var spaceIndex = new Vector3i(
                 (int)Math.Floor(position.X / VoxelSize),
@@ -72,6 +72,22 @@ namespace Clunker.Voxels.Space
                 (int)Math.Floor((float)spaceIndex.X / GridSize),
                 (int)Math.Floor((float)spaceIndex.Y / GridSize),
                 (int)Math.Floor((float)spaceIndex.Z / GridSize));
+        }
+
+        public Vector3i GetMemberIndexFromSpaceIndex(Vector3i spaceIndex)
+        {
+            return new Vector3i(
+                (int)Math.Floor((float)spaceIndex.X / GridSize),
+                (int)Math.Floor((float)spaceIndex.Y / GridSize),
+                (int)Math.Floor((float)spaceIndex.Z / GridSize));
+        }
+
+        public Vector3i GetVoxelIndexFromSpaceIndex(Vector3i memberIndex, Vector3i spaceIndex)
+        {
+            return new Vector3i(
+                spaceIndex.X - memberIndex.X * GridSize,
+                spaceIndex.Y - memberIndex.Y * GridSize,
+                spaceIndex.Z - memberIndex.Z * GridSize);
         }
 
         public Vector3i GetSpaceIndexFromVoxelIndex(Vector3i memberIndex, Vector3i voxelIndex)

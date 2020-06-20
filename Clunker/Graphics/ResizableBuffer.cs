@@ -25,6 +25,17 @@ namespace Clunker.Graphics
             Length = 0;
         }
 
+        public ResizableBuffer(GraphicsDevice graphicsDevice, int itemSizeInBytes, BufferUsage bufferUsage, T[] data)
+        {
+            GraphicsDevice = graphicsDevice;
+            DeviceBuffer = null;
+            ItemSizeInBytes = itemSizeInBytes;
+            BufferUsage = bufferUsage;
+            Length = 0;
+
+            Update(data);
+        }
+
         public void Update(T[] data)
         {
             var factory = GraphicsDevice.ResourceFactory;

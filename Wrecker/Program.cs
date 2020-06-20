@@ -9,6 +9,7 @@ using Clunker.Editor.VoxelSpaceLoader;
 using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
+using Clunker.Graphics.Systems;
 using Clunker.Physics;
 using Clunker.Physics.Character;
 using Clunker.Physics.Voxels;
@@ -133,8 +134,6 @@ namespace ClunkerECSDemo
                 Members = new Dictionary<Vector3i, Entity>()
             });
 
-            Scene.RendererSystems.Add(new MeshGeometryInitializer(Scene.World));
-
             //var px = Image.Load("Assets\\skybox_px.png");
             //var nx = Image.Load("Assets\\skybox_nx.png");
             //var py = Image.Load("Assets\\skybox_py.png");
@@ -165,12 +164,14 @@ namespace ClunkerECSDemo
 
             var voxelTypes = LoadVoxelTypes();
 
-            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), parrallelRunner));
+            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parrallelRunner));
 
             Scene.LogicSystems.Add(new SunLightPropogator(new VoxelTypes(voxelTypes), Scene, parrallelRunner));
             Scene.LogicSystems.Add(new LightVertexMesher(GraphicsDevice, Scene, new VoxelTypes(voxelTypes)));
 
             Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, Scene.World));
+
+            Scene.LogicSystems.Add(new MeshGeometryCleaner(Scene.World));
 
             var tools = new List<ITool>()
             {
@@ -207,7 +208,7 @@ namespace ClunkerECSDemo
             "greysand"    // 9
         };
 
-        private static void AddCylinder(Entity entity, Material material, MaterialTexture materialTexture)
+        private static void AddCylinder(Entity entity, GraphicsDevice device, Material material, MaterialTexture materialTexture)
         {
             entity.Set(new Transform());
             entity.Set(material);
@@ -217,11 +218,13 @@ namespace ClunkerECSDemo
 
             var mesh = new RenderableMeshGeometry()
             {
-                Vertices = cylinder
-                    .Select(v => new VertexPositionTextureNormal(v.Vertex, new Vector2(20, 20), v.Normal))
-                    .ToArray(),
-                Indices = cylinder.Select((v, i) => (ushort)i).ToArray(),
-                TransparentIndices = new ushort[0],
+                Vertices = new ResizableBuffer<VertexPositionTextureNormal>(device, VertexPositionTextureNormal.SizeInBytes, BufferUsage.VertexBuffer,
+                    cylinder
+                        .Select(v => new VertexPositionTextureNormal(v.Vertex, new Vector2(20, 20), v.Normal))
+                        .ToArray()),
+                Indices = new ResizableBuffer<ushort>(device, sizeof(ushort), BufferUsage.IndexBuffer,
+                    cylinder.Select((v, i) => (ushort)i).ToArray()),
+                TransparentIndices = new ResizableBuffer<ushort>(device, sizeof(ushort), BufferUsage.IndexBuffer),
                 BoundingSize = null
             };
 

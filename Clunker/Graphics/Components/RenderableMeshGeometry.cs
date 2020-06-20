@@ -12,9 +12,9 @@ namespace Clunker.Graphics
     [ClunkerComponent]
     public struct RenderableMeshGeometry
     {
-        public VertexPositionTextureNormal[] Vertices;
-        public ushort[] Indices;
-        public ushort[] TransparentIndices;
+        public ResizableBuffer<VertexPositionTextureNormal> Vertices;
+        public ResizableBuffer<ushort> Indices;
+        public ResizableBuffer<ushort> TransparentIndices;
         public Vector3? BoundingSize;
     }
 }

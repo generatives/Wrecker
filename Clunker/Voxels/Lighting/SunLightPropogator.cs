@@ -36,7 +36,7 @@ namespace Clunker.Voxels.Lighting
             ref var voxels = ref entity.Get<VoxelGrid>();
             ref var lightField = ref entity.Get<LightField>();
 
-            var propogationQueue = new PooledQueue<int>(lightField.GridSize * lightField.GridSize * lightField.GridSize);
+            var propogationQueue = new PooledQueue<Vector3i>(lightField.GridSize * lightField.GridSize * 2);
 
             // Stage 1 Clear previous values and start light beams
             for (int x = 0; x < lightField.GridSize; x++)
@@ -50,7 +50,7 @@ namespace Clunker.Voxels.Lighting
                             if (!voxel.Exists || _voxelTypes[voxel.BlockType].Transparent)
                             {
                                 lightField[index] = (byte)15;
-                                propogationQueue.Enqueue(voxels.AsFlatIndex(index));
+                                propogationQueue.Enqueue(index);
                             }
                         }
                         else
@@ -60,40 +60,37 @@ namespace Clunker.Voxels.Lighting
                     }
 
             // Stage 2 propogate the light
-            // We index into the voxel array directly here to save time converting between coordinates and indices
-            var xInc = 1;
-            var yInc = voxels.GridSize;
-            var zInc = voxels.GridSize * voxels.GridSize;
-            while (propogationQueue.TryDequeue(out var flatIndex))
+            while (propogationQueue.TryDequeue(out var index))
             {
-                var lightLevel = lightField.Lights[flatIndex];
+                var lightLevel = lightField[index];
 
                 // Propogate in each direction, -Y doesn't decrease since the sun is shining there
-                CheckVoxel(flatIndex - xInc, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
-                CheckVoxel(flatIndex + xInc, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
-                CheckVoxel(flatIndex - yInc, (byte)(lightLevel), ref voxels, ref lightField, propogationQueue);
-                CheckVoxel(flatIndex + yInc, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
-                CheckVoxel(flatIndex - zInc, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
-                CheckVoxel(flatIndex + zInc, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
+                CheckVoxel(index - Vector3i.UnitX, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
+                CheckVoxel(index + Vector3i.UnitX, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
+                CheckVoxel(index - Vector3i.UnitY, (byte)(lightLevel), ref voxels, ref lightField, propogationQueue);
+                CheckVoxel(index + Vector3i.UnitY, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
+                CheckVoxel(index - Vector3i.UnitZ, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
+                CheckVoxel(index + Vector3i.UnitZ, (byte)(lightLevel - 1), ref voxels, ref lightField, propogationQueue);
             }
 
             var record = _scene.CommandRecorder.Record(entity);
             record.Set(lightField);
 
             watch.Stop();
-            _times.Add(watch.Elapsed.TotalMilliseconds);
-            Console.WriteLine($"Prop: {_times.Average()}");
+            //_times.Add(watch.Elapsed.TotalMilliseconds);
+            //Console.WriteLine($"Prop: {_times.Average()}");
+            //Console.WriteLine($"Max: {maxValue}");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CheckVoxel(int checkIndex, byte newLightLevel, ref VoxelGrid voxels, ref LightField lightField, PooledQueue<int> propogationQueue)
+        private void CheckVoxel(Vector3i checkIndex, byte newLightLevel, ref VoxelGrid voxels, ref LightField lightField, PooledQueue<Vector3i> propogationQueue)
         {
-            if (voxels.ContainsFlatIndex(checkIndex))
+            if (voxels.ContainsIndex(checkIndex))
             {
-                var voxel = voxels.Voxels[checkIndex];
-                if((!voxel.Exists || _voxelTypes[voxel.BlockType].Transparent) && lightField.Lights[checkIndex] < newLightLevel)
+                var voxel = voxels[checkIndex];
+                if((!voxel.Exists || _voxelTypes[voxel.BlockType].Transparent) && lightField[checkIndex] < newLightLevel)
                 {
-                    lightField.Lights[checkIndex] = newLightLevel;
+                    lightField[checkIndex] = newLightLevel;
                     propogationQueue.Enqueue(checkIndex);
                 }
             }

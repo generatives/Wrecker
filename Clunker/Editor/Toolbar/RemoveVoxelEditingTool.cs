@@ -37,12 +37,12 @@ namespace Clunker.Editor.Toolbar
             _displayGridEntity.Disable();
         }
 
-        protected override void DoVoxelAction(IVoxels voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
+        protected override void DoVoxelAction(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
         {
             voxels.SetVoxel(index, new Voxel() { Exists = false });
         }
 
-        protected override void DrawVoxelChange(IVoxels voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
+        protected override void DrawVoxelChange(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
         {
             var currentVoxel = voxels.GetVoxel(index);
             if (currentVoxel.HasValue)

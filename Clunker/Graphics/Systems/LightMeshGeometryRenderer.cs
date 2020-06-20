@@ -29,7 +29,6 @@ namespace Clunker.Graphics
             .With<Material>()
             .With<MaterialTexture>()
             .With<RenderableMeshGeometry>()
-            .With<RenderableMeshGeometryResources>()
             .With<LightVertexResources>()
             .With<Transform>().AsSet())
         {
@@ -66,7 +65,6 @@ namespace Clunker.Graphics
                 ref var material = ref entity.Get<Material>();
                 ref var texture = ref entity.Get<MaterialTexture>();
                 ref var geometry = ref entity.Get<RenderableMeshGeometry>();
-                ref var resources = ref entity.Get<RenderableMeshGeometryResources>();
                 ref var lightVertexResources = ref entity.Get<LightVertexResources>();
                 ref var transform = ref entity.Get<Transform>();
 
@@ -76,11 +74,11 @@ namespace Clunker.Graphics
 
                 if (shouldRender)
                 {
-                    RenderObject(commandList, materialInputs, material, texture, resources.VertexBuffer, lightVertexResources.LightLevels, resources.IndexBuffer, transform);
+                    RenderObject(commandList, materialInputs, material, texture, geometry.Vertices, lightVertexResources.LightLevels, geometry.Indices, transform);
 
                     if (geometry.TransparentIndices.Length > 0)
                     {
-                        transparents.Add((material, texture, resources.VertexBuffer, lightVertexResources.LightLevels, resources.TransparentIndexBuffer, transform));
+                        transparents.Add((material, texture, geometry.Vertices, lightVertexResources.LightLevels, geometry.TransparentIndices, transform));
                     }
                 }
             }

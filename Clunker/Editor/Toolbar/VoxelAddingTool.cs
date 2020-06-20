@@ -9,6 +9,8 @@ using ImGuiNET;
 using DefaultEcs;
 using Clunker.Physics;
 using Clunker.Core;
+using Clunker.Voxels.Space;
+using Clunker.Voxels.Lighting;
 
 namespace Clunker.Editor.Toolbar
 {
@@ -39,7 +41,7 @@ namespace Clunker.Editor.Toolbar
             _displayGridEntity.Disable();
         }
 
-        protected override void DoVoxelAction(IVoxels voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
+        protected override void DoVoxelAction(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
         {
             var addIndex = CalculateAddIndex(voxels, hitTransform, hitLocation, index);
             if(addIndex.HasValue)
@@ -48,7 +50,7 @@ namespace Clunker.Editor.Toolbar
             }
         }
 
-        protected override void DrawVoxelChange(IVoxels voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
+        protected override void DrawVoxelChange(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
         {
             ref var displayVoxels = ref _displayGridEntity.Get<VoxelGrid>();
             var displayVoxel = displayVoxels.GetVoxel(new Vector3i(0, 0, 0));
@@ -73,6 +75,13 @@ namespace Clunker.Editor.Toolbar
                 displayTransform.WorldPosition = worldPosition;
                 displayTransform.WorldOrientation = hitTransform.WorldOrientation;
                 _displayGridEntity.Set(displayTransform);
+
+                var memberIndex = voxels.GetMemberIndexFromSpaceIndex(addIndex.Value);
+                var voxelIndex = voxels.GetVoxelIndexFromSpaceIndex(memberIndex, addIndex.Value);
+                var grid = voxels.Members[memberIndex];
+                ref var lightField = ref grid.Get<LightField>();
+                ImGui.Text($"Add Light: {lightField[voxelIndex]}");
+                ImGui.Text($"Add Index: {voxelIndex}");
             }
         }
 

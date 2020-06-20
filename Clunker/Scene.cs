@@ -35,10 +35,9 @@ namespace Clunker
                 if(system.IsEnabled)
                 {
                     system.Update(deltaSec);
+                    CommandRecorder.Execute(World);
                 }
             }
-
-            CommandRecorder.Execute(World);
         }
 
         public void Dispose()

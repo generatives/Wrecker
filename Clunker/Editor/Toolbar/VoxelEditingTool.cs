@@ -11,6 +11,8 @@ using Clunker.Input;
 using DefaultEcs;
 using Clunker.Voxels.Space;
 using Clunker.Core;
+using ImGuiNET;
+using Clunker.Voxels.Lighting;
 
 namespace Clunker.Editor.Toolbar
 {
@@ -70,7 +72,7 @@ namespace Clunker.Editor.Toolbar
             }
         }
 
-        private void Hit(IVoxels voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
+        private void Hit(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
         {
             DrawVoxelChange(voxels, hitTransform, hitLocation, index);
 
@@ -78,9 +80,16 @@ namespace Clunker.Editor.Toolbar
             {
                 DoVoxelAction(voxels, hitTransform, hitLocation, index);
             }
+
+            var memberIndex = voxels.GetMemberIndexFromSpaceIndex(index);
+            var voxelIndex = voxels.GetVoxelIndexFromSpaceIndex(memberIndex, index);
+            var grid = voxels.Members[memberIndex];
+            ref var lightField = ref grid.Get<LightField>();
+            ImGui.Text($"Light: {lightField[voxelIndex]}");
+            ImGui.Text($"Index: {voxelIndex}");
         }
 
-        protected virtual void DoVoxelAction(IVoxels voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index) { }
-        protected virtual void DrawVoxelChange(IVoxels voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index) { }
+        protected virtual void DoVoxelAction(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index) { }
+        protected virtual void DrawVoxelChange(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index) { }
     }
 }

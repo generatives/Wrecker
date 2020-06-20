@@ -74,8 +74,8 @@ namespace Clunker.Physics.Voxels
                 }
 
                 watch.Stop();
-                _times.Add(watch.Elapsed.TotalMilliseconds);
-                Console.WriteLine(_times.Skip(10).Any() ? _times.Skip(10).Average() : 0);
+                //_times.Add(watch.Elapsed.TotalMilliseconds);
+                //Console.WriteLine(_times.Skip(10).Any() ? _times.Skip(10).Average() : 0);
             }
         }
 

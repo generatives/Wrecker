@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +13,7 @@ using DefaultEcs;
 using DefaultEcs.Threading;
 using Clunker.Voxels.Meshing;
 using Collections.Pooled;
+using System.Runtime.CompilerServices;
 
 namespace Clunker.Voxels.Meshing
 {
@@ -24,25 +24,49 @@ namespace Clunker.Voxels.Meshing
     {
         private Scene _scene;
         private VoxelTypes _types;
+        private GraphicsDevice _device;
 
-        public VoxelGridMesher(Scene scene, VoxelTypes types, IParallelRunner runner) : base(scene.World.GetEntities().With<MaterialTexture>().WhenAdded<VoxelGrid>().WhenChanged<VoxelGrid>().AsSet(), runner)
+        public VoxelGridMesher(Scene scene, VoxelTypes types, GraphicsDevice device, IParallelRunner runner) : base(scene.World.GetEntities().With<MaterialTexture>().WhenAdded<VoxelGrid>().WhenChanged<VoxelGrid>().AsSet(), runner)
         {
             _scene = scene;
             _types = types;
+            _device = device;
         }
 
         protected override void Update(double state, in Entity entity)
         {
-            ref var data = ref entity.Get<VoxelGrid>();
+            var data = entity.Get<VoxelGrid>();
             ref var materialTexture = ref entity.Get<MaterialTexture>();
+
+            ResizableBuffer<VertexPositionTextureNormal> vertexBuffer;
+            ResizableBuffer<ushort> indexBuffer;
+            ResizableBuffer<ushort> transparentIndexBuffer;
+
+            if(entity.Has<RenderableMeshGeometry>())
+            {
+                ref var geometry = ref entity.Get<RenderableMeshGeometry>();
+                vertexBuffer = geometry.Vertices;
+                indexBuffer = geometry.Indices;
+                transparentIndexBuffer = geometry.TransparentIndices;
+            }
+            else
+            {
+                vertexBuffer = new ResizableBuffer<VertexPositionTextureNormal>(_device, VertexPositionTextureNormal.SizeInBytes, BufferUsage.VertexBuffer);
+                indexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
+                transparentIndexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
+            }
 
             using var vertices = new PooledList<VertexPositionTextureNormal>(data.GridSize * data.GridSize * data.GridSize);
             using var indices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
             using var transIndices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
             var imageSize = new Vector2(materialTexture.ImageWidth, materialTexture.ImageHeight);
 
-            MeshGenerator.GenerateMesh(data, _types, (voxel, side, quad) =>
+            MeshGenerator.FindExposedSides(data, _types, (x, y, z, side) =>
             {
+                var voxelSize = data.VoxelSize;
+                var position = new Vector3(x, y, z);
+                var quad = side.GetQuad().Translate(position).Scale(voxelSize);
+                var voxel = data[x, y, z];
                 var type = _types[voxel.BlockType];
                 var textureOffset = GetTexCoords(type, voxel.Orientation, side);
                 if (type.Transparent)
@@ -55,11 +79,15 @@ namespace Clunker.Voxels.Meshing
                 }
             });
 
+            vertexBuffer.Update(vertices.ToArray());
+            indexBuffer.Update(indices.ToArray());
+            transparentIndexBuffer.Update(transIndices.ToArray());
+
             var mesh = new RenderableMeshGeometry()
             {
-                Vertices = vertices.ToArray(),
-                Indices = indices.ToArray(),
-                TransparentIndices = transIndices.ToArray(),
+                Vertices = vertexBuffer,
+                Indices = indexBuffer,
+                TransparentIndices = transparentIndexBuffer,
                 BoundingSize = new Vector3(data.GridSize * data.VoxelSize)
             };
             var entityRecord = _scene.CommandRecorder.Record(entity);

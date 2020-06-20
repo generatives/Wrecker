@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Clunker.Geometry
@@ -22,11 +23,13 @@ namespace Clunker.Geometry
             Normal = normal;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (Triangle, Triangle) GetTriangles()
         {
             return (new Triangle(A, B, D, Normal), new Triangle(B, C, D, Normal));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Quad Translate(Vector3 vector)
         {
             return new Quad(
@@ -37,6 +40,7 @@ namespace Clunker.Geometry
                 Normal);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Quad Scale(float scale)
         {
             return new Quad(

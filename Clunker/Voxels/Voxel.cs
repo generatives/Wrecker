@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Veldrid;
@@ -14,10 +15,13 @@ namespace Clunker.Voxels
     public struct Voxel
     {
         [Key(0)]
-        public uint Data;
-        public bool Exists { get => (1 & Data) == 1; set => Data = Data | (uint)(value ? 1 : 0); }
-        public ushort BlockType { get => (ushort)((Data >> 1) & 0xFFF); set => Data = Data | (uint)(value << 1); }
-        public VoxelSide Orientation { get => (VoxelSide)((Data >> 13) & 0x7); set => Data = Data | ((uint)value << 13); }
+        public int Data;
+        [IgnoreMember]
+        public bool Exists { get => (1 & Data) == 1; set => Data = Data | (value ? 1 : 0); }
+        [IgnoreMember]
+        public ushort BlockType { get => (ushort)((Data >> 1) & 0xFFF); set => Data = Data | (value << 1); }
+        [IgnoreMember]
+        public VoxelSide Orientation { get => (VoxelSide)((Data >> 13) & 0x7); set => Data = Data | ((int)value << 13); }
 
         public static bool operator ==(Voxel v, Voxel v1)
         {
@@ -47,9 +51,9 @@ namespace Clunker.Voxels
 
     public static class VoxelSideExt
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Quaternion GetQuaternion(this VoxelSide side)
         {
-            //return new Quaternion(GetDirection(side), 0);
             switch (side)
             {
                 case VoxelSide.TOP:
@@ -69,6 +73,7 @@ namespace Clunker.Voxels
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 GetDirection(this VoxelSide side)
         {
             switch (side)
@@ -90,6 +95,7 @@ namespace Clunker.Voxels
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3i GetGridOffset(this VoxelSide side)
         {
             switch (side)
@@ -111,6 +117,7 @@ namespace Clunker.Voxels
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Quad GetQuad(this VoxelSide side)
         {
             switch (side)
@@ -128,7 +135,7 @@ namespace Clunker.Voxels
                 case VoxelSide.SOUTH:
                     return new Quad(new Vector3(0, 0, 1), new Vector3(0, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 0, 1), Vector3.UnitZ);
                 default:
-                    throw new Exception("how did this happen?");
+                    return default;
             }
         }
     }
