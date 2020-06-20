@@ -104,6 +104,12 @@ namespace Clunker.Voxels
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool ContainsFlatIndex(int flatIndex)
+        {
+            return flatIndex >= 0 && flatIndex < Voxels.Length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetVoxel(int x, int y, int z, Voxel voxel) => SetVoxel(new Vector3i(x, y, z), voxel);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetVoxel(Vector3i index, Voxel voxel)
