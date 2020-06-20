@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using Clunker.Geometry;
+using MessagePack;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,6 +73,7 @@ namespace Clunker.Voxels
                     return Quaternion.Identity;
             }
         }
+
         public static Vector3 GetDirection(this VoxelSide side)
         {
             switch (side)
@@ -90,6 +92,48 @@ namespace Clunker.Voxels
                     return -Vector3.UnitX;
                 default:
                     return Vector3.Zero;
+            }
+        }
+
+        public static Vector3i GetGridOffset(this VoxelSide side)
+        {
+            switch (side)
+            {
+                case VoxelSide.TOP:
+                    return Vector3i.UnitY;
+                case VoxelSide.BOTTOM:
+                    return -Vector3i.UnitY;
+                case VoxelSide.NORTH:
+                    return -Vector3i.UnitZ;
+                case VoxelSide.SOUTH:
+                    return Vector3i.UnitZ;
+                case VoxelSide.EAST:
+                    return Vector3i.UnitX;
+                case VoxelSide.WEST:
+                    return -Vector3i.UnitX;
+                default:
+                    return Vector3i.Zero;
+            }
+        }
+
+        public static Quad GetQuad(this VoxelSide side)
+        {
+            switch (side)
+            {
+                case VoxelSide.BOTTOM:
+                    return new Quad(new Vector3(0, 0, 0), new Vector3(0, 0, 1), new Vector3(1, 0, 1), new Vector3(1, 0, 0), -Vector3.UnitY);
+                case VoxelSide.EAST:
+                    return new Quad(new Vector3(1, 0, 1), new Vector3(1, 1, 1), new Vector3(1, 1, 0), new Vector3(1, 0, 0), Vector3.UnitX);
+                case VoxelSide.WEST:
+                    return new Quad(new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 1), new Vector3(0, 0, 1), -Vector3.UnitX);
+                case VoxelSide.TOP:
+                    return new Quad(new Vector3(0, 1, 1), new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 1, 1), Vector3.UnitY);
+                case VoxelSide.NORTH:
+                    return new Quad(new Vector3(1, 0, 0), new Vector3(1, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 0), -Vector3.UnitZ);
+                case VoxelSide.SOUTH:
+                    return new Quad(new Vector3(0, 0, 1), new Vector3(0, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 0, 1), Vector3.UnitZ);
+                default:
+                    throw new Exception("how did this happen?");
             }
         }
     }

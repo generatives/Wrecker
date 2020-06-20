@@ -65,6 +65,11 @@ namespace Clunker.Geometry
             return new Vector3i(v.X - v1.X, v.Y - v1.Y, v.Z - v1.Z);
         }
 
+        public static Vector3i operator -(Vector3i v)
+        {
+            return new Vector3i(-v.X, -v.Y, -v.Z);
+        }
+
         public static Vector3i operator *(Vector3i v, int n)
         {
             return new Vector3i(v.X * n, v.Y * n, v.Z * n);
@@ -120,6 +125,9 @@ namespace Clunker.Geometry
             return (X, Y, Z).GetHashCode();
         }
 
+        public static Vector3i UnitX => new Vector3i(1, 0, 0);
+        public static Vector3i UnitY => new Vector3i(0, 1, 0);
+        public static Vector3i UnitZ => new Vector3i(0, 0, 1);
         public static Vector3i Zero => new Vector3i(0, 0, 0);
     }
 }

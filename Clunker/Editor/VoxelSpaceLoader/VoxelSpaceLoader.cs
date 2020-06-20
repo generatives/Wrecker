@@ -6,6 +6,8 @@ using Clunker.Graphics;
 using Clunker.Physics;
 using Clunker.Physics.Voxels;
 using Clunker.Voxels;
+using Clunker.Voxels.Lighting;
+using Clunker.Voxels.Meshing;
 using Clunker.Voxels.Serialization;
 using Clunker.Voxels.Space;
 using DefaultEcs;
@@ -122,6 +124,8 @@ namespace Clunker.Editor.VoxelSpaceLoader
                     _setVoxelRender(gridEntity);
                     gridEntity.Set(new PhysicsBlocks());
                     gridEntity.Set(new VoxelSpaceExpander());
+                    gridEntity.Set(new LightField(voxelSpaceData.GridSize));
+                    gridEntity.Set(new LightVertexResources());
                     gridEntity.Set(new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, spaceEntity, t.Index, t.Voxels));
 
                     return (t.Item1, gridEntity);

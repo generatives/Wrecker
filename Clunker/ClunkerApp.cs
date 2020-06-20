@@ -68,6 +68,7 @@ namespace Clunker
                 _windowResized = true;
 
                 Started?.Invoke();
+
                 var frameWatch = Stopwatch.StartNew();
 
                 while (_window.Exists)
@@ -125,12 +126,12 @@ namespace Clunker
 
                     var displaySize = ImGui.GetIO().DisplaySize;
                     ImGui.GetBackgroundDrawList().AddCircleFilled(displaySize / 2, 2, ImGui.GetColorU32(new Vector4(1, 1, 1, 1)));
+
                     imGuiRenderer.Render(GraphicsDevice, CommandList);
 
                     CommandList.End();
                     GraphicsDevice.SubmitCommands(CommandList);
                     GraphicsDevice.SwapBuffers(GraphicsDevice.MainSwapchain);
-
                     GraphicsDevice.WaitForIdle();
                 }
             }, TaskCreationOptions.LongRunning);

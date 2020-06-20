@@ -14,6 +14,7 @@ using Clunker.Physics.Character;
 using Clunker.Physics.Voxels;
 using Clunker.Resources;
 using Clunker.Voxels;
+using Clunker.Voxels.Lighting;
 using Clunker.Voxels.Meshing;
 using Clunker.Voxels.Space;
 using Clunker.WorldSpace;
@@ -94,11 +95,15 @@ namespace ClunkerECSDemo
             materialInputLayouts.ResourceLayouts["SceneInputs"] = sceneInputsLayout;
 
             materialInputLayouts.VertexLayouts["Model"] = new VertexLayoutDescription(
-                    new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
+                    new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
                     new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
-                    new VertexElementDescription("Normal", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3));
+                    new VertexElementDescription("Normal", VertexElementSemantic.Normal, VertexElementFormat.Float3));
+
+            materialInputLayouts.VertexLayouts["Lighting"] = new VertexLayoutDescription(
+                    new VertexElementDescription("Light", VertexElementSemantic.Color, VertexElementFormat.Float1));
 
             var mesh3dMaterial = Mesh3dMaterial.Build(GraphicsDevice, materialInputLayouts);
+            var lightMeshMaterial = LightMeshMaterial.Build(GraphicsDevice, materialInputLayouts);
 
             var voxelTexturesResource = Resources.LoadImage("Assets\\spritesheet_tiles.png");
             var voxelTexture = new MaterialTexture(GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.White);
@@ -107,7 +112,7 @@ namespace ClunkerECSDemo
 
             Action<Entity> setVoxelRender = (Entity e) =>
             {
-                e.Set(mesh3dMaterial);
+                e.Set(lightMeshMaterial);
                 e.Set(voxelTexture);
             };
 
@@ -139,6 +144,7 @@ namespace ClunkerECSDemo
             //Scene.RendererSystems.Add(new SkyboxRenderer(px, nx, py, ny, pz, nz));
 
             Scene.RendererSystems.Add(new MeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));
+            Scene.RendererSystems.Add(new LightMeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));
 
             var physicsSystem = new PhysicsSystem();
 
@@ -160,6 +166,9 @@ namespace ClunkerECSDemo
             var voxelTypes = LoadVoxelTypes();
 
             Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), parrallelRunner));
+
+            Scene.LogicSystems.Add(new SunLightPropogator(new VoxelTypes(voxelTypes), Scene, parrallelRunner));
+            Scene.LogicSystems.Add(new LightVertexMesher(GraphicsDevice, Scene, new VoxelTypes(voxelTypes)));
 
             Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, Scene.World));
 

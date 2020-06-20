@@ -10,6 +10,8 @@ using Clunker.Voxels.Space;
 using Clunker.Core;
 using System.Numerics;
 using Clunker.Physics.Voxels;
+using Clunker.Voxels.Lighting;
+using Clunker.Voxels.Meshing;
 
 namespace Clunker.Voxels.Space
 {
@@ -56,6 +58,8 @@ namespace Clunker.Voxels.Space
                             _setVoxelRender(voxelGridObj);
                             voxelGridObj.Set(new PhysicsBlocks());
                             voxelGridObj.Set(new VoxelSpaceExpander());
+                            voxelGridObj.Set(new LightField(space.GridSize));
+                            voxelGridObj.Set(new LightVertexResources());
                             voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize, voxelSpaceEntity, index));
 
                             space.Members[index] = voxelGridObj;

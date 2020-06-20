@@ -26,5 +26,25 @@ namespace Clunker.Geometry
         {
             return (new Triangle(A, B, D, Normal), new Triangle(B, C, D, Normal));
         }
+
+        public Quad Translate(Vector3 vector)
+        {
+            return new Quad(
+                A + vector,
+                B + vector,
+                C + vector,
+                D + vector,
+                Normal);
+        }
+
+        public Quad Scale(float scale)
+        {
+            return new Quad(
+                A * scale,
+                B * scale,
+                C * scale,
+                D * scale,
+                Normal);
+        }
     }
 }

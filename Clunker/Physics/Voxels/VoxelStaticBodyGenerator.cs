@@ -20,6 +20,8 @@ namespace Clunker.Physics.Voxels
     {
         private PhysicsSystem _physicsSystem;
 
+        private List<double> _times = new List<double>();
+
         public VoxelStaticBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(PhysicsBlocks), typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
         {
             _physicsSystem = physicsSystem;
@@ -70,6 +72,10 @@ namespace Clunker.Physics.Voxels
                     var transformedOffset = Vector3.Transform(offset, transform.WorldOrientation);
                     body.VoxelStatic = _physicsSystem.AddStatic(new StaticDescription(transform.WorldPosition + transformedOffset, new CollidableDescription(body.VoxelShape, 0.1f)), entity);
                 }
+
+                watch.Stop();
+                _times.Add(watch.Elapsed.TotalMilliseconds);
+                Console.WriteLine(_times.Skip(10).Any() ? _times.Skip(10).Average() : 0);
             }
         }
 

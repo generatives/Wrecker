@@ -13,7 +13,7 @@ using Veldrid.Utilities;
 
 namespace Clunker.Graphics
 {
-    public class MeshGeometryRenderer : AEntitySystem<RenderingContext>
+    public class LightMeshGeometryRenderer : AEntitySystem<RenderingContext>
     {
         // World Transform
         public ResourceSet WorldTransformResourceSet;
@@ -25,12 +25,12 @@ namespace Clunker.Graphics
         public DeviceBuffer ViewMatrixBuffer { get; private set; }
         public DeviceBuffer SceneLightingBuffer { get; private set; }
 
-        public MeshGeometryRenderer(GraphicsDevice device, MaterialInputLayouts materialInputLayouts, World world) : base(world.GetEntities()
+        public LightMeshGeometryRenderer(GraphicsDevice device, MaterialInputLayouts materialInputLayouts, World world) : base(world.GetEntities()
             .With<Material>()
             .With<MaterialTexture>()
             .With<RenderableMeshGeometry>()
             .With<RenderableMeshGeometryResources>()
-            .Without<LightVertexResources>()
+            .With<LightVertexResources>()
             .With<Transform>().AsSet())
         {
             var factory = device.ResourceFactory;
@@ -56,7 +56,7 @@ namespace Clunker.Graphics
 
             var frustrum = new BoundingFrustum(viewMatrix * context.ProjectionMatrix);
 
-            var transparents = new List<(Material mat, MaterialTexture texture, ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<ushort> indices, Transform transform)>();
+            var transparents = new List<(Material mat, MaterialTexture texture, ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<float> lighting, ResizableBuffer<ushort> indices, Transform transform)>();
 
             var materialInputs = new MaterialInputs();
             materialInputs.ResouceSets["SceneInputs"] = SceneInputsResourceSet;
@@ -67,6 +67,7 @@ namespace Clunker.Graphics
                 ref var texture = ref entity.Get<MaterialTexture>();
                 ref var geometry = ref entity.Get<RenderableMeshGeometry>();
                 ref var resources = ref entity.Get<RenderableMeshGeometryResources>();
+                ref var lightVertexResources = ref entity.Get<LightVertexResources>();
                 ref var transform = ref entity.Get<Transform>();
 
                 var shouldRender = geometry.BoundingSize.HasValue ?
@@ -75,25 +76,25 @@ namespace Clunker.Graphics
 
                 if (shouldRender)
                 {
-                    RenderObject(commandList, materialInputs, material, texture, resources.VertexBuffer, resources.IndexBuffer, transform);
+                    RenderObject(commandList, materialInputs, material, texture, resources.VertexBuffer, lightVertexResources.LightLevels, resources.IndexBuffer, transform);
 
                     if (geometry.TransparentIndices.Length > 0)
                     {
-                        transparents.Add((material, texture, resources.VertexBuffer, resources.TransparentIndexBuffer, transform));
+                        transparents.Add((material, texture, resources.VertexBuffer, lightVertexResources.LightLevels, resources.TransparentIndexBuffer, transform));
                     }
                 }
             }
 
             var sorted = transparents.OrderByDescending(t => Vector3.Distance(cameraTransform.WorldPosition, t.transform.WorldPosition));
 
-            foreach(var (material, texture, vertices, indices, transform) in sorted)
+            foreach(var (material, texture, vertices, lighting, indices, transform) in sorted)
             {
-                RenderObject(commandList, materialInputs, material, texture, vertices, indices, transform);
+                RenderObject(commandList, materialInputs, material, texture, vertices, lighting, indices, transform);
             }
         }
 
         private void RenderObject(CommandList commandList, MaterialInputs inputs, Material material, MaterialTexture texture,
-            ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<ushort> indices, Transform transform)
+            ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<float> lighting, ResizableBuffer<ushort> indices, Transform transform)
         {
             commandList.UpdateBuffer(SceneLightingBuffer, 0, new SceneLighting()
             {
@@ -109,9 +110,10 @@ namespace Clunker.Graphics
             inputs.ResouceSets["Texture"] = texture.ResourceSet;
 
             inputs.VertexBuffers["Model"] = vertices.DeviceBuffer;
+            inputs.VertexBuffers["Lighting"] = lighting.DeviceBuffer;
             inputs.IndexBuffer = indices.DeviceBuffer;
 
-            material.RunPipeline(commandList, inputs, (ushort)indices.Length);
+            material.RunPipeline(commandList, inputs, (uint)indices.Length);
         }
 
         private BoundingBox GetBoundingBox(Transform transform, Vector3 size)

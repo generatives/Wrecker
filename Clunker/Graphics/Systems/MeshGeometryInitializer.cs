@@ -19,9 +19,9 @@ namespace Clunker.Graphics
         {
             ref var geometry = ref entity.Get<RenderableMeshGeometry>();
 
-            var vertexBuffer = default(DeviceBuffer);
-            var indexBuffer = default(DeviceBuffer);
-            var transIndexBuffer = default(DeviceBuffer);
+            ResizableBuffer<VertexPositionTextureNormal> vertexBuffer;
+            ResizableBuffer<ushort> indexBuffer;
+            ResizableBuffer<ushort> transIndexBuffer;
 
             if (entity.Has<RenderableMeshGeometryResources>())
             {
@@ -30,32 +30,16 @@ namespace Clunker.Graphics
                 indexBuffer = resources.IndexBuffer;
                 transIndexBuffer = resources.TransparentIndexBuffer;
             }
-
-            var device = context.GraphicsDevice;
-            var factory = device.ResourceFactory;
-            var vertexBufferSize = (uint)(VertexPositionTextureNormal.SizeInBytes * geometry.Vertices.Length);
-            if (vertexBuffer == null || vertexBuffer.SizeInBytes < vertexBufferSize)
+            else
             {
-                if (vertexBuffer != null) device.DisposeWhenIdle(vertexBuffer);
-                vertexBuffer = factory.CreateBuffer(new BufferDescription(vertexBufferSize, BufferUsage.VertexBuffer));
+                vertexBuffer = new ResizableBuffer<VertexPositionTextureNormal>(context.GraphicsDevice, VertexPositionTextureNormal.SizeInBytes, BufferUsage.VertexBuffer);
+                indexBuffer = new ResizableBuffer<ushort>(context.GraphicsDevice, sizeof(ushort), BufferUsage.IndexBuffer);
+                transIndexBuffer = new ResizableBuffer<ushort>(context.GraphicsDevice, sizeof(ushort), BufferUsage.IndexBuffer);
             }
-            device.UpdateBuffer(vertexBuffer, 0, geometry.Vertices);
 
-            var indexBufferSize = sizeof(ushort) * (uint)geometry.Indices.Length;
-            if (indexBuffer == null || indexBuffer.SizeInBytes < indexBufferSize)
-            {
-                if (indexBuffer != null) device.DisposeWhenIdle(indexBuffer);
-                indexBuffer = factory.CreateBuffer(new BufferDescription(indexBufferSize, BufferUsage.IndexBuffer));
-            }
-            device.UpdateBuffer(indexBuffer, 0, geometry.Indices);
-
-            var transIndexBufferSize = sizeof(ushort) * (uint)geometry.TransparentIndices.Length;
-            if (transIndexBuffer == null || transIndexBuffer.SizeInBytes < transIndexBufferSize)
-            {
-                if (transIndexBuffer != null) device.DisposeWhenIdle(transIndexBuffer);
-                transIndexBuffer = factory.CreateBuffer(new BufferDescription(transIndexBufferSize, BufferUsage.IndexBuffer));
-            }
-            device.UpdateBuffer(transIndexBuffer, 0, geometry.TransparentIndices);
+            vertexBuffer.Update(geometry.Vertices);
+            indexBuffer.Update(geometry.Indices);
+            transIndexBuffer.Update(geometry.TransparentIndices);
 
             entity.Set(new RenderableMeshGeometryResources()
             {

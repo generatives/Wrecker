@@ -13,6 +13,8 @@ using DefaultEcs;
 using Clunker.Voxels.Space;
 using System.Numerics;
 using Clunker.Physics.Voxels;
+using Clunker.Voxels.Lighting;
+using Clunker.Voxels.Meshing;
 
 namespace Clunker.WorldSpace
 {
@@ -81,11 +83,13 @@ namespace Clunker.WorldSpace
                                 chunk.Set(new Chunk());
                                 chunk.Set(new VoxelStaticBody());
                                 chunk.Set(new PhysicsBlocks());
+                                chunk.Set(new LightField(_chunkLength));
+                                chunk.Set(new LightVertexResources());
                                 chunk.Set(new VoxelGrid(_chunkLength, 1, _worldVoxelSpace, coordinates));
                                 WorldSpace.Members[coordinates] = chunk;
 
                                 chunksLoaded++;
-                                //if (chunksLoaded == Environment.ProcessorCount * 10) return;
+                                if (chunksLoaded == Environment.ProcessorCount * 3) return;
                             }
                         }
                     }

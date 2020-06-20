@@ -67,13 +67,35 @@ namespace Clunker.Voxels
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int AsFlatIndex(Vector3i coordinate) => AsFlatIndex(coordinate.X, coordinate.Y, coordinate.Z);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int AsFlatIndex(int x, int y, int z)
+        {
+            return x + GridSize * (y + GridSize * z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3i AsCoordinate(int flatIndex)
+        {
+            var x = flatIndex % GridSize;
+            int y = (flatIndex % (GridSize * GridSize)) / GridSize;
+            int z = flatIndex / (GridSize * GridSize);
+
+            return new Vector3i(x, y, z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Exists(Vector3i index) => Exists(index.X, index.Y, index.Z);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Exists(int x, int y, int z)
         {
             return ContainsIndex(x, y, z) && this[x, y, z].Exists;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsIndex(Vector3i index) => ContainsIndex(index.X, index.Y, index.Z);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsIndex(int x, int y, int z)
         {
             return x >= 0 && x < GridSize &&
@@ -81,7 +103,9 @@ namespace Clunker.Voxels
                 z >= 0 && z < GridSize;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetVoxel(int x, int y, int z, Voxel voxel) => SetVoxel(new Vector3i(x, y, z), voxel);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetVoxel(Vector3i index, Voxel voxel)
         {
             if (ContainsIndex(index))
@@ -95,6 +119,7 @@ namespace Clunker.Voxels
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Exposed(int x, int y, int z)
         {
             Voxel voxel = this[x, y, z];

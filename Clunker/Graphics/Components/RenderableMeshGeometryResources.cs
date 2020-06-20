@@ -9,8 +9,8 @@ namespace Clunker.Graphics
     [ClunkerComponent]
     public struct RenderableMeshGeometryResources
     {
-        public DeviceBuffer VertexBuffer;
-        public DeviceBuffer IndexBuffer;
-        public DeviceBuffer TransparentIndexBuffer;
+        public ResizableBuffer<VertexPositionTextureNormal> VertexBuffer;
+        public ResizableBuffer<ushort> IndexBuffer;
+        public ResizableBuffer<ushort> TransparentIndexBuffer;
     }
 }
