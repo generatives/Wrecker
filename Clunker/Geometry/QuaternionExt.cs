@@ -21,23 +21,23 @@ namespace Clunker.Geometry
 
         public static (float, float, float) GetYawPitchRoll(this Quaternion q)
         {
-            // roll (x-axis rotation)
+            // pitch (x-axis rotation)
             var sinr_cosp = +2f * (q.W * q.X + q.Y * q.Z);
             var cosr_cosp = +1f - 2f * (q.X * q.X + q.Y * q.Y);
-            var roll = (float)System.Math.Atan2(sinr_cosp, cosr_cosp);
+            var pitch = (float)System.Math.Atan2(sinr_cosp, cosr_cosp);
 
-            // pitch (y-axis rotation)
-            float pitch;
+            // yaw (y-axis rotation)
+            float yaw;
             var sinp = +2f * (q.W * q.Y - q.Z * q.X);
             if (System.Math.Abs(sinp) >= 1)
-                pitch = System.Math.Sign(sinp) * (float)System.Math.PI / 2; // use 90 degrees if out of range
+                yaw = System.Math.Sign(sinp) * (float)System.Math.PI / 2; // use 90 degrees if out of range
             else
-                pitch = (float)System.Math.Asin(sinp);
+                yaw = (float)System.Math.Asin(sinp);
 
-            // yaw (z-axis rotation)
+            // roll (z-axis rotation)
             var siny_cosp = +2f * (q.W * q.Z + q.X * q.Y);
             var cosy_cosp = +1f - 2f * (q.Y * q.Y + q.Z * q.Z);
-            var yaw = (float)System.Math.Atan2(siny_cosp, cosy_cosp);
+            var roll = (float)System.Math.Atan2(siny_cosp, cosy_cosp);
 
             return (yaw, pitch, roll);
         }
