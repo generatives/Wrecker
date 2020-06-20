@@ -103,7 +103,7 @@ namespace Clunker.WorldSpace
                                 }
                             }
                         }
-                        voxels[x, y, z] = new Voxel() { Density = (byte)(255 * Math.Max(0, strength - 0.5f)) };
+                        voxels[x, y, z] = new Voxel() { Exists = (255 * Math.Max(0, strength - 0.5f) > 0 )};
                     }
         }
 

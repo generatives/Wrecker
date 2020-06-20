@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Voxels\Meshing\GreedyMeshGenerator.cs" />
+    <Compile Remove="Voxels\Meshing\MarchingCubesGenerator.cs" />
+    <Compile Remove="Voxels\Meshing\SurfaceNetGenerator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Collections.Pooled" Version="1.0.82" />
     <PackageReference Include="DefaultEcs" Version="0.14.3" />
     <PackageReference Include="DynamicExpresso.Core" Version="2.3.1" />
