@@ -66,7 +66,7 @@ namespace Clunker.Editor.Toolbar
         protected override void DrawVoxelChange(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
         {
             ref var displayVoxels = ref _displayGridEntity.Get<VoxelGrid>();
-            var displayVoxel = displayVoxels.GetVoxel(new Vector3i(0, 0, 0));
+            var displayVoxel = displayVoxels[new Vector3i(0, 0, 0)];
             var newVoxel = new Voxel()
             {
                 Exists = true,
@@ -98,7 +98,7 @@ namespace Clunker.Editor.Toolbar
             }
         }
 
-        private Vector3i? CalculateAddIndex(IVoxels voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
+        private Vector3i? CalculateAddIndex(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
         {
             var size = voxels.VoxelSize;
             var voxelLocation = index * size;
@@ -142,7 +142,7 @@ namespace Clunker.Editor.Toolbar
             Orientation = (VoxelSide)selectedOrientation;
         }
 
-        public abstract void AddVoxel(IVoxels voxel, Vector3i index);
+        public abstract void AddVoxel(VoxelSpace voxel, Vector3i index);
 
         public static bool NearlyEqual(float f1, float f2) => System.Math.Abs(f1 - f2) < 0.01;
     }

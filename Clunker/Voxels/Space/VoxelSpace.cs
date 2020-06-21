@@ -12,7 +12,7 @@ using System.Text;
 namespace Clunker.Voxels.Space
 {
     [ClunkerComponent]
-    public struct VoxelSpace : IVoxels, IEnumerable<KeyValuePair<Vector3i, Entity>>
+    public struct VoxelSpace : IEnumerable<KeyValuePair<Vector3i, Entity>>
     {
         public int GridSize { get; set; }
         public float VoxelSize { get; set; }
@@ -115,6 +115,15 @@ namespace Clunker.Voxels.Space
 
                 grid.SetVoxel(voxelIndex, voxel);
                 member.Set(grid);
+
+                foreach (var offset in GeometricIterators.SixNeighbours)
+                {
+                    var otherIndex = memberIndex + offset;
+                    if (otherIndex != memberIndex && _members.ContainsKey(otherIndex))
+                    {
+                        _members[otherIndex].NotifyChanged<VoxelGrid>();
+                    }
+                }
             }
         }
 

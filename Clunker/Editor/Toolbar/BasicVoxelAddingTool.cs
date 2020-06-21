@@ -7,6 +7,7 @@ using Clunker.Voxels;
 using ImGuiNET;
 using Clunker.Physics;
 using DefaultEcs;
+using Clunker.Voxels.Space;
 
 namespace Clunker.Editor.Toolbar
 {
@@ -20,7 +21,7 @@ namespace Clunker.Editor.Toolbar
             _name = name;
         }
 
-        public override void AddVoxel(IVoxels voxels, Vector3i index)
+        public override void AddVoxel(VoxelSpace voxels, Vector3i index)
         {
             voxels.SetVoxel(index, new Voxel() { Exists = true, Orientation = Orientation, BlockType = VoxelType });
         }
