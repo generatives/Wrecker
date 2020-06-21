@@ -220,7 +220,7 @@ namespace ClunkerECSDemo
                 Indices = new ResizableBuffer<ushort>(device, sizeof(ushort), BufferUsage.IndexBuffer,
                     cylinder.Select((v, i) => (ushort)i).ToArray()),
                 TransparentIndices = new ResizableBuffer<ushort>(device, sizeof(ushort), BufferUsage.IndexBuffer),
-                BoundingSize = null
+                BoundingRadius = 0
             };
 
             entity.Set(mesh);

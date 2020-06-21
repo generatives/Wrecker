@@ -29,7 +29,7 @@ namespace Clunker.Physics.Voxels
 
         protected override void Compute(double time, in Entity entity)
         {
-            var watch = Stopwatch.StartNew();
+            //var watch = Stopwatch.StartNew();
 
             ref var voxels = ref entity.Get<VoxelGrid>();
             ref var body = ref entity.Get<VoxelStaticBody>();
@@ -73,7 +73,7 @@ namespace Clunker.Physics.Voxels
                     body.VoxelStatic = _physicsSystem.AddStatic(new StaticDescription(transform.WorldPosition + transformedOffset, new CollidableDescription(body.VoxelShape, 0.1f)), entity);
                 }
 
-                watch.Stop();
+                //watch.Stop();
                 //_times.Add(watch.Elapsed.TotalMilliseconds);
                 //Console.WriteLine(_times.Skip(10).Any() ? _times.Skip(10).Average() : 0);
             }

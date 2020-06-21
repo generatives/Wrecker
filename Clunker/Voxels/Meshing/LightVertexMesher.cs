@@ -32,7 +32,7 @@ namespace Clunker.Voxels.Meshing
 
         protected override void Compute(double state, in Entity entity)
         {
-            var watch = Stopwatch.StartNew();
+            //var watch = Stopwatch.StartNew();
 
             var data = entity.Get<VoxelGrid>();
             var lightField = entity.Get<LightField>();
@@ -69,7 +69,7 @@ namespace Clunker.Voxels.Meshing
             var entityRecord = _scene.CommandRecorder.Record(entity);
             entityRecord.Set(lightVertexResources);
 
-            watch.Stop();
+            //watch.Stop();
             //_times.Add(watch.Elapsed.TotalMilliseconds);
             //Console.WriteLine($"Mesh: {_times.Average()}");
         }

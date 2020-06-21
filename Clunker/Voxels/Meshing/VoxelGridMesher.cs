@@ -87,12 +87,15 @@ namespace Clunker.Voxels.Meshing
             indexBuffer.Update(indices.ToArray());
             transparentIndexBuffer.Update(transIndices.ToArray());
 
+            var centerOffset = Vector3.One * (data.GridSize * data.VoxelSize / 2f);
+
             var mesh = new RenderableMeshGeometry()
             {
                 Vertices = vertexBuffer,
                 Indices = indexBuffer,
                 TransparentIndices = transparentIndexBuffer,
-                BoundingSize = new Vector3(data.GridSize * data.VoxelSize)
+                BoundingRadius = centerOffset.Length(),
+                BoundingRadiusOffset = centerOffset
             };
             var entityRecord = _scene.CommandRecorder.Record(entity);
             entityRecord.Set(mesh);

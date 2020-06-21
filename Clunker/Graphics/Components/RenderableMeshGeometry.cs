@@ -15,6 +15,7 @@ namespace Clunker.Graphics
         public ResizableBuffer<VertexPositionTextureNormal> Vertices;
         public ResizableBuffer<ushort> Indices;
         public ResizableBuffer<ushort> TransparentIndices;
-        public Vector3? BoundingSize;
+        public float BoundingRadius;
+        public Vector3 BoundingRadiusOffset;
     }
 }

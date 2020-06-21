@@ -67,8 +67,8 @@ namespace Clunker.Graphics
                 ref var geometry = ref entity.Get<RenderableMeshGeometry>();
                 ref var transform = ref entity.Get<Transform>();
 
-                var shouldRender = geometry.BoundingSize.HasValue ?
-                    frustrum.Contains(GetBoundingBox(transform, geometry.BoundingSize.Value)) != ContainmentType.Disjoint :
+                var shouldRender = geometry.BoundingRadius > 0 ?
+                    frustrum.Contains(new BoundingSphere(transform.GetWorld(geometry.BoundingRadiusOffset), geometry.BoundingRadius)) != ContainmentType.Disjoint :
                     true;
 
                 if (shouldRender)
@@ -110,27 +110,6 @@ namespace Clunker.Graphics
             inputs.IndexBuffer = indices.DeviceBuffer;
 
             material.RunPipeline(commandList, inputs, (ushort)indices.Length);
-        }
-
-        private BoundingBox GetBoundingBox(Transform transform, Vector3 size)
-        {
-            var positions = new Vector3[]
-            {
-                transform.GetWorld(new Vector3(0, 0, 0)),
-                transform.GetWorld(new Vector3(size.X, 0, 0)),
-                transform.GetWorld(new Vector3(size.X, 0, size.Z)),
-                transform.GetWorld(new Vector3(0, 0, size.Z)),
-
-                transform.GetWorld(new Vector3(0, size.Y, 0)),
-                transform.GetWorld(new Vector3(size.X, size.Y, 0)),
-                transform.GetWorld(new Vector3(size.X, size.Y, size.Z)),
-                transform.GetWorld(new Vector3(0, size.Y, size.Z)),
-            };
-
-            var min = new Vector3(positions.Min(p => p.X), positions.Min(p => p.Y), positions.Min(p => p.Z));
-            var max = new Vector3(positions.Max(p => p.X), positions.Max(p => p.Y), positions.Max(p => p.Z));
-
-            return new BoundingBox(min, max);
         }
     }
 }

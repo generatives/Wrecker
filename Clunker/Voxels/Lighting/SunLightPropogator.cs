@@ -31,7 +31,7 @@ namespace Clunker.Voxels.Lighting
 
         protected override void Update(double state, in Entity entity)
         {
-            var watch = Stopwatch.StartNew();
+            //var watch = Stopwatch.StartNew();
 
             ref var voxels = ref entity.Get<VoxelGrid>();
             ref var lightField = ref entity.Get<LightField>();
@@ -76,7 +76,7 @@ namespace Clunker.Voxels.Lighting
             var record = _scene.CommandRecorder.Record(entity);
             record.Set(lightField);
 
-            watch.Stop();
+            //watch.Stop();
             //_times.Add(watch.Elapsed.TotalMilliseconds);
             //Console.WriteLine($"Prop: {_times.Average()}");
             //Console.WriteLine($"Max: {maxValue}");
