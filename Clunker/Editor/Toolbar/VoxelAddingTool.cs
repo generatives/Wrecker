@@ -94,7 +94,7 @@ namespace Clunker.Editor.Toolbar
                 var grid = voxels[memberIndex];
                 ref var lightField = ref grid.Get<LightField>();
                 ImGui.Text($"Add Light: {lightField[voxelIndex]}");
-                ImGui.Text($"Add Index: {voxelIndex}");
+                ImGui.Text($"Add Voxel Index: {voxelIndex}");
             }
         }
 

@@ -215,10 +215,5 @@ namespace Clunker.Voxels
         {
             return this.GetEnumerator();
         }
-
-        public Voxel? GetVoxel(Vector3i index)
-        {
-            return ContainsIndex(index) ? this[index] : (Voxel?)null;
-        }
     }
 }
