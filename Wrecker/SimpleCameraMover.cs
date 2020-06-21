@@ -48,7 +48,7 @@ namespace Wrecker
                 }
                 else
                 {
-                    var input = _physicsSystem.BuildCharacterInput(playerTransform.WorldPosition, new Capsule(0.5f, 1), 0.1f, 1.25f, 50, 100, 8, 4, MathF.PI * 0.4f);
+                    var input = _physicsSystem.BuildCharacterInput(playerTransform.WorldPosition, new Capsule(0.5f, 1), 0.1f, 1.25f, 100, 100, 6, 4, MathF.PI * 0.4f);
                     _playerEntity.Set(input);
                 }
             }

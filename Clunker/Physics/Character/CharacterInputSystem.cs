@@ -115,8 +115,8 @@ namespace Clunker.Physics.Character
                     var worldMovementDirection = characterRight * movementDirection.X + characterForward * movementDirection.Y;
                     var currentVelocity = Vector3.Dot(characterBody.Velocity.Linear, worldMovementDirection);
                     //We'll arbitrarily set air control to be a fraction of supported movement's speed/force.
-                    const float airControlForceScale = .2f;
-                    const float airControlSpeedScale = .2f;
+                    const float airControlForceScale = .6f;
+                    const float airControlSpeedScale = .8f;
                     var airAccelerationDt = characterBody.LocalInertia.InverseMass * character.MaximumHorizontalForce * airControlForceScale * delta;
                     var maximumAirSpeed = effectiveSpeed * airControlSpeedScale;
                     var targetVelocity = (float)Math.Min(currentVelocity + airAccelerationDt, maximumAirSpeed);
