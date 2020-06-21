@@ -36,7 +36,7 @@ namespace Clunker.Voxels.Lighting
             ref var voxels = ref entity.Get<VoxelGrid>();
             ref var lightField = ref entity.Get<LightField>();
 
-            var propogationQueue = new PooledQueue<int>(lightField.GridSize * lightField.GridSize * 2);
+            using var propogationQueue = new PooledQueue<int>(lightField.GridSize * lightField.GridSize * 2);
 
             // Stage 1 Clear previous values and start light beams
             for (int x = 0; x < lightField.GridSize; x++)
