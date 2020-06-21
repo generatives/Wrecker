@@ -44,11 +44,10 @@ namespace Clunker.Voxels.Lighting
                     for (int z = 0; z < lightField.GridSize; z++)
                     {
                         var index = new Vector3i(x, y, z);
-                        if (y == lightField.GridSize - 1)
+                        var voxel = voxels[index];
+                        if (y == lightField.GridSize - 1 && (!voxel.Exists || _voxelTypes[voxel.BlockType].Transparent))
                         {
-                            var voxel = voxels[index];
-                            var light = !voxel.Exists || _voxelTypes[voxel.BlockType].Transparent;
-                            lightField[index] = light ? (byte)15 : (byte)0;
+                            lightField[index] = (byte)15;
                             propogationQueue.Enqueue(voxels.AsFlatIndex(index));
                         }
                         else
