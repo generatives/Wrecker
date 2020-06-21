@@ -44,7 +44,7 @@ namespace Clunker.Voxels.Meshing
 
             using var vertices = new PooledList<float>(data.GridSize * data.GridSize * data.GridSize);
 
-            MeshGenerator.FindExposedSides(data, _types, (x, y, z, side) =>
+            MeshGenerator.FindExposedSides(ref data, _types, (x, y, z, side) =>
             {
                 var facing = new Vector3i(x, y, z) + side.GetGridOffset();
                 if(data.ContainsIndex(facing))

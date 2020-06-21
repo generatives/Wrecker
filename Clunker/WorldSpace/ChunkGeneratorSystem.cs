@@ -24,7 +24,7 @@ namespace Clunker.WorldSpace
             ref var chunk = ref entity.Get<Chunk>();
             ref var grid = ref entity.Get<VoxelGrid>();
 
-            _generator.GenerateChunk(entity, _scene.CommandRecorder.Record(entity), grid.SpaceIndex);
+            _generator.GenerateChunk(entity, _scene.CommandRecorder.Record(entity), grid.MemberIndex);
         }
     }
 }

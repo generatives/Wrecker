@@ -11,11 +11,13 @@ using Clunker.Physics;
 using Clunker.Core;
 using Clunker.Voxels.Space;
 using Clunker.Voxels.Lighting;
+using Clunker.Voxels.Meshing;
 
 namespace Clunker.Editor.Toolbar
 {
     public abstract class VoxelAddingTool : VoxelEditingTool
     {
+        private Entity _displaySpaceEntity;
         private Entity _displayGridEntity;
         protected VoxelSide Orientation { get; private set; }
         protected ushort VoxelType { get; private set; }
@@ -24,10 +26,21 @@ namespace Clunker.Editor.Toolbar
         {
             VoxelType = voxelType;
 
+            _displaySpaceEntity = world.CreateEntity();
+            var voxelSpace = new VoxelSpace(1, 1);
+            _displaySpaceEntity.Set(voxelSpace);
+            var spaceTransform = new Transform();
+            _displaySpaceEntity.Set(spaceTransform);
+
             _displayGridEntity = world.CreateEntity();
-            _displayGridEntity.Set(new VoxelGrid(1, 1, default(Entity), Vector3i.Zero));
+            voxelSpace[Vector3i.Zero] = _displayGridEntity;
+            _displayGridEntity.Set(new LightField(1));
+            _displayGridEntity.Set(new LightVertexResources());
+            _displayGridEntity.Set(new VoxelGrid(1, 1, _displaySpaceEntity, Vector3i.Zero));
             setVoxelRender(_displayGridEntity);
-            _displayGridEntity.Set(new Transform());
+            var gridTransform = new Transform();
+            spaceTransform.AddChild(gridTransform);
+            _displayGridEntity.Set(gridTransform);
             _displayGridEntity.Disable();
         }
 
@@ -71,14 +84,14 @@ namespace Clunker.Editor.Toolbar
                 var localPosition = addIndex.Value * voxels.VoxelSize;
                 var worldPosition = hitTransform.GetWorld(localPosition);
 
-                ref var displayTransform = ref _displayGridEntity.Get<Transform>();
+                ref var displayTransform = ref _displaySpaceEntity.Get<Transform>();
                 displayTransform.WorldPosition = worldPosition;
                 displayTransform.WorldOrientation = hitTransform.WorldOrientation;
-                _displayGridEntity.Set(displayTransform);
+                _displaySpaceEntity.Set(displayTransform);
 
                 var memberIndex = voxels.GetMemberIndexFromSpaceIndex(addIndex.Value);
                 var voxelIndex = voxels.GetVoxelIndexFromSpaceIndex(memberIndex, addIndex.Value);
-                var grid = voxels.Members[memberIndex];
+                var grid = voxels[memberIndex];
                 ref var lightField = ref grid.Get<LightField>();
                 ImGui.Text($"Add Light: {lightField[voxelIndex]}");
                 ImGui.Text($"Add Index: {voxelIndex}");

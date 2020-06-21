@@ -14,6 +14,9 @@ using DefaultEcs.Threading;
 using Clunker.Voxels.Meshing;
 using Collections.Pooled;
 using System.Runtime.CompilerServices;
+using Clunker.Geometry;
+using System.Collections.Concurrent;
+using System.Linq;
 
 namespace Clunker.Voxels.Meshing
 {
@@ -36,6 +39,7 @@ namespace Clunker.Voxels.Meshing
         protected override void Update(double state, in Entity entity)
         {
             var data = entity.Get<VoxelGrid>();
+
             ref var materialTexture = ref entity.Get<MaterialTexture>();
 
             ResizableBuffer<VertexPositionTextureNormal> vertexBuffer;
@@ -61,7 +65,7 @@ namespace Clunker.Voxels.Meshing
             using var transIndices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
             var imageSize = new Vector2(materialTexture.ImageWidth, materialTexture.ImageHeight);
 
-            MeshGenerator.FindExposedSides(data, _types, (x, y, z, side) =>
+            MeshGenerator.FindExposedSides(ref data, _types, (x, y, z, side) =>
             {
                 var voxelSize = data.VoxelSize;
                 var position = new Vector3(x, y, z);

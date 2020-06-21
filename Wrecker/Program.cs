@@ -127,12 +127,7 @@ namespace ClunkerECSDemo
 
             var worldVoxelSpace = Scene.World.CreateEntity();
             worldVoxelSpace.Set(new Transform());
-            worldVoxelSpace.Set(new VoxelSpace()
-            {
-                GridSize = 32,
-                VoxelSize = 1,
-                Members = new Dictionary<Vector3i, Entity>()
-            });
+            worldVoxelSpace.Set(new VoxelSpace(32, 1));
 
             //var px = Image.Load("Assets\\skybox_px.png");
             //var nx = Image.Load("Assets\\skybox_nx.png");
@@ -175,9 +170,9 @@ namespace ClunkerECSDemo
 
             var tools = new List<ITool>()
             {
-                new RemoveVoxelEditingTool((e) => { e.Set(mesh3dMaterial); e.Set(redVoxelTexture); }, Scene.World, physicsSystem, player)
+                new RemoveVoxelEditingTool((e) => { e.Set(lightMeshMaterial); e.Set(redVoxelTexture); }, Scene.World, physicsSystem, player)
             };
-            tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, (e) => { e.Set(mesh3dMaterial); e.Set(semiTransVoxelColour); }, Scene.World, physicsSystem, player)));
+            tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, (e) => { e.Set(lightMeshMaterial); e.Set(semiTransVoxelColour); }, Scene.World, physicsSystem, player)));
 
             Scene.LogicSystems.Add(new EditorMenu(Scene, new List<IEditor>()
             {

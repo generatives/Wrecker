@@ -64,7 +64,7 @@ namespace Clunker.Editor.VoxelSpaceLoader
                             {
                                 VoxelSize = space.VoxelSize,
                                 GridSize = space.GridSize,
-                                Grids = space.Members.Select(kvp => (kvp.Key, kvp.Value.Get<VoxelGrid>().Voxels)).ToArray()
+                                Grids = space.Select(kvp => (kvp.Key, kvp.Value.Get<VoxelGrid>().Voxels)).ToArray()
                             };
                             VoxelSpaceDataSerializer.Serialize(voxelSpaceData, File.OpenWrite(_fileLocation));
                         }
@@ -135,12 +135,7 @@ namespace Clunker.Editor.VoxelSpaceLoader
             spaceEntity.Set(spaceTransform);
             spaceEntity.Set(new VoxelSpaceDynamicBody());
             spaceEntity.Set(new DynamicBody());
-            spaceEntity.Set(new VoxelSpace()
-            {
-                GridSize = voxelSpaceData.GridSize,
-                VoxelSize = voxelSpaceData.VoxelSize,
-                Members = members
-            });
+            spaceEntity.Set(new VoxelSpace(voxelSpaceData.GridSize, voxelSpaceData.VoxelSize, members));
 
             _world.Publish(new SelectEntityRequest() { Entity = spaceEntity });
         }

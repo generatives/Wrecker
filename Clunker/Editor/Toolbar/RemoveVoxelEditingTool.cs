@@ -3,6 +3,8 @@ using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Physics;
 using Clunker.Voxels;
+using Clunker.Voxels.Lighting;
+using Clunker.Voxels.Meshing;
 using Clunker.Voxels.Space;
 using DefaultEcs;
 using System;
@@ -16,14 +18,26 @@ namespace Clunker.Editor.Toolbar
     {
         public override string Name => "Remove";
 
+        private Entity _displaySpaceEntity;
         private Entity _displayGridEntity;
 
         public RemoveVoxelEditingTool(Action<Entity> setVoxelRender, World world, PhysicsSystem physicsSystem, Entity entity) : base(world, physicsSystem, entity)
         {
+            _displaySpaceEntity = world.CreateEntity();
+            var voxelSpace = new VoxelSpace(1, 1);
+            _displaySpaceEntity.Set(voxelSpace);
+            var spaceTransform = new Transform();
+            _displaySpaceEntity.Set(spaceTransform);
+
             _displayGridEntity = world.CreateEntity();
-            _displayGridEntity.Set(new VoxelGrid(1, 1, default(Entity), Vector3i.Zero));
+            voxelSpace[Vector3i.Zero] = _displayGridEntity;
+            _displayGridEntity.Set(new LightField(1));
+            _displayGridEntity.Set(new LightVertexResources());
+            _displayGridEntity.Set(new VoxelGrid(1, 1, _displaySpaceEntity, Vector3i.Zero));
             setVoxelRender(_displayGridEntity);
-            _displayGridEntity.Set(new Transform());
+            var gridTransform = new Transform();
+            spaceTransform.AddChild(gridTransform);
+            _displayGridEntity.Set(gridTransform);
             _displayGridEntity.Disable();
         }
 
@@ -55,10 +69,10 @@ namespace Clunker.Editor.Toolbar
             var localPosition = index * voxels.VoxelSize;
             var worldPosition = hitTransform.GetWorld(localPosition);
 
-            ref var displayTransform = ref _displayGridEntity.Get<Transform>();
+            ref var displayTransform = ref _displaySpaceEntity.Get<Transform>();
             displayTransform.WorldPosition = worldPosition;
             displayTransform.WorldOrientation = hitTransform.WorldOrientation;
-            _displayGridEntity.Set(displayTransform);
+            _displaySpaceEntity.Set(displayTransform);
         }
     }
 }

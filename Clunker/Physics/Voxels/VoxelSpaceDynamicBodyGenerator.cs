@@ -37,7 +37,7 @@ namespace Clunker.Physics.Voxels
             using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
             {
                 var any = false;
-                foreach (var kvp in space.Members)
+                foreach (var kvp in space)
                 {
                     var memberIndex = kvp.Key;
                     var member = kvp.Value;

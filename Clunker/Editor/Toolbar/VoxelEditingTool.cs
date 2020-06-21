@@ -43,17 +43,14 @@ namespace Clunker.Editor.Toolbar
                     ref var space = ref hitEntity.Get<VoxelSpace>();
                     var hitTransform = hitEntity.Get<Transform>();
 
-                    if (space.Members != null)
-                    {
-                        // Nudge forward a little so we are inside the block
-                        var insideHitLocation = hitTransform.GetLocal(transform.WorldPosition + forward * result.T + forward * 0.01f);
-                        var index = new Vector3i(
-                            (int)Math.Floor(insideHitLocation.X),
-                            (int)Math.Floor(insideHitLocation.Y),
-                            (int)Math.Floor(insideHitLocation.Z));
+                    // Nudge forward a little so we are inside the block
+                    var insideHitLocation = hitTransform.GetLocal(transform.WorldPosition + forward * result.T + forward * 0.01f);
+                    var index = new Vector3i(
+                        (int)Math.Floor(insideHitLocation.X),
+                        (int)Math.Floor(insideHitLocation.Y),
+                        (int)Math.Floor(insideHitLocation.Z));
 
-                        Hit(space, hitTransform, hitLocation, index);
-                    }
+                    Hit(space, hitTransform, hitLocation, index);
                 }
                 if (hitEntity.Has<VoxelGrid>())
                 {
@@ -83,7 +80,7 @@ namespace Clunker.Editor.Toolbar
 
             var memberIndex = voxels.GetMemberIndexFromSpaceIndex(index);
             var voxelIndex = voxels.GetVoxelIndexFromSpaceIndex(memberIndex, index);
-            var grid = voxels.Members[memberIndex];
+            var grid = voxels[memberIndex];
             ref var lightField = ref grid.Get<LightField>();
             ImGui.Text($"Light: {lightField[voxelIndex]}");
             ImGui.Text($"Index: {voxelIndex}");

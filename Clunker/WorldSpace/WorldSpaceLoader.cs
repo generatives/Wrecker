@@ -22,23 +22,24 @@ namespace Clunker.WorldSpace
     {
         public bool IsEnabled { get; set; } = true;
 
-        private VoxelSpace WorldSpace => _worldVoxelSpace.Get<VoxelSpace>();
+        private VoxelSpace _voxelSpace;
+        private Entity _voxelSpaceEntity;
 
         private World _world;
         private Transform _player;
-        private Entity _worldVoxelSpace;
         private int _chunkLength;
         public Vector3i CenterChunk { get; private set; }
         public int LoadRadius { get; set; }
 
         private Action<Entity> _setVoxelRendering;
 
-        public WorldSpaceLoader(Action<Entity> setVoxelRendering, World world, Transform player, Entity worldVoxelSpace, int loadRadius, int chunkLength)
+        public WorldSpaceLoader(Action<Entity> setVoxelRendering, World world, Transform player, Entity voxelSpaceEntity, int loadRadius, int chunkLength)
         {
             _setVoxelRendering = setVoxelRendering;
             _world = world;
             _player = player;
-            _worldVoxelSpace = worldVoxelSpace;
+            _voxelSpace = voxelSpaceEntity.Get<VoxelSpace>();
+            _voxelSpaceEntity = voxelSpaceEntity;
             LoadRadius = loadRadius;
             _chunkLength = chunkLength;
         }
@@ -54,7 +55,7 @@ namespace Clunker.WorldSpace
         {
             CenterChunk = new Vector3i(x, y, z);
 
-            foreach (var coordinates in WorldSpace.Members.Keys.ToList())
+            foreach (var coordinates in _voxelSpace.Select(kvp => kvp.Key).ToList())
             {
                 if (!AreaContainsChunk(coordinates))
                 {
@@ -72,7 +73,7 @@ namespace Clunker.WorldSpace
                         if ((xOffset * xOffset + yOffset * yOffset + zOffset * zOffset) <= LoadRadius * LoadRadius)
                         {
                             var coordinates = new Vector3i(x + xOffset, y + yOffset, z + zOffset);
-                            if (!WorldSpace.Members.ContainsKey(coordinates))
+                            if (!_voxelSpace.ContainsMember(coordinates))
                             {
                                 var chunk = _world.CreateEntity();
                                 chunk.Set(new Transform()
@@ -85,8 +86,8 @@ namespace Clunker.WorldSpace
                                 chunk.Set(new PhysicsBlocks());
                                 chunk.Set(new LightField(_chunkLength));
                                 chunk.Set(new LightVertexResources());
-                                chunk.Set(new VoxelGrid(_chunkLength, 1, _worldVoxelSpace, coordinates));
-                                WorldSpace.Members[coordinates] = chunk;
+                                chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpaceEntity, coordinates));
+                                _voxelSpace[coordinates] = chunk;
 
                                 chunksLoaded++;
                                 if (chunksLoaded == Environment.ProcessorCount * 3) return;
@@ -99,11 +100,11 @@ namespace Clunker.WorldSpace
 
         private void UnloadChunk(Vector3i coordinates)
         {
-            if(WorldSpace.Members.ContainsKey(coordinates))
+            if(_voxelSpace.ContainsMember(coordinates))
             {
-                var chunk = WorldSpace.Members[coordinates];
+                var chunk = _voxelSpace[coordinates];
                 chunk.Dispose();
-                WorldSpace.Members.Remove(coordinates);
+                _voxelSpace.Remove(coordinates);
             }
         }
 

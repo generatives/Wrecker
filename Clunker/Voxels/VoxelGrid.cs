@@ -17,7 +17,7 @@ namespace Clunker.Voxels
     public struct VoxelGrid : IEnumerable<(Vector3, Voxel)>, IVoxels
     {
         public Entity VoxelSpace { get; set; }
-        public Vector3i SpaceIndex { get; set; }
+        public Vector3i MemberIndex { get; set; }
         public Voxel[] Voxels { get; private set; }
         public float VoxelSize { get; private set; }
         public int GridSize { get; private set; }
@@ -28,7 +28,7 @@ namespace Clunker.Voxels
             VoxelSize = voxelSize;
             GridSize = gridSize;
             VoxelSpace = voxelSpace;
-            SpaceIndex = spaceIndex;
+            MemberIndex = spaceIndex;
             Voxels = new Voxel[gridSize * gridSize * gridSize];
         }
 
@@ -39,7 +39,7 @@ namespace Clunker.Voxels
             VoxelSize = voxelSize;
             GridSize = gridSize;
             VoxelSpace = voxelSpace;
-            SpaceIndex = spaceIndex;
+            MemberIndex = spaceIndex;
             Voxels = voxels;
         }
 

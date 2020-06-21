@@ -36,7 +36,7 @@ namespace Clunker.WorldSpace
             ref var voxelSpaceData = ref entity.Get<VoxelGrid>();
             bool anyExist = true;
 
-            if(voxelSpaceData.SpaceIndex.Y >= 2 && voxelSpaceData.SpaceIndex.Y <= 5)
+            if(voxelSpaceData.MemberIndex.Y >= 2 && voxelSpaceData.MemberIndex.Y <= 5)
             {
                 if(random.Next(0, 29) == 0)
                 {
@@ -44,7 +44,7 @@ namespace Clunker.WorldSpace
                     SetTypes(voxelSpaceData);
                 }
             }
-            else if (voxelSpaceData.SpaceIndex.Y >= 0)
+            else if (voxelSpaceData.MemberIndex.Y >= 0)
             {
                 for (int x = 0; x < voxelSpaceData.GridSize; x++)
                     for (int y = 0; y < voxelSpaceData.GridSize; y++)
