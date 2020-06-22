@@ -7,7 +7,6 @@ using System.Text;
 
 namespace Clunker.Graphics.Systems
 {
-    [WhenRemoved(typeof(RenderableMeshGeometry))]
     public class MeshGeometryCleaner : ISystem<double>
     {
         public bool IsEnabled { get; set; } = true;

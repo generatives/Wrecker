@@ -44,11 +44,7 @@ namespace Clunker.Voxels.Space
                 foreach(var offset in GeometricIterators.SixNeighbours)
                 {
                     var otherIndex = memberIndex + offset;
-                    if (otherIndex != memberIndex && _members.ContainsKey(otherIndex))
-                    {
-                        var member = _members[otherIndex];
-                        member.NotifyChanged<VoxelGrid>();
-                    }
+                    TryNotifyNeighbor(otherIndex);
                 }
             }
         }
@@ -64,11 +60,7 @@ namespace Clunker.Voxels.Space
             foreach (var offset in GeometricIterators.SixNeighbours)
             {
                 var otherIndex = memberIndex + offset;
-                if (otherIndex != memberIndex && _members.ContainsKey(otherIndex))
-                {
-                    var member = _members[otherIndex];
-                    member.NotifyChanged<VoxelGrid>();
-                }
+                TryNotifyNeighbor(otherIndex);
             }
         }
 
@@ -116,14 +108,26 @@ namespace Clunker.Voxels.Space
                 grid.SetVoxel(voxelIndex, voxel);
                 member.Set(grid);
 
-                foreach (var offset in GeometricIterators.SixNeighbours)
-                {
-                    var otherIndex = memberIndex + offset;
-                    if (otherIndex != memberIndex && _members.ContainsKey(otherIndex))
-                    {
-                        _members[otherIndex].NotifyChanged<VoxelGrid>();
-                    }
-                }
+                if (voxelIndex.X == 0)
+                    TryNotifyNeighbor(memberIndex - Vector3i.UnitX);
+                if (voxelIndex.X == GridSize - 1)
+                    TryNotifyNeighbor(memberIndex + Vector3i.UnitX);
+                if (voxelIndex.Y == 0)
+                    TryNotifyNeighbor(memberIndex - Vector3i.UnitY);
+                if (voxelIndex.Y == GridSize - 1)
+                    TryNotifyNeighbor(memberIndex + Vector3i.UnitY);
+                if (voxelIndex.Z == 0)
+                    TryNotifyNeighbor(memberIndex - Vector3i.UnitZ);
+                if (voxelIndex.Z == GridSize - 1)
+                    TryNotifyNeighbor(memberIndex + Vector3i.UnitZ);
+            }
+        }
+
+        private void TryNotifyNeighbor(Vector3i index)
+        {
+            if (_members.ContainsKey(index))
+            {
+                _members[index].NotifyChanged<VoxelGrid>();
             }
         }
 

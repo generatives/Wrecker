@@ -17,19 +17,24 @@ using System.Runtime.CompilerServices;
 using Clunker.Geometry;
 using System.Collections.Concurrent;
 using System.Linq;
+using Clunker.Voxels.Space;
 
 namespace Clunker.Voxels.Meshing
 {
     /// <summary>
     /// Creates a GeometryMesh of exposed sides
     /// </summary>
+    [With(typeof(MaterialTexture))]
+    [WhenAddedEither(typeof(VoxelGrid))]
+    [WhenChangedEither(typeof(VoxelGrid))]
+    //[WhenAddedEither(typeof(NeighbourMemberChanged))]
     public class VoxelGridMesher : AEntitySystem<double>
     {
         private Scene _scene;
         private VoxelTypes _types;
         private GraphicsDevice _device;
 
-        public VoxelGridMesher(Scene scene, VoxelTypes types, GraphicsDevice device, IParallelRunner runner) : base(scene.World.GetEntities().With<MaterialTexture>().WhenAdded<VoxelGrid>().WhenChanged<VoxelGrid>().AsSet(), runner)
+        public VoxelGridMesher(Scene scene, VoxelTypes types, GraphicsDevice device, IParallelRunner runner) : base(scene.World, runner)
         {
             _scene = scene;
             _types = types;

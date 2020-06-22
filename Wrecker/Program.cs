@@ -1,5 +1,6 @@
 ﻿using Clunker;
 using Clunker.Core;
+using Clunker.ECS;
 using Clunker.Editor;
 using Clunker.Editor.EditorConsole;
 using Clunker.Editor.Inspector;
@@ -142,31 +143,7 @@ namespace ClunkerECSDemo
 
             var physicsSystem = new PhysicsSystem();
 
-            Scene.LogicSystems.Add(new SimpleCameraMover(player, physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 5, 32));
-            Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parrallelRunner, new ChunkGenerator()));
-
-            Scene.LogicSystems.Add(new InputForceApplier(physicsSystem, Scene.World));
-
-            Scene.LogicSystems.Add(new PhysicsBlockFinder(Scene.World, parrallelRunner));
-            Scene.LogicSystems.Add(new VoxelSpaceChangePropogator(Scene.World));
-            Scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(setVoxelRender, Scene.World));
-
-            Scene.LogicSystems.Add(physicsSystem);
-            Scene.LogicSystems.Add(new DynamicBodyPositionSync(Scene.World));
-
             var voxelTypes = LoadVoxelTypes();
-
-            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parrallelRunner));
-
-            Scene.LogicSystems.Add(new SunLightPropogator(new VoxelTypes(voxelTypes), Scene, parrallelRunner));
-            Scene.LogicSystems.Add(new LightVertexMesher(GraphicsDevice, Scene, new VoxelTypes(voxelTypes)));
-
-            Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, Scene.World));
-
-            Scene.LogicSystems.Add(new MeshGeometryCleaner(Scene.World));
 
             var tools = new List<ITool>()
             {
@@ -184,6 +161,33 @@ namespace ClunkerECSDemo
                 new EntityList(Scene.World),
                 new VoxelSpaceLoader(Scene.World, playerTransform, setVoxelRender)
             }));
+
+            Scene.LogicSystems.Add(new SimpleCameraMover(player, physicsSystem, Scene.World));
+            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 5, 32));
+            Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parrallelRunner, new ChunkGenerator()));
+
+            Scene.LogicSystems.Add(new InputForceApplier(physicsSystem, Scene.World));
+
+            Scene.LogicSystems.Add(new PhysicsBlockFinder(Scene.World, parrallelRunner));
+            Scene.LogicSystems.Add(new VoxelSpaceChangePropogator(Scene.World));
+            Scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, Scene.World));
+            Scene.LogicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, Scene.World));
+            Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(setVoxelRender, Scene.World));
+
+            Scene.LogicSystems.Add(physicsSystem);
+            Scene.LogicSystems.Add(new DynamicBodyPositionSync(Scene.World));
+
+            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parrallelRunner));
+
+            Scene.LogicSystems.Add(new SunLightPropogator(new VoxelTypes(voxelTypes), Scene, parrallelRunner));
+            Scene.LogicSystems.Add(new LightVertexMesher(GraphicsDevice, Scene, new VoxelTypes(voxelTypes)));
+            Scene.LogicSystems.Add(new LightVertexCleaner(Scene.World));
+
+            Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, Scene.World));
+
+            Scene.LogicSystems.Add(new MeshGeometryCleaner(Scene.World));
+
+            Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(Scene.World));
 
             //var cylinder = Scene.World.CreateEntity();
             //AddCylinder(cylinder, mesh3dMaterial, voxelTexture);
