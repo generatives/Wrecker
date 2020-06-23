@@ -81,7 +81,7 @@ namespace Clunker.Editor.Toolbar
             var memberIndex = voxels.GetMemberIndexFromSpaceIndex(index);
             var voxelIndex = voxels.GetVoxelIndexFromSpaceIndex(memberIndex, index);
             var grid = voxels[memberIndex];
-            ref var lightField = ref grid.Get<LightField>();
+            var lightField = grid.Get<LightField>();
             ImGui.Text($"Light: {lightField[voxelIndex]}");
             ImGui.Text($"Voxel Index: {voxelIndex}");
         }
