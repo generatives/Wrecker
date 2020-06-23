@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Clunker.Voxels.Lighting
 {
-    public struct LightField
+    public class LightField
     {
         public byte[] Lights { get; private set; }
         public int GridSize { get; private set; }
