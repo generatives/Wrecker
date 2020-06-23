@@ -27,7 +27,6 @@ namespace Clunker.Voxels.Meshing
     [With(typeof(MaterialTexture))]
     [WhenAddedEither(typeof(VoxelGrid))]
     [WhenChangedEither(typeof(VoxelGrid))]
-    //[WhenAddedEither(typeof(NeighbourMemberChanged))]
     public class VoxelGridMesher : AEntitySystem<double>
     {
         private Scene _scene;

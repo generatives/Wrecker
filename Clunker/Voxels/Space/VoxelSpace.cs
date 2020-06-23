@@ -105,8 +105,11 @@ namespace Clunker.Voxels.Space
                 var member = _members[memberIndex];
                 var grid = member.Get<VoxelGrid>();
 
+                var previousVoxel = grid[voxelIndex];
+
                 grid.SetVoxel(voxelIndex, voxel);
                 member.Set(grid);
+                member.World.Publish(new VoxelChanged() { Entity = member, VoxelIndex = voxelIndex, PreviousValue = previousVoxel });
 
                 if (voxelIndex.X == 0)
                     TryNotifyNeighbor(memberIndex - Vector3i.UnitX);

@@ -21,15 +21,12 @@ namespace Clunker.Voxels
         public Voxel[] Voxels { get; private set; }
         public float VoxelSize { get; private set; }
         public int GridSize { get; private set; }
+        public int CoordinateDimSize { get; private set; }
+        public int CoordinateDimSize2x { get; private set; }
         public bool HasExistingVoxels => this.Any(v => v.Item2.Exists);
 
-        public VoxelGrid(int gridSize, float voxelSize, Entity voxelSpace, Vector3i spaceIndex)
+        public VoxelGrid(int gridSize, float voxelSize, Entity voxelSpace, Vector3i spaceIndex) : this(voxelSize, gridSize, voxelSpace, spaceIndex, new Voxel[gridSize * gridSize * gridSize])
         {
-            VoxelSize = voxelSize;
-            GridSize = gridSize;
-            VoxelSpace = voxelSpace;
-            MemberIndex = spaceIndex;
-            Voxels = new Voxel[gridSize * gridSize * gridSize];
         }
 
         public VoxelGrid(float voxelSize, int gridSize, Entity voxelSpace, Vector3i spaceIndex, Voxel[] voxels)
@@ -41,6 +38,9 @@ namespace Clunker.Voxels
             VoxelSpace = voxelSpace;
             MemberIndex = spaceIndex;
             Voxels = voxels;
+
+            CoordinateDimSize = (int)Math.Log(GridSize, 2);
+            CoordinateDimSize2x = CoordinateDimSize * 2;
         }
 
         public Voxel this[Vector3i index]
@@ -59,11 +59,11 @@ namespace Clunker.Voxels
         {
             get
             {
-                return Voxels[x + GridSize * (y + GridSize * z)];
+                return Voxels[(z << CoordinateDimSize2x) + (y << CoordinateDimSize) + x];
             }
             set
             {
-                Voxels[x + GridSize * (y + GridSize * z)] = value;
+                Voxels[(z << CoordinateDimSize2x) + (y << CoordinateDimSize) + x] = value;
             }
         }
 
@@ -72,17 +72,13 @@ namespace Clunker.Voxels
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int AsFlatIndex(int x, int y, int z)
         {
-            return x + GridSize * (y + GridSize * z);
+            return (z << CoordinateDimSize2x) + (y << CoordinateDimSize) + x;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3i AsCoordinate(int flatIndex)
         {
-            var x = flatIndex % GridSize;
-            int y = (flatIndex % (GridSize * GridSize)) / GridSize;
-            int z = flatIndex / (GridSize * GridSize);
-
-            return new Vector3i(x, y, z);
+            return new Vector3i(flatIndex & GridSize - 1, (flatIndex >> CoordinateDimSize) & GridSize - 1, (flatIndex >> CoordinateDimSize2x) & GridSize - 1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,82 +119,6 @@ namespace Clunker.Voxels
             {
                 return false;
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Exposed(int x, int y, int z)
-        {
-            Voxel voxel = this[x, y, z];
-            if (voxel.Exists)
-            {
-                if (!Exists(x, y - 1, z) ||
-                    !Exists(x + 1, y, z) ||
-                    !Exists(x - 1, y, z) ||
-                    !Exists(x, y + 1, z) ||
-                    !Exists(x, y, z - 1) ||
-                    !Exists(x, y, z + 1))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public void FindExposedSides(Action<Voxel, int, int, int, VoxelSide> sideProcessor)
-        {
-            for(int x = 0; x < GridSize; x++)
-                for (int y = 0; y < GridSize; y++)
-                    for (int z = 0; z < GridSize; z++)
-                    {
-                        Voxel voxel = this[x, y, z];
-                        if (voxel.Exists)
-                        {
-                            if (!Exists(x, y - 1, z))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.BOTTOM);
-                            }
-
-                            if (!Exists(x + 1, y, z))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.EAST);
-                            }
-
-                            if (!Exists(x - 1, y, z))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.WEST);
-                            }
-
-                            if (!Exists(x, y + 1, z))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.TOP);
-                            }
-
-                            if (!Exists(x, y, z - 1))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.NORTH);
-                            }
-
-                            if (!Exists(x, y, z + 1))
-                            {
-                                sideProcessor(voxel, x, y, z, VoxelSide.SOUTH);
-                            }
-                        }
-                    }
-        }
-
-        public void FindExposedBlocks(Action<Voxel, int, int, int> blockProcessor)
-        {
-            for (int x = 0; x < GridSize; x++)
-                for (int y = 0; y < GridSize; y++)
-                    for (int z = 0; z < GridSize; z++)
-                    {
-                        if(Exposed(x, y, z))
-                        {
-                            Voxel voxel = this[x, y, z];
-                            blockProcessor(voxel, x, y, z);
-                        }
-                    }
         }
 
         public IEnumerator<(Vector3, Voxel)> GetEnumerator()

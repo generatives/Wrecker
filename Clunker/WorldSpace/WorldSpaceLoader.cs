@@ -90,7 +90,7 @@ namespace Clunker.WorldSpace
                                 _voxelSpace[coordinates] = chunk;
 
                                 chunksLoaded++;
-                                if (chunksLoaded == Environment.ProcessorCount * 3) return;
+                                //if (chunksLoaded == Environment.ProcessorCount * 3) return;
                             }
                         }
                     }

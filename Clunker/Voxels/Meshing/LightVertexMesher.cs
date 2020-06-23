@@ -18,9 +18,9 @@ namespace Clunker.Voxels.Meshing
 {
     [With(typeof(LightField))]
     [WhenAddedEither(typeof(VoxelGrid))]
+    [WhenAddedEither(typeof(LightField))]
     [WhenChangedEither(typeof(LightField))]
     [WhenChangedEither(typeof(VoxelGrid))]
-    //[WhenAddedEither(typeof(NeighbourMemberChanged))]
     public class LightVertexMesher : AEntitySystem<double>
     {
         private GraphicsDevice _device;

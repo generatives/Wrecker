@@ -179,7 +179,7 @@ namespace ClunkerECSDemo
 
             Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parrallelRunner));
 
-            Scene.LogicSystems.Add(new SunLightPropogator(new VoxelTypes(voxelTypes), Scene, parrallelRunner));
+            Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), Scene));
             Scene.LogicSystems.Add(new LightVertexMesher(GraphicsDevice, Scene, new VoxelTypes(voxelTypes)));
             Scene.LogicSystems.Add(new LightVertexCleaner(Scene.World));
 
