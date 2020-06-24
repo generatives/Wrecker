@@ -19,18 +19,22 @@ namespace Clunker.Voxels.Lighting
     {
         public PooledQueue<(int, VoxelGrid)> PropogationQueue;
 
-        public void Check(int flatIndex, VoxelGrid voxels)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Check(int flatIndex, VoxelGrid voxels)
         {
             var otherLightLevel = voxels.Lights[flatIndex];
             if (otherLightLevel > 0)
             {
                 PropogationQueue.Enqueue((flatIndex, voxels));
             }
+            return false;
         }
 
-        public void CheckBelow(int flatIndex, VoxelGrid grid)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool CheckBelow(int flatIndex, VoxelGrid grid)
         {
             Check(flatIndex, grid);
+            return false;
         }
     }
 
@@ -40,29 +44,37 @@ namespace Clunker.Voxels.Lighting
         public PooledQueue<(int, VoxelGrid)> PropogationQueue;
         public byte NewLightLevel;
         public byte OriginalLightLevel;
-        public PooledSet<VoxelGrid> ChangedLights;
+        //public PooledSet<VoxelGrid> ChangedLights;
 
-        public void Check(int flatIndex, VoxelGrid voxels)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Check(int flatIndex, VoxelGrid voxels)
         {
             var voxel = voxels.Voxels[flatIndex];
             if ((!voxel.Exists || VoxelTypes[voxel.BlockType].Transparent) && voxels.Lights[flatIndex] < NewLightLevel)
             {
                 voxels.Lights[flatIndex] = NewLightLevel;
-                ChangedLights.Add(voxels);
+                voxels.Changed = true;
                 PropogationQueue.Enqueue((flatIndex, voxels));
+                return true;
             }
+
+            return false;
         }
 
-        public void CheckBelow(int flatIndex, VoxelGrid voxels)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool CheckBelow(int flatIndex, VoxelGrid voxels)
         {
             var newLightLevel = OriginalLightLevel == 15 ? (byte)15 : NewLightLevel;
             var voxel = voxels.Voxels[flatIndex];
             if ((!voxel.Exists || VoxelTypes[voxel.BlockType].Transparent) && (voxels.Lights[flatIndex] < newLightLevel || voxels.Lights[flatIndex] == 15))
             {
                 voxels.Lights[flatIndex] = newLightLevel;
-                ChangedLights.Add(voxels);
+                voxels.Changed = true;
                 PropogationQueue.Enqueue((flatIndex, voxels));
+                return true;
             }
+
+            return false;
         }
     }
 
@@ -72,38 +84,41 @@ namespace Clunker.Voxels.Lighting
         public PooledQueue<(int, VoxelGrid)> PropogationQueue;
         public PooledQueue<(int, byte, VoxelGrid)> RemovalQueue;
         public byte LightLevel;
-        public PooledSet<VoxelGrid> ChangedLights;
 
-        public void Check(int flatIndex, VoxelGrid voxels)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Check(int flatIndex, VoxelGrid voxels)
         {
             var checkLevel = voxels.Lights[flatIndex];
 
             if (checkLevel != 0 && checkLevel < LightLevel)
             {
                 voxels.Lights[flatIndex] = 0;
-                ChangedLights.Add(voxels);
+                voxels.Changed = true;
                 RemovalQueue.Enqueue((flatIndex, checkLevel, voxels));
             }
             else if (checkLevel >= LightLevel)
             {
                 PropogationQueue.Enqueue((flatIndex, voxels));
             }
+            return false;
         }
 
-        public void CheckBelow(int flatIndex, VoxelGrid voxels)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool CheckBelow(int flatIndex, VoxelGrid voxels)
         {
             var checkLevel = voxels.Lights[flatIndex];
 
-            if ((checkLevel != 0 && checkLevel < LightLevel) || LightLevel == 15)
+            if (LightLevel == 15 || (checkLevel != 0 && checkLevel < LightLevel))
             {
                 voxels.Lights[flatIndex] = 0;
-                ChangedLights.Add(voxels);
+                voxels.Changed = true;
                 RemovalQueue.Enqueue((flatIndex, checkLevel, voxels));
             }
             else if (checkLevel >= LightLevel)
             {
                 PropogationQueue.Enqueue((flatIndex, voxels));
             }
+            return false;
         }
     }
 
@@ -113,6 +128,7 @@ namespace Clunker.Voxels.Lighting
         private Scene _scene;
 
         private EntitySet _addedGrids;
+        private EntitySet _grids;
         private IDisposable _changedSubscription;
         private List<VoxelChanged> _voxelChanges;
 
@@ -126,6 +142,7 @@ namespace Clunker.Voxels.Lighting
             _scene = scene;
 
             _addedGrids = scene.World.GetEntities().WhenAdded<VoxelGrid>().AsSet();
+            _grids = scene.World.GetEntities().With<VoxelGrid>().AsSet();
             _changedSubscription = scene.World.Subscribe<VoxelChanged>(VoxelChanged);
             _voxelChanges = new List<VoxelChanged>();
         }
@@ -139,7 +156,6 @@ namespace Clunker.Voxels.Lighting
         {
             var watch = Stopwatch.StartNew();
 
-            using var changedLightFields = new PooledSet<VoxelGrid>();
             using var propogationQueue = new PooledQueue<(int, VoxelGrid)>();
             using var removalQueue = new PooledQueue<(int, byte, VoxelGrid)>();
 
@@ -161,8 +177,7 @@ namespace Clunker.Voxels.Lighting
                                 propogationQueue.Enqueue((voxels.AsFlatIndex(index), voxels));
                             }
                         }
-
-                    changedLightFields.Add(voxels);
+                    voxels.Changed = true;
                 }
             }
             _addedGrids.Complete();
@@ -183,7 +198,6 @@ namespace Clunker.Voxels.Lighting
                     {
                         // This is a source of sunlight so we can propogate straight from here
                         voxels.SetLight(voxelIndex, (byte)15);
-                        changedLightFields.Add(voxels);
                         propogationQueue.Enqueue((voxels.AsFlatIndex(voxelIndex), voxels));
                     }
                     else
@@ -202,38 +216,43 @@ namespace Clunker.Voxels.Lighting
                     // We are propogating the loss of a path for sunlight
                     var lightLevel = voxels.GetLight(voxelIndex);
                     voxels.SetLight(voxelIndex, 0);
-                    changedLightFields.Add(voxels);
                     removalQueue.Enqueue((voxels.AsFlatIndex(voxelIndex), lightLevel, voxels));
                 }
+                voxels.Changed = true;
             }
             _voxelChanges.Clear();
 
             var initialProp = propogationQueue.Count;
 
-            PropogateRemovedLights(changedLightFields, removalQueue, propogationQueue);
-            PropogateAddedLights(changedLightFields, propogationQueue);
+            PropogateRemovedLights(removalQueue, propogationQueue);
+            PropogateAddedLights(propogationQueue);
 
-            foreach(var voxels in changedLightFields)
+            var anyChanged = false;
+            foreach(var entity in _grids.GetEntities())
             {
-                var entity = voxels.VoxelSpace[voxels.MemberIndex];
-                entity.NotifyChanged<VoxelGrid>();
+                var voxelGrid = entity.Get<VoxelGrid>();
+                if(voxelGrid.Changed)
+                {
+                    anyChanged = true;
+                    voxelGrid.Changed = false;
+                    entity.Set(voxelGrid);
+                }
             }
 
-            if(changedLightFields.Any())
+            if(anyChanged)
             {
                 watch.Stop();
                 _times.Add(watch.Elapsed.TotalMilliseconds);
-                Console.WriteLine($"Time: {watch.Elapsed.TotalMilliseconds}, Changed Fields: {changedLightFields.Count}, Initial Prop: {initialProp}");
+                Console.WriteLine($"Time: {watch.Elapsed.TotalMilliseconds}, Initial Prop: {initialProp}");
             }
         }
 
-        private void PropogateAddedLights(PooledSet<VoxelGrid> changed, PooledQueue<(int, VoxelGrid)> propogationQueue)
+        private void PropogateAddedLights(PooledQueue<(int, VoxelGrid)> propogationQueue)
         {
             var addedLightVisitor = new AddedLightVisitor()
             {
                 PropogationQueue = propogationQueue,
-                VoxelTypes = _voxelTypes,
-                ChangedLights = changed
+                VoxelTypes = _voxelTypes
             };
 
             while (propogationQueue.TryDequeue(out var node))
@@ -251,14 +270,14 @@ namespace Clunker.Voxels.Lighting
             }
         }
 
-        private void PropogateRemovedLights(PooledSet<VoxelGrid> changed, PooledQueue<(int, byte, VoxelGrid)> removalQueue, PooledQueue<(int, VoxelGrid)> propogationQueue)
+        private void PropogateRemovedLights(PooledQueue<(int, byte, VoxelGrid)> removalQueue, PooledQueue<(int, VoxelGrid)> propogationQueue)
         {
             var removedLightVisitor = new RemovedLightVisitor()
             {
                 PropogationQueue = propogationQueue,
                 RemovalQueue = removalQueue,
                 VoxelTypes = _voxelTypes,
-                ChangedLights = changed
+                //ChangedLights = changed
             };
 
             while (removalQueue.TryDequeue(out var node))

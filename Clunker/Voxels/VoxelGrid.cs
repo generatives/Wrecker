@@ -17,6 +17,7 @@ namespace Clunker.Voxels
     [ClunkerComponent]
     public class VoxelGrid : IEnumerable<(Vector3, Voxel)>
     {
+        public bool Changed;
         public VoxelSpace VoxelSpace { get; set; }
         public Vector3i MemberIndex { get; set; }
         public VoxelGrid[] NeighborGrids { get; private set; }

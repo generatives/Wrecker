@@ -45,6 +45,7 @@ namespace Clunker.Graphics
                 if (DeviceBuffer != null) GraphicsDevice.DisposeWhenIdle(DeviceBuffer);
                 DeviceBuffer = factory.CreateBuffer(new BufferDescription(vertexBufferSize, BufferUsage));
             }
+            
             GraphicsDevice.UpdateBuffer(DeviceBuffer, 0, data);
             Length = data.Length;
         }

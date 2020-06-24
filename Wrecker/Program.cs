@@ -21,6 +21,7 @@ using Clunker.Voxels.Meshing;
 using Clunker.Voxels.Space;
 using Clunker.WorldSpace;
 using DefaultEcs;
+using DefaultEcs.System;
 using DefaultEcs.Threading;
 using SixLabors.ImageSharp;
 using System;
@@ -118,7 +119,7 @@ namespace ClunkerECSDemo
                 e.Set(voxelTexture);
             };
 
-            var parrallelRunner = new DefaultParallelRunner(8);
+            var parallelRunner = new DefaultParallelRunner(4);
 
             var player = Scene.World.CreateEntity();
             var playerTransform = new Transform();
@@ -163,24 +164,25 @@ namespace ClunkerECSDemo
             }));
 
             Scene.LogicSystems.Add(new SimpleCameraMover(player, physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 5, 5, 32));
-            Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parrallelRunner, new ChunkGenerator()));
+            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 10, 5, 32));
+            Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parallelRunner, new ChunkGenerator()));
+
+            Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(setVoxelRender, Scene.World));
 
             Scene.LogicSystems.Add(new InputForceApplier(physicsSystem, Scene.World));
 
-            Scene.LogicSystems.Add(new PhysicsBlockFinder(Scene.World, parrallelRunner));
-            Scene.LogicSystems.Add(new VoxelSpaceChangePropogator(Scene.World));
-            Scene.LogicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(setVoxelRender, Scene.World));
+            Scene.LogicSystems.Add(new PhysicsBlockFinder(Scene.World, parallelRunner));
 
-            Scene.LogicSystems.Add(physicsSystem);
-            Scene.LogicSystems.Add(new DynamicBodyPositionSync(Scene.World));
+            Scene.LogicSystems.Add(new ParallelSystem<double>(parallelRunner,
+                new SequentialSystem<double>(
+                    new VoxelSpaceChangePropogator(Scene.World),
+                    new VoxelStaticBodyGenerator(physicsSystem, Scene.World),
+                    new VoxelSpaceDynamicBodyGenerator(physicsSystem, Scene.World),
+                    physicsSystem,
+                    new DynamicBodyPositionSync(Scene.World)),
+                new SunLightPropogationSystem(new VoxelTypes(voxelTypes), Scene)));
 
-            Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), Scene));
-            //Scene.LogicSystems.Add(new LightVertexMesher(GraphicsDevice, Scene, new VoxelTypes(voxelTypes)));
-
-            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parrallelRunner));
+            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parallelRunner));
 
             Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, Scene.World));
 

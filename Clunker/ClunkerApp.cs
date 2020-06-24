@@ -101,7 +101,7 @@ namespace Clunker
                     }
 
                     var frameTime = frameWatch.Elapsed.TotalSeconds;
-                    frameTime = Math.Min(frameTime, 0.016666);
+                    frameTime = Math.Min(frameTime, 0.033333);
                     frameWatch.Restart();
 
                     imGuiRenderer.Update((float)frameTime, InputTracker.LockMouse ? new EmptyInputSnapshot() : InputTracker.FrameSnapshot );

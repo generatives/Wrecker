@@ -36,8 +36,6 @@ namespace Clunker.Physics.Voxels
             ref var physicsBlocks = ref entity.Get<PhysicsBlocks>();
             var transform = entity.Get<Transform>();
 
-            var size = voxels.VoxelSize;
-
             if(physicsBlocks.Blocks?.Any() ?? false)
             {
                 using (var compoundBuilder = new CompoundBuilder(_physicsSystem.Pool, _physicsSystem.Simulation.Shapes, 8))
