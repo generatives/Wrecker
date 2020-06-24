@@ -26,10 +26,9 @@ namespace Clunker.Voxels.Space
         private void Propogate(in Entity entity)
         {
             var grid = entity.Get<VoxelGrid>();
-            if(grid.VoxelSpace.IsAlive)
+            if(grid.VoxelSpace.Self.IsAlive)
             {
-                var parent = grid.VoxelSpace.Get<VoxelSpace>();
-                grid.VoxelSpace.Set(parent);
+                grid.VoxelSpace.Self.NotifyChanged<VoxelSpace>();
             }
         }
     }

@@ -12,7 +12,7 @@ namespace Clunker.Voxels.Meshing
     {
         public static void FindExposedSides(ref VoxelGrid grid, VoxelTypes types, Action<int, int, int, VoxelSide> sideProcessor)
         {
-            ref var space = ref grid.VoxelSpace.Get<VoxelSpace>();
+            var space = grid.VoxelSpace;
             for (int x = 0; x < grid.GridSize; x++)
                 for (int y = 0; y < grid.GridSize; y++)
                     for (int z = 0; z < grid.GridSize; z++)

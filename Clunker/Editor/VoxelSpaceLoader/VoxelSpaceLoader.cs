@@ -107,35 +107,33 @@ namespace Clunker.Editor.VoxelSpaceLoader
         private void LoadAsDynamic(VoxelSpaceData voxelSpaceData)
         {
             var spaceEntity = _world.CreateEntity();
+            var space = new VoxelSpace(voxelSpaceData.GridSize, voxelSpaceData.VoxelSize, spaceEntity);
             var spaceTransform = new Transform()
             {
                 WorldPosition = _transform.WorldPosition
             };
 
-            var members = voxelSpaceData.Grids
-                .Select(t =>
-                {
-                    var gridEntity = _world.CreateEntity();
+            foreach(var (index, voxels) in voxelSpaceData.Grids)
+            {
+                var gridEntity = _world.CreateEntity();
 
-                    var gridTransform = new Transform();
-                    gridTransform.Position = Vector3.One * voxelSpaceData.GridSize * voxelSpaceData.VoxelSize * t.Index;
-                    spaceTransform.AddChild(gridTransform);
-                    gridEntity.Set(gridTransform);
-                    _setVoxelRender(gridEntity);
-                    gridEntity.Set(new PhysicsBlocks());
-                    gridEntity.Set(new VoxelSpaceExpander());
-                    gridEntity.Set(new LightField(voxelSpaceData.GridSize));
-                    gridEntity.Set(new LightVertexResources());
-                    gridEntity.Set(new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, spaceEntity, t.Index, t.Voxels));
+                var gridTransform = new Transform();
+                gridTransform.Position = Vector3.One * voxelSpaceData.GridSize * voxelSpaceData.VoxelSize * index;
+                spaceTransform.AddChild(gridTransform);
+                gridEntity.Set(gridTransform);
+                _setVoxelRender(gridEntity);
+                gridEntity.Set(new PhysicsBlocks());
+                gridEntity.Set(new VoxelSpaceExpander());
+                gridEntity.Set(new LightVertexResources());
+                gridEntity.Set(new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, space, index, voxels));
 
-                    return (t.Item1, gridEntity);
-                })
-                .ToDictionary(t => t.Item1, t => t.gridEntity);
+                space[index] = gridEntity;
+            }
 
             spaceEntity.Set(spaceTransform);
             spaceEntity.Set(new VoxelSpaceDynamicBody());
             spaceEntity.Set(new DynamicBody());
-            spaceEntity.Set(new VoxelSpace(voxelSpaceData.GridSize, voxelSpaceData.VoxelSize, members));
+            spaceEntity.Set(space);
 
             _world.Publish(new SelectEntityRequest() { Entity = spaceEntity });
         }

@@ -27,20 +27,19 @@ namespace Clunker.Voxels.Space
         protected override void Update(double state, in Entity entity)
         {
             ref var grid = ref entity.Get<VoxelGrid>();
-            var spaceEntity = grid.VoxelSpace;
-            ref var space = ref spaceEntity.Get<VoxelSpace>();
+            var space = grid.VoxelSpace;
 
             if (grid.HasExistingVoxels)
             {
-                AddSurrounding(spaceEntity, space, grid.MemberIndex);
+                AddSurrounding(space, grid.MemberIndex);
             }
             else
             {
-                RemoveSurrounding(spaceEntity, space, grid.MemberIndex);
+                RemoveSurrounding(space, grid.MemberIndex);
             }
         }
 
-        private void AddSurrounding(Entity voxelSpaceEntity, VoxelSpace space, Vector3i addSurrounding)
+        private void AddSurrounding(VoxelSpace space, Vector3i addSurrounding)
         {
             for (int x = -1; x <= 1; x++)
                 for (int y = -1; y <= 1; y++)
@@ -49,8 +48,8 @@ namespace Clunker.Voxels.Space
                         var index = new Vector3i(addSurrounding.X + x, addSurrounding.Y + y, addSurrounding.Z + z);
                         if(index != addSurrounding && !space.ContainsMember(index))
                         {
-                            var spaceTransform = voxelSpaceEntity.Get<Transform>();
-                            var voxelGridObj = voxelSpaceEntity.World.CreateEntity();
+                            var spaceTransform = space.Self.Get<Transform>();
+                            var voxelGridObj = space.Self.World.CreateEntity();
                             var transform = new Transform();
                             transform.Position = new Vector3(index.X * space.GridSize * space.VoxelSize, index.Y * space.GridSize * space.VoxelSize, index.Z * space.GridSize * space.VoxelSize);
                             spaceTransform.AddChild(transform);
@@ -58,17 +57,16 @@ namespace Clunker.Voxels.Space
                             _setVoxelRender(voxelGridObj);
                             voxelGridObj.Set(new PhysicsBlocks());
                             voxelGridObj.Set(new VoxelSpaceExpander());
-                            voxelGridObj.Set(new LightField(space.GridSize));
                             voxelGridObj.Set(new LightVertexResources());
-                            voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize, voxelSpaceEntity, index));
+                            voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize, space, index));
 
                             space[index] = voxelGridObj;
-                            voxelSpaceEntity.Set(space);
+                            space.Self.Set(space);
                         }
                     }
         }
 
-        private void RemoveSurrounding(Entity voxelSpaceEntity, VoxelSpace space, Vector3i removeSurrounding)
+        private void RemoveSurrounding(VoxelSpace space, Vector3i removeSurrounding)
         {
             for (int x = -1; x <= 1; x++)
                 for (int y = -1; y <= 1; y++)
@@ -80,7 +78,7 @@ namespace Clunker.Voxels.Space
                             var voxelGridObj = space[index];
                             space.Remove(index);
                             voxelGridObj.Dispose();
-                            voxelSpaceEntity.Set(space);
+                            space.Self.Set(space);
                         }
                     }
         }

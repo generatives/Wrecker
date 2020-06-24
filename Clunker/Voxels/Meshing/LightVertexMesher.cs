@@ -16,10 +16,7 @@ using Veldrid;
 
 namespace Clunker.Voxels.Meshing
 {
-    [With(typeof(LightField))]
     [WhenAddedEither(typeof(VoxelGrid))]
-    [WhenAddedEither(typeof(LightField))]
-    [WhenChangedEither(typeof(LightField))]
     [WhenChangedEither(typeof(VoxelGrid))]
     public class LightVertexMesher : AEntitySystem<double>
     {
@@ -41,7 +38,6 @@ namespace Clunker.Voxels.Meshing
             //var watch = Stopwatch.StartNew();
 
             var data = entity.Get<VoxelGrid>();
-            var lightField = entity.Get<LightField>();
             ref var lightVertexResources = ref entity.Get<LightVertexResources>();
 
             var lightBuffer = lightVertexResources.LightLevels.Exists ?
@@ -54,10 +50,10 @@ namespace Clunker.Voxels.Meshing
                 var facing = new Vector3i(x, y, z) + side.GetGridOffset();
                 if(data.ContainsIndex(facing))
                 {
-                    vertices.Add(lightField[facing] / 15f);
-                    vertices.Add(lightField[facing] / 15f);
-                    vertices.Add(lightField[facing] / 15f);
-                    vertices.Add(lightField[facing] / 15f);
+                    vertices.Add(data.GetLight(facing) / 15f);
+                    vertices.Add(data.GetLight(facing) / 15f);
+                    vertices.Add(data.GetLight(facing) / 15f);
+                    vertices.Add(data.GetLight(facing) / 15f);
                 }
                 else
                 {

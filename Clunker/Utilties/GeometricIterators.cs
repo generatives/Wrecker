@@ -1,4 +1,5 @@
 ﻿using Clunker.Geometry;
+using Clunker.Voxels;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -34,6 +35,16 @@ namespace Clunker.Utilties
             new Vector3i(0, 1, 0),
             new Vector3i(0, 0, -1),
             new Vector3i(0, 0, 1),
+        };
+
+        public static readonly (VoxelSide, Vector3i, VoxelSide)[] SixNeighbourSides = new (VoxelSide, Vector3i, VoxelSide)[]
+        {
+            (VoxelSide.WEST, new Vector3i(-1, 0, 0), VoxelSide.EAST),
+            (VoxelSide.EAST, new Vector3i(1, 0, 0), VoxelSide.WEST),
+            (VoxelSide.BOTTOM, new Vector3i(0, -1, 0), VoxelSide.TOP),
+            (VoxelSide.TOP, new Vector3i(0, 1, 0), VoxelSide.BOTTOM),
+            (VoxelSide.NORTH, new Vector3i(0, 0, -1), VoxelSide.SOUTH),
+            (VoxelSide.SOUTH, new Vector3i(0, 0, 1), VoxelSide.NORTH)
         };
     }
 }

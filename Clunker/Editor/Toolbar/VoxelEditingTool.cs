@@ -56,7 +56,7 @@ namespace Clunker.Editor.Toolbar
                 {
                     ref var voxels = ref hitEntity.Get<VoxelGrid>();
 
-                    var hitTransform = voxels.VoxelSpace.Get<Transform>();
+                    var hitTransform = voxels.VoxelSpace.Self.Get<Transform>();
                     // Nudge forward a little so we are inside the block
                     var insideHitLocation = hitTransform.GetLocal(transform.WorldPosition + forward * result.T + forward * 0.01f);
                     var index = new Vector3i(
@@ -64,25 +64,25 @@ namespace Clunker.Editor.Toolbar
                         (int)Math.Floor(insideHitLocation.Y),
                         (int)Math.Floor(insideHitLocation.Z));
 
-                    Hit(voxels.VoxelSpace.Get<VoxelSpace>(), hitTransform, hitLocation, index);
+                    Hit(voxels.VoxelSpace, hitTransform, hitLocation, index);
                 }
             }
         }
 
-        private void Hit(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
+        private void Hit(VoxelSpace voxelSpace, Transform hitTransform, Vector3 hitLocation, Vector3i index)
         {
-            DrawVoxelChange(voxels, hitTransform, hitLocation, index);
+            DrawVoxelChange(voxelSpace, hitTransform, hitLocation, index);
 
             if (InputTracker.LockMouse && InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left))
             {
-                DoVoxelAction(voxels, hitTransform, hitLocation, index);
+                DoVoxelAction(voxelSpace, hitTransform, hitLocation, index);
             }
 
-            var memberIndex = voxels.GetMemberIndexFromSpaceIndex(index);
-            var voxelIndex = voxels.GetVoxelIndexFromSpaceIndex(memberIndex, index);
-            var grid = voxels[memberIndex];
-            var lightField = grid.Get<LightField>();
-            ImGui.Text($"Light: {lightField[voxelIndex]}");
+            var memberIndex = voxelSpace.GetMemberIndexFromSpaceIndex(index);
+            var voxelIndex = voxelSpace.GetVoxelIndexFromSpaceIndex(memberIndex, index);
+            var grid = voxelSpace[memberIndex];
+            var voxels = grid.Get<VoxelGrid>();
+            ImGui.Text($"Light: {voxels.GetLight(voxelIndex)}");
             ImGui.Text($"Voxel Index: {voxelIndex}");
         }
 

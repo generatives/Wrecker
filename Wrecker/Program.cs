@@ -128,7 +128,7 @@ namespace ClunkerECSDemo
 
             var worldVoxelSpace = Scene.World.CreateEntity();
             worldVoxelSpace.Set(new Transform());
-            worldVoxelSpace.Set(new VoxelSpace(32, 1));
+            worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
             //var px = Image.Load("Assets\\skybox_px.png");
             //var nx = Image.Load("Assets\\skybox_nx.png");
@@ -163,7 +163,7 @@ namespace ClunkerECSDemo
             }));
 
             Scene.LogicSystems.Add(new SimpleCameraMover(player, physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 5, 32));
+            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 5, 5, 32));
             Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parrallelRunner, new ChunkGenerator()));
 
             Scene.LogicSystems.Add(new InputForceApplier(physicsSystem, Scene.World));

@@ -24,16 +24,15 @@ namespace Clunker.Editor.Toolbar
         public RemoveVoxelEditingTool(Action<Entity> setVoxelRender, World world, PhysicsSystem physicsSystem, Entity entity) : base(world, physicsSystem, entity)
         {
             _displaySpaceEntity = world.CreateEntity();
-            var voxelSpace = new VoxelSpace(1, 1);
+            var voxelSpace = new VoxelSpace(1, 1, _displaySpaceEntity);
             _displaySpaceEntity.Set(voxelSpace);
             var spaceTransform = new Transform();
             _displaySpaceEntity.Set(spaceTransform);
 
             _displayGridEntity = world.CreateEntity();
-            voxelSpace[Vector3i.Zero] = _displayGridEntity;
-            _displayGridEntity.Set(new LightField(1));
             _displayGridEntity.Set(new LightVertexResources());
-            _displayGridEntity.Set(new VoxelGrid(1, 1, _displaySpaceEntity, Vector3i.Zero));
+            _displayGridEntity.Set(new VoxelGrid(1, 1, voxelSpace, Vector3i.Zero));
+            voxelSpace[Vector3i.Zero] = _displayGridEntity;
             setVoxelRender(_displayGridEntity);
             var gridTransform = new Transform();
             spaceTransform.AddChild(gridTransform);

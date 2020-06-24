@@ -68,7 +68,7 @@ void main()
     vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * Colour;
 
     vec3 norm = normalize(fsin_normal);
-    float diff = max(dot(norm, DiffuseLightDirection), 0.1) + 0.2;
+    float diff = dot(norm, DiffuseLightDirection) * 0.5 + 0.5;
     vec4 diffuse = diff * DiffuseLightColour;
     vec4 litColour = fsin_light * diffuse * objectColour;
     fsout_color = vec4(litColour.xyz, objectColour.w);

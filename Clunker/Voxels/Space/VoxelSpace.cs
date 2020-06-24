@@ -12,24 +12,27 @@ using System.Text;
 namespace Clunker.Voxels.Space
 {
     [ClunkerComponent]
-    public struct VoxelSpace : IEnumerable<KeyValuePair<Vector3i, Entity>>
+    public class VoxelSpace : IEnumerable<KeyValuePair<Vector3i, Entity>>
     {
         public int GridSize { get; set; }
         public float VoxelSize { get; set; }
         private Dictionary<Vector3i, Entity> _members { get; set; }
+        public Entity Self { get; private set; }
 
-        public VoxelSpace(int gridSize, float voxelSize)
+        public VoxelSpace(int gridSize, float voxelSize, Entity self)
         {
             GridSize = gridSize;
             VoxelSize = voxelSize;
             _members = new Dictionary<Vector3i, Entity>();
+            Self = self;
         }
 
-        public VoxelSpace(int gridSize, float voxelSize, Dictionary<Vector3i, Entity> members)
+        public VoxelSpace(int gridSize, float voxelSize, List<(Vector3i, Entity)> members, Entity self) : this(gridSize, voxelSize, self)
         {
-            GridSize = gridSize;
-            VoxelSize = voxelSize;
-            _members = members;
+            foreach(var (index, entity) in members)
+            {
+                this[index] = entity;
+            }
         }
 
         public Entity this[Vector3i memberIndex]
@@ -41,10 +44,19 @@ namespace Clunker.Voxels.Space
             set
             {
                 _members[memberIndex] = value;
-                foreach(var offset in GeometricIterators.SixNeighbours)
+                var voxelGrid = value.Get<VoxelGrid>();
+
+                foreach(var (side, offset, inverseSide) in GeometricIterators.SixNeighbourSides)
                 {
                     var otherIndex = memberIndex + offset;
-                    TryNotifyNeighbor(otherIndex);
+                    if(_members.ContainsKey(otherIndex))
+                    {
+                        var member = _members[otherIndex];
+                        var otherVoxels = member.Get<VoxelGrid>();
+                        voxelGrid.NeighborGrids[(int)side] = otherVoxels;
+                        otherVoxels.NeighborGrids[(int)inverseSide] = voxelGrid;
+                        member.NotifyChanged<VoxelGrid>();
+                    }
                 }
             }
         }

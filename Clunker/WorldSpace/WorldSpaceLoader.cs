@@ -30,10 +30,11 @@ namespace Clunker.WorldSpace
         private int _chunkLength;
         public Vector3i CenterChunk { get; private set; }
         public int LoadRadius { get; set; }
+        public int LoadHeight { get; set; }
 
         private Action<Entity> _setVoxelRendering;
 
-        public WorldSpaceLoader(Action<Entity> setVoxelRendering, World world, Transform player, Entity voxelSpaceEntity, int loadRadius, int chunkLength)
+        public WorldSpaceLoader(Action<Entity> setVoxelRendering, World world, Transform player, Entity voxelSpaceEntity, int loadRadius, int loadHeight, int chunkLength)
         {
             _setVoxelRendering = setVoxelRendering;
             _world = world;
@@ -41,6 +42,7 @@ namespace Clunker.WorldSpace
             _voxelSpace = voxelSpaceEntity.Get<VoxelSpace>();
             _voxelSpaceEntity = voxelSpaceEntity;
             LoadRadius = loadRadius;
+            LoadHeight = loadHeight;
             _chunkLength = chunkLength;
         }
         
@@ -66,13 +68,14 @@ namespace Clunker.WorldSpace
             var chunksLoaded = 0;
             for (int xOffset = -LoadRadius; xOffset <= LoadRadius; xOffset++)
             {
-                for (int yOffset = -LoadRadius; yOffset <= LoadRadius; yOffset++)
+                //for (int yOffset = -LoadRadius; yOffset <= LoadRadius; yOffset++)
+                for (int yLoad = 0; yLoad < LoadHeight; yLoad++)
                 {
                     for (int zOffset = -LoadRadius; zOffset <= LoadRadius; zOffset++)
                     {
-                        if ((xOffset * xOffset + yOffset * yOffset + zOffset * zOffset) <= LoadRadius * LoadRadius)
+                        if ((xOffset * xOffset + zOffset * zOffset) <= LoadRadius * LoadRadius)
                         {
-                            var coordinates = new Vector3i(x + xOffset, y + yOffset, z + zOffset);
+                            var coordinates = new Vector3i(x + xOffset, yLoad, z + zOffset);
                             if (!_voxelSpace.ContainsMember(coordinates))
                             {
                                 var chunk = _world.CreateEntity();
@@ -84,9 +87,8 @@ namespace Clunker.WorldSpace
                                 chunk.Set(new Chunk());
                                 chunk.Set(new VoxelStaticBody());
                                 chunk.Set(new PhysicsBlocks());
-                                chunk.Set(new LightField(_chunkLength));
                                 chunk.Set(new LightVertexResources());
-                                chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpaceEntity, coordinates));
+                                chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpace, coordinates));
                                 _voxelSpace[coordinates] = chunk;
 
                                 chunksLoaded++;
@@ -116,7 +118,7 @@ namespace Clunker.WorldSpace
         public bool AreaContainsChunk(int x, int y, int z)
         {
             return CenterChunk.X - LoadRadius <= x && CenterChunk.X + LoadRadius >= x &&
-                CenterChunk.Y - LoadRadius <= y && CenterChunk.Y + LoadRadius >= y &&
+                y >= -1 && y < LoadHeight &&
                 CenterChunk.Z - LoadRadius <= z && CenterChunk.Z + LoadRadius >= z;
         }
 

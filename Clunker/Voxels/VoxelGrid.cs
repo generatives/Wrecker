@@ -1,5 +1,6 @@
 ﻿using Clunker.ECS;
 using Clunker.Geometry;
+using Clunker.Voxels.Space;
 using DefaultEcs;
 using System;
 using System.Collections;
@@ -16,20 +17,22 @@ namespace Clunker.Voxels
     [ClunkerComponent]
     public class VoxelGrid : IEnumerable<(Vector3, Voxel)>
     {
-        public Entity VoxelSpace { get; set; }
+        public VoxelSpace VoxelSpace { get; set; }
         public Vector3i MemberIndex { get; set; }
+        public VoxelGrid[] NeighborGrids { get; private set; }
         public Voxel[] Voxels { get; private set; }
+        public byte[] Lights { get; private set; }
         public float VoxelSize { get; private set; }
         public int GridSize { get; private set; }
         public int CoordinateDimSize { get; private set; }
         public int CoordinateDimSize2x { get; private set; }
         public bool HasExistingVoxels => this.Any(v => v.Item2.Exists);
 
-        public VoxelGrid(int gridSize, float voxelSize, Entity voxelSpace, Vector3i spaceIndex) : this(voxelSize, gridSize, voxelSpace, spaceIndex, new Voxel[gridSize * gridSize * gridSize])
+        public VoxelGrid(int gridSize, float voxelSize, VoxelSpace voxelSpace, Vector3i spaceIndex) : this(voxelSize, gridSize, voxelSpace, spaceIndex, new Voxel[gridSize * gridSize * gridSize])
         {
         }
 
-        public VoxelGrid(float voxelSize, int gridSize, Entity voxelSpace, Vector3i spaceIndex, Voxel[] voxels)
+        public VoxelGrid(float voxelSize, int gridSize, VoxelSpace voxelSpace, Vector3i spaceIndex, Voxel[] voxels)
         {
             Debug.Assert(voxels.Length == gridSize * gridSize * gridSize, "Voxel array must be sized to gridSize");
 
@@ -37,7 +40,9 @@ namespace Clunker.Voxels
             GridSize = gridSize;
             VoxelSpace = voxelSpace;
             MemberIndex = spaceIndex;
+            NeighborGrids = new VoxelGrid[6];
             Voxels = voxels;
+            Lights = new byte[gridSize * gridSize * gridSize];
 
             CoordinateDimSize = (int)Math.Log(GridSize, 2);
             CoordinateDimSize2x = CoordinateDimSize * 2;
@@ -65,6 +70,16 @@ namespace Clunker.Voxels
             {
                 Voxels[(z << CoordinateDimSize2x) + (y << CoordinateDimSize) + x] = value;
             }
+        }
+
+        public byte GetLight(Vector3i voxelIndex)
+        {
+            return Lights[AsFlatIndex(voxelIndex)];
+        }
+
+        public void SetLight(Vector3i voxelIndex, byte value)
+        {
+            Lights[AsFlatIndex(voxelIndex)] = value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
