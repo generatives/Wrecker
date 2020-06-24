@@ -64,9 +64,16 @@ namespace Clunker.Voxels.Meshing
                 transparentIndexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
             }
 
+            ref var lightVertexResources = ref entity.Get<LightVertexResources>();
+
+            var lightBuffer = lightVertexResources.LightLevels.Exists ?
+                lightVertexResources.LightLevels :
+                new ResizableBuffer<float>(_device, sizeof(float), BufferUsage.VertexBuffer);
+
             using var vertices = new PooledList<VertexPositionTextureNormal>(data.GridSize * data.GridSize * data.GridSize);
             using var indices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
             using var transIndices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
+            using var lights = new PooledList<float>(data.GridSize * data.GridSize * data.GridSize);
             var imageSize = new Vector2(materialTexture.ImageWidth, materialTexture.ImageHeight);
 
             MeshGenerator.FindExposedSides(ref data, _types, (x, y, z, side) =>
@@ -77,13 +84,15 @@ namespace Clunker.Voxels.Meshing
                 var voxel = data[x, y, z];
                 var type = _types[voxel.BlockType];
                 var textureOffset = GetTexCoords(type, voxel.Orientation, side);
+                var facing = new Vector3i(x, y, z) + side.GetGridOffset();
+                var light = data.ContainsIndex(facing) ? data.GetLight(facing) / 15f : 1.0f;
                 if (type.Transparent)
                 {
-                    AddQuad(quad, vertices, transIndices, textureOffset, imageSize);
+                    AddQuad(quad, light, vertices, lights, transIndices, textureOffset, imageSize);
                 }
                 else
                 {
-                    AddQuad(quad, vertices, indices, textureOffset, imageSize);
+                    AddQuad(quad, light, vertices, lights, indices, textureOffset, imageSize);
                 }
             });
 
@@ -103,9 +112,13 @@ namespace Clunker.Voxels.Meshing
             };
             var entityRecord = _scene.CommandRecorder.Record(entity);
             entityRecord.Set(mesh);
+
+            lightBuffer.Update(lights.ToArray());
+            lightVertexResources.LightLevels = lightBuffer;
+            entityRecord.Set(lightVertexResources);
         }
 
-        private void AddQuad(Geometry.Quad quad, PooledList<VertexPositionTextureNormal> vertices, PooledList<ushort> indices, Vector2 textureOffset, Vector2 imageSize)
+        private void AddQuad(Geometry.Quad quad, float light, PooledList<VertexPositionTextureNormal> vertices, PooledList<float> lights, PooledList<ushort> indices, Vector2 textureOffset, Vector2 imageSize)
         {
             indices.Add((ushort)(vertices.Count + 0));
             indices.Add((ushort)(vertices.Count + 1));
@@ -117,6 +130,10 @@ namespace Clunker.Voxels.Meshing
             vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
             vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
             vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
+            lights.Add(light);
+            lights.Add(light);
+            lights.Add(light);
+            lights.Add(light);
         }
 
         private Vector2 GetTexCoords(VoxelType type, VoxelSide orientation, VoxelSide side)

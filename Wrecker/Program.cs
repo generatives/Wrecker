@@ -177,15 +177,15 @@ namespace ClunkerECSDemo
             Scene.LogicSystems.Add(physicsSystem);
             Scene.LogicSystems.Add(new DynamicBodyPositionSync(Scene.World));
 
-            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parrallelRunner));
-
             Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), Scene));
-            Scene.LogicSystems.Add(new LightVertexMesher(GraphicsDevice, Scene, new VoxelTypes(voxelTypes)));
-            Scene.LogicSystems.Add(new LightVertexCleaner(Scene.World));
+            //Scene.LogicSystems.Add(new LightVertexMesher(GraphicsDevice, Scene, new VoxelTypes(voxelTypes)));
+
+            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parrallelRunner));
 
             Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, Scene.World));
 
             Scene.LogicSystems.Add(new MeshGeometryCleaner(Scene.World));
+            Scene.LogicSystems.Add(new LightVertexCleaner(Scene.World));
 
             Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(Scene.World));
 
