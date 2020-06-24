@@ -14,7 +14,7 @@ namespace Clunker.Voxels.Meshing
         public static void FindBlocks(VoxelGrid voxels, Action<ushort, Vector3i, Vector3i> blockProcessor)
         {
             var gridSize = voxels.GridSize;
-            var processed = new byte[voxels.GridSize, voxels.GridSize];
+            var processed = new byte[voxels.GridSize * voxels.GridSize];
 
             for (int y = 0; y < gridSize; y++)
             {
@@ -22,7 +22,7 @@ namespace Clunker.Voxels.Meshing
                 {
                     for (int x = 0; x < gridSize; x++)
                     {
-                        if (processed[x, z] != y + 1 && voxels[x, y, z].Exists)
+                        if (processed[(x << voxels.CoordinateDimSize) + z] != y + 1 && voxels[x, y, z].Exists)
                         {
                             var (endX, blockType, size) = FindRectangle(x, z, y, voxels, processed);
                             blockProcessor(blockType, new Vector3i(x, y, z), new Vector3i(size.X, 1, size.Y));
@@ -34,23 +34,18 @@ namespace Clunker.Voxels.Meshing
             }
         }
 
-        private static (int endX, ushort blockType, Vector2i size) FindRectangle(int startX, int startZ, int y, VoxelGrid voxels, byte[,] processed)
+        private static (int endX, ushort blockType, Vector2i size) FindRectangle(int startX, int startZ, int y, VoxelGrid voxels, byte[] processed)
         {
             var type = voxels[startX, y, startZ].BlockType;
-            var start = new Vector2i(startX, startZ);
             var sizeX = 1;
             var sizeZ = 1;
 
             var x = startX + 1;
-            while (x < voxels.GridSize && voxels[x, y, startZ].Exists && processed[x, startZ] != y + 1 && voxels[x, y, startZ].BlockType == type)
+            while (x < voxels.GridSize && voxels[x, y, startZ].Exists && processed[(x << voxels.CoordinateDimSize) + startZ] != y + 1 && voxels[x, y, startZ].BlockType == type)
             {
+                processed[(x << voxels.CoordinateDimSize) + startX] = (byte)(y + 1);
                 sizeX++;
                 x++;
-
-                if (voxels[x - 1, y, startZ].BlockType == 0 && voxels[x, y, startZ].BlockType == 1)
-                {
-
-                }
             }
 
             var endX = x;
@@ -59,8 +54,9 @@ namespace Clunker.Voxels.Meshing
             while(z < voxels.GridSize)
             {
                 x = startX;
-                while (x < endX && voxels[x, y, z].Exists && processed[x, z] != y + 1 && voxels[x, y, z].BlockType == type)
+                while (x < endX && voxels[x, y, z].Exists && processed[(x << voxels.CoordinateDimSize) + z] != y + 1 && voxels[x, y, z].BlockType == type)
                 {
+                    processed[(x << voxels.CoordinateDimSize) + z] = (byte)(y + 1);
                     x++;
                 }
 
@@ -71,15 +67,12 @@ namespace Clunker.Voxels.Meshing
                 }
                 else
                 {
+                    while(x >= startX)
+                    {
+                        processed[(x << voxels.CoordinateDimSize) + z] = 0;
+                        x--;
+                    }
                     break;
-                }
-            }
-
-            for(var px = start.X; px < startX + sizeX; px++)
-            {
-                for(var py = start.Y; py < startZ + sizeZ; py++)
-                {
-                    processed[px, py] = (byte)(y + 1);
                 }
             }
 
