@@ -46,11 +46,6 @@ namespace Clunker.Voxels.Meshing
             {
                 sizeX++;
                 x++;
-
-                if (voxels[x - 1, y, startZ].BlockType == 0 && voxels[x, y, startZ].BlockType == 1)
-                {
-
-                }
             }
 
             var endX = x;

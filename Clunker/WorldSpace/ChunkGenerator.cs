@@ -33,6 +33,8 @@ namespace Clunker.WorldSpace
                 biome > 0 && biome < 0.5 ? 6 :
                 biome > 0.5 && biome < 1 ? 7 : 0;
 
+            var biomeHeightModifier = (biome + 1) * 2;
+
             ref var voxelSpaceData = ref entity.Get<VoxelGrid>();
             bool anyExist = true;
 
@@ -52,7 +54,7 @@ namespace Clunker.WorldSpace
                         {
                             var voxelPosition = new Vector3(coordinates.X * voxelSpaceData.GridSize + x, coordinates.Y * voxelSpaceData.GridSize + y, coordinates.Z * voxelSpaceData.GridSize + z);
 
-                            var exists = ((_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f) + 1f) * 15) > voxelPosition.Y;
+                            var exists = (_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f) + 1f) * 15 * biomeHeightModifier > voxelPosition.Y;
                             anyExist = anyExist || exists;
                             var water = voxelPosition.Y < 8 && !exists;
                             var blockType = water ? 4 : biomeBlockType;

@@ -62,7 +62,7 @@ namespace Clunker.Graphics
             commandList.UpdateBuffer(CameraInputsBuffer, 0, new CameraInfo()
             {
                 Position = cameraTransform.WorldPosition,
-                ViewDistance = 300f,
+                ViewDistance = 720f,
                 BlurLength = 20f
             });
 

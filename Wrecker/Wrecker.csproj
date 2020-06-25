@@ -7,33 +7,33 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\skybox_nx.png" />
-    <None Remove="Assets\skybox_ny.png" />
-    <None Remove="Assets\skybox_nz.png" />
-    <None Remove="Assets\skybox_px.png" />
-    <None Remove="Assets\skybox_py.png" />
-    <None Remove="Assets\skybox_pz.png" />
+    <None Remove="Assets\cloudtop_bk.png" />
+    <None Remove="Assets\cloudtop_dn.png" />
+    <None Remove="Assets\cloudtop_ft.png" />
+    <None Remove="Assets\cloudtop_lf.png" />
+    <None Remove="Assets\cloudtop_rt.png" />
+    <None Remove="Assets\cloudtop_up.png" />
     <None Remove="Assets\spritesheet_tiles.png" />
     <None Remove="Assets\spritesheet_tiles.xml" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\skybox_nx.png">
+    <Content Include="Assets\cloudtop_bk.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\skybox_ny.png">
+    <Content Include="Assets\cloudtop_dn.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\skybox_nz.png">
+    <Content Include="Assets\cloudtop_ft.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\skybox_px.png">
+    <Content Include="Assets\cloudtop_lf.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\skybox_py.png">
+    <Content Include="Assets\cloudtop_rt.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\skybox_pz.png">
+    <Content Include="Assets\cloudtop_up.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\spritesheet_tiles.png">
@@ -46,6 +46,27 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Clunker\Clunker.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\skybox_nx.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\skybox_ny.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\skybox_nz.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\skybox_px.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\skybox_py.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\skybox_pz.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

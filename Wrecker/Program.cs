@@ -133,13 +133,13 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new Transform());
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
-            //var px = Image.Load("Assets\\skybox_px.png");
-            //var nx = Image.Load("Assets\\skybox_nx.png");
-            //var py = Image.Load("Assets\\skybox_py.png");
-            //var ny = Image.Load("Assets\\skybox_ny.png");
-            //var pz = Image.Load("Assets\\skybox_pz.png");
-            //var nz = Image.Load("Assets\\skybox_nz.png");
-            //Scene.RendererSystems.Add(new SkyboxRenderer(px, nx, py, ny, pz, nz));
+            var px = Image.Load("Assets\\cloudtop_rt.png");
+            var nx = Image.Load("Assets\\cloudtop_lf.png");
+            var py = Image.Load("Assets\\cloudtop_up.png");
+            var ny = Image.Load("Assets\\cloudtop_dn.png");
+            var pz = Image.Load("Assets\\cloudtop_bk.png");
+            var nz = Image.Load("Assets\\cloudtop_ft.png");
+            Scene.RendererSystems.Add(new SkyboxRenderer(GraphicsDevice, px, nx, py, ny, pz, nz));
 
             Scene.RendererSystems.Add(new MeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));
             Scene.RendererSystems.Add(new LightMeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));
@@ -166,7 +166,7 @@ namespace ClunkerECSDemo
             }));
 
             Scene.LogicSystems.Add(new SimpleCameraMover(player, physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 10, 5, 32));
+            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 25, 2, 32));
             Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parallelRunner, new ChunkGenerator()));
 
             Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(setVoxelRender, Scene.World));
