@@ -138,6 +138,30 @@ namespace Clunker.Voxels.Space
             }
         }
 
+        public byte? GetLight(Vector3i index)
+        {
+            var memberIndex = new Vector3i(
+                (int)Math.Floor((float)index.X / GridSize),
+                (int)Math.Floor((float)index.Y / GridSize),
+                (int)Math.Floor((float)index.Z / GridSize));
+
+            var voxelIndex = new Vector3i(
+                index.X - memberIndex.X * GridSize,
+                index.Y - memberIndex.Y * GridSize,
+                index.Z - memberIndex.Z * GridSize);
+
+            if (_members.ContainsKey(memberIndex))
+            {
+                var grid = _members[memberIndex].Get<VoxelGrid>();
+
+                return grid.GetLight(voxelIndex);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         private void TryNotifyNeighbor(Vector3i index)
         {
             if (_members.ContainsKey(index))

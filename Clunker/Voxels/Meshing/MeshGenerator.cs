@@ -8,9 +8,14 @@ using System.Text;
 
 namespace Clunker.Voxels.Meshing
 {
-    public class MeshGenerator
+    public interface IExposedSideProcessor
     {
-        public static void FindExposedSides(ref VoxelGrid grid, VoxelTypes types, Action<int, int, int, VoxelSide> sideProcessor)
+        void Process(int x, int y, int z, VoxelSide side);
+    }
+
+    public class MeshGenerator<T> where T : IExposedSideProcessor
+    {
+        public static void FindExposedSides(ref VoxelGrid grid, VoxelTypes types, T sideProcessor)
         {
             var space = grid.VoxelSpace;
             for (int x = 0; x < grid.GridSize; x++)
@@ -22,32 +27,32 @@ namespace Clunker.Voxels.Meshing
                         {
                             if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x, y - 1, z))
                             {
-                                sideProcessor(x, y, z, VoxelSide.BOTTOM);
+                                sideProcessor.Process(x, y, z, VoxelSide.BOTTOM);
                             }
 
                             if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x + 1, y, z))
                             {
-                                sideProcessor(x, y, z, VoxelSide.EAST);
+                                sideProcessor.Process(x, y, z, VoxelSide.EAST);
                             }
 
                             if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x - 1, y, z))
                             {
-                                sideProcessor(x, y, z, VoxelSide.WEST);
+                                sideProcessor.Process(x, y, z, VoxelSide.WEST);
                             }
 
                             if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x, y + 1, z))
                             {
-                                sideProcessor(x, y, z, VoxelSide.TOP);
+                                sideProcessor.Process(x, y, z, VoxelSide.TOP);
                             }
 
                             if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x, y, z - 1))
                             {
-                                sideProcessor(x, y, z, VoxelSide.NORTH);
+                                sideProcessor.Process(x, y, z, VoxelSide.NORTH);
                             }
 
                             if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x, y, z + 1))
                             {
-                                sideProcessor(x, y, z, VoxelSide.SOUTH);
+                                sideProcessor.Process(x, y, z, VoxelSide.SOUTH);
                             }
                         }
                     }
