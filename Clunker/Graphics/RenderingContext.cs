@@ -13,6 +13,7 @@ namespace Clunker.Graphics
         public GraphicsDevice GraphicsDevice;
         public CommandList CommandList;
         public Transform CameraTransform;
+        public Camera Camera;
         public Matrix4x4 ProjectionMatrix;
     }
 }

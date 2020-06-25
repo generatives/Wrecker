@@ -88,10 +88,10 @@ namespace Clunker
                         GraphicsDevice.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
 
                         _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
-                            1.0f,
+                            0.90f,
                             (float)_window.Width / _window.Height,
                             0.05f,
-                            1024f);
+                            300f);
                         if (GraphicsDevice.IsClipSpaceYInverted)
                         {
                             _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);

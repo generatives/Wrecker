@@ -25,6 +25,9 @@ namespace Clunker.Graphics
         public DeviceBuffer ViewMatrixBuffer { get; private set; }
         public DeviceBuffer SceneLightingBuffer { get; private set; }
 
+        public ResourceSet CameraInputsResourceSet;
+        public DeviceBuffer CameraInputsBuffer { get; private set; }
+
         public LightMeshGeometryRenderer(GraphicsDevice device, MaterialInputLayouts materialInputLayouts, World world) : base(world.GetEntities()
             .With<Material>()
             .With<MaterialTexture>()
@@ -41,6 +44,9 @@ namespace Clunker.Graphics
             ViewMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             SceneLightingBuffer = factory.CreateBuffer(new BufferDescription(SceneLighting.Size, BufferUsage.UniformBuffer));
             SceneInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["SceneInputs"], ProjectionMatrixBuffer, ViewMatrixBuffer, SceneLightingBuffer));
+
+            CameraInputsBuffer = factory.CreateBuffer(new BufferDescription(CameraInfo.Size, BufferUsage.UniformBuffer));
+            CameraInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["CameraInputs"], CameraInputsBuffer));
         }
 
         protected override void Update(RenderingContext context, ReadOnlySpan<Entity> entities)
@@ -53,14 +59,22 @@ namespace Clunker.Graphics
             var viewMatrix = cameraTransform.GetViewMatrix();
             commandList.UpdateBuffer(ViewMatrixBuffer, 0, viewMatrix);
 
+            commandList.UpdateBuffer(CameraInputsBuffer, 0, new CameraInfo()
+            {
+                Position = cameraTransform.WorldPosition,
+                ViewDistance = 300f,
+                BlurLength = 20f
+            });
+
             var frustrum = new BoundingFrustum(viewMatrix * context.ProjectionMatrix);
 
             var transparents = new List<(Material mat, MaterialTexture texture, ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<float> lighting, ResizableBuffer<ushort> indices, Transform transform)>();
 
             var materialInputs = new MaterialInputs();
             materialInputs.ResouceSets["SceneInputs"] = SceneInputsResourceSet;
+            materialInputs.ResouceSets["CameraInputs"] = CameraInputsResourceSet;
 
-            foreach(var entity in entities)
+            foreach (var entity in entities)
             {
                 ref var material = ref entity.Get<Material>();
                 ref var texture = ref entity.Get<MaterialTexture>();

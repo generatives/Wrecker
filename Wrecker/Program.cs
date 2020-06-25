@@ -83,19 +83,21 @@ namespace ClunkerECSDemo
                     new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment),
                     new ResourceLayoutElementDescription("TextureColour", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
-            var worldTransformLayout = factory.CreateResourceLayout(
+            materialInputLayouts.ResourceLayouts["Texture"] = textureLayout;
+
+            materialInputLayouts.ResourceLayouts["WorldTransform"] = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
 
-            var sceneInputsLayout = factory.CreateResourceLayout(
+            materialInputLayouts.ResourceLayouts["SceneInputs"] = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("ProjectionBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                     new ResourceLayoutElementDescription("ViewBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                     new ResourceLayoutElementDescription("SceneLighting", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
-            materialInputLayouts.ResourceLayouts["Texture"] = textureLayout;
-            materialInputLayouts.ResourceLayouts["WorldTransform"] = worldTransformLayout;
-            materialInputLayouts.ResourceLayouts["SceneInputs"] = sceneInputsLayout;
+            materialInputLayouts.ResourceLayouts["CameraInputs"] = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("CameraInfo", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
 
             materialInputLayouts.VertexLayouts["Model"] = new VertexLayoutDescription(
                     new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),

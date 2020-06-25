@@ -16,4 +16,13 @@ namespace Clunker.Graphics
         public float Pitch;
         public float Roll;
     }
+
+    public struct CameraInfo
+    {
+        public static uint Size = sizeof(float) * (3 + 1 + 1 + 3);
+        public Vector3 Position;
+        public float ViewDistance;
+        public float BlurLength;
+        public Vector3 Spacing;
+    }
 }
