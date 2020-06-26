@@ -23,7 +23,7 @@ namespace Clunker.Voxels.Meshing
             // NORTH
             new Vector3i[]
             {
-                new Vector3i(1, -1, -1), new Vector3i(1, 0, -1), new Vector3i(0, 0, -1), new Vector3i(0, -1, -1)
+                new Vector3i(0, -1, -1), new Vector3i(0, 0, -1), new Vector3i(-1, 0, -1), new Vector3i(-1, -1, -1)
             },
             // SOUTH
             new Vector3i[]
@@ -38,7 +38,7 @@ namespace Clunker.Voxels.Meshing
             // WEST
             new Vector3i[]
             {
-                new Vector3i(-1, -1, -1), new Vector3i(-1, 0, -1), new Vector3i(-1, 0, 0), new Vector3i(-1, -1, 0)
+                new Vector3i(-1, -1, 0), new Vector3i(-1, 0, 0), new Vector3i(-1, 0, 1), new Vector3i(-1, -1, 1)
             }
         };
 

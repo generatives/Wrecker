@@ -26,14 +26,6 @@ namespace Clunker.WorldSpace
         public void GenerateChunk(Entity entity, EntityRecord entityRecord, Vector3i coordinates)
         {
             var random = new Random((coordinates.X << 20) ^ (coordinates.Y << 10) ^ (coordinates.Z));
-            var biome = _noise.GetPerlin(coordinates.X, coordinates.Z);
-            var biomeBlockType =
-                biome > -1 && biome < -0.5 ? 3 :
-                biome > -0.5 && biome < 0 ? 5 :
-                biome > 0 && biome < 0.5 ? 6 :
-                biome > 0.5 && biome < 1 ? 7 : 0;
-
-            var biomeHeightModifier = (biome + 1) * 2;
 
             ref var voxelSpaceData = ref entity.Get<VoxelGrid>();
             bool anyExist = true;
@@ -53,6 +45,15 @@ namespace Clunker.WorldSpace
                         for (int z = 0; z < voxelSpaceData.GridSize; z++)
                         {
                             var voxelPosition = new Vector3(coordinates.X * voxelSpaceData.GridSize + x, coordinates.Y * voxelSpaceData.GridSize + y, coordinates.Z * voxelSpaceData.GridSize + z);
+
+                            var biome = _noise.GetPerlin(voxelPosition.X / voxelSpaceData.GridSize, voxelPosition.Z / voxelSpaceData.GridSize);
+                            var biomeBlockType =
+                                biome > -1 && biome < -0.5 ? 3 :
+                                biome > -0.5 && biome < 0 ? 5 :
+                                biome > 0 && biome < 0.5 ? 6 :
+                                biome > 0.5 && biome < 1 ? 7 : 0;
+
+                            var biomeHeightModifier = (biome + 1) * 2;
 
                             var exists = (_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f) + 1f) * 15 * biomeHeightModifier > voxelPosition.Y;
                             anyExist = anyExist || exists;

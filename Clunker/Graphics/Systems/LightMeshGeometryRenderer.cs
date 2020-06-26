@@ -113,7 +113,7 @@ namespace Clunker.Graphics
                 AmbientLightColour = RgbaFloat.White,
                 AmbientLightStrength = 0.4f,
                 DiffuseLightColour = RgbaFloat.White,
-                DiffuseLightDirection = Vector3.Normalize(Vector3.Transform(new Vector3(0, 5, 0), Quaternion.Inverse(transform.WorldOrientation)))
+                DiffuseLightDirection = Vector3.Normalize(Vector3.Transform(new Vector3(-1, 8, 4), Quaternion.Inverse(transform.WorldOrientation)))
             });
 
             commandList.UpdateBuffer(WorldMatrixBuffer, 0, transform.WorldMatrix);
