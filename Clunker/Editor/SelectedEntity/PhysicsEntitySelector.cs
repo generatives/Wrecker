@@ -15,7 +15,7 @@ namespace Clunker.Editor.SelectedEntity
         public override string Name => "Physics Entity Selector";
 
         public override string Category => "Entities";
-        public override char? HotKey => 'S';
+        public override char? HotKey => 'P';
 
         private World _world;
         private PhysicsSystem _physicsSystem;

@@ -26,6 +26,6 @@ void main()
     vec3 norm = normalize(fsin_normal);
     float diff = dot(norm, DiffuseLightDirection) * 0.2 + 0.8;
     vec4 diffuse = diff * DiffuseLightColour;
-    vec4 litColour = fsin_light * diffuse * objectColour;
+    vec4 litColour = fsin_light * diffuse * AmbientLightColour * objectColour;
     fsout_color = vec4(litColour.xyz, objectColour.w * fsin_OpacityScale);
 }

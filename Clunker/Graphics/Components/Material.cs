@@ -46,43 +46,60 @@ namespace Clunker.Graphics
 
         private void Build()
         {
-            var vertexShader = _vertexShader.Data;
-            var fragShader = _fragmentShader.Data;
+            try
+            {
+                var vertexShader = _vertexShader.Data;
+                var fragShader = _fragmentShader.Data;
 
-            var resourceFactory = _device.ResourceFactory;
-            ShaderSetDescription shaderSet = new ShaderSetDescription(
-                _vertexInputs.Select(i => _registry.VertexLayouts[i]).ToArray(),
-                resourceFactory.CreateFromSpirv(
-                    new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexShader), "main"),
-                    new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragShader), "main")));
+                var resourceFactory = _device.ResourceFactory;
 
-            _pipeline = resourceFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
-                BlendStateDescription.SingleAlphaBlend,
-                DepthStencilStateDescription.DepthOnlyLessEqual,
-                RasterizerStateDescription.Default,
-                PrimitiveTopology.TriangleList,
-                shaderSet,
-                _resourceInputs.Select(l => _registry.ResourceLayouts[l]).ToArray(),
-                _device.MainSwapchain.Framebuffer.OutputDescription));
+                if(_pipeline != null)
+                {
+                    _pipeline.Dispose();
+                    _pipeline = null;
+                }
+
+                ShaderSetDescription shaderSet = new ShaderSetDescription(
+                    _vertexInputs.Select(i => _registry.VertexLayouts[i]).ToArray(),
+                    resourceFactory.CreateFromSpirv(
+                        new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexShader), "main"),
+                        new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragShader), "main")));
+
+                _pipeline = resourceFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
+                    BlendStateDescription.SingleAlphaBlend,
+                    DepthStencilStateDescription.DepthOnlyLessEqual,
+                    RasterizerStateDescription.Default,
+                    PrimitiveTopology.TriangleList,
+                    shaderSet,
+                    _resourceInputs.Select(l => _registry.ResourceLayouts[l]).ToArray(),
+                    _device.MainSwapchain.Framebuffer.OutputDescription));
+            }
+            catch
+            {
+                _pipeline = null;
+            }
         }
 
         public void RunPipeline(CommandList commandList, MaterialInputs inputs, uint numIndices)
         {
-            for (uint i = 0; i < _vertexInputs.Length; i++)
+            if(_pipeline != null)
             {
-                commandList.SetVertexBuffer(i, inputs.VertexBuffers[_vertexInputs[i]]);
+                for (uint i = 0; i < _vertexInputs.Length; i++)
+                {
+                    commandList.SetVertexBuffer(i, inputs.VertexBuffers[_vertexInputs[i]]);
+                }
+
+                commandList.SetPipeline(_pipeline);
+
+                for (uint i = 0; i < _resourceInputs.Length; i++)
+                {
+                    commandList.SetGraphicsResourceSet(i, inputs.ResouceSets[_resourceInputs[i]]);
+                }
+
+                commandList.SetIndexBuffer(inputs.IndexBuffer, IndexFormat.UInt16);
+
+                commandList.DrawIndexed(numIndices, 1, 0, 0, 0);
             }
-
-            commandList.SetPipeline(_pipeline);
-
-            for(uint i = 0; i < _resourceInputs.Length; i++)
-            {
-                commandList.SetGraphicsResourceSet(i, inputs.ResouceSets[_resourceInputs[i]]);
-            }
-
-            commandList.SetIndexBuffer(inputs.IndexBuffer, IndexFormat.UInt16);
-
-            commandList.DrawIndexed(numIndices, 1, 0, 0, 0);
         }
     }
 }

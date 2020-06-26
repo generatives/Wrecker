@@ -28,6 +28,13 @@ namespace Clunker.Graphics
         public ResourceSet CameraInputsResourceSet;
         public DeviceBuffer CameraInputsBuffer { get; private set; }
 
+        public RgbaFloat AmbientLightColour { get; set; } = RgbaFloat.White;
+        public float AmbientLightStrength { get; set; } = 0.8f;
+        public RgbaFloat DiffuseLightColour { get; set; } = RgbaFloat.White;
+        public Vector3 DiffuseLightDirection { get; set; } = new Vector3(-1, 8, 4);
+        public float ViewDistance { get; set; } = 720f;
+        public float BlurLength { get; set; } = 20f;
+
         public LightMeshGeometryRenderer(GraphicsDevice device, MaterialInputLayouts materialInputLayouts, World world) : base(world.GetEntities()
             .With<Material>()
             .With<MaterialTexture>()
@@ -62,8 +69,8 @@ namespace Clunker.Graphics
             commandList.UpdateBuffer(CameraInputsBuffer, 0, new CameraInfo()
             {
                 Position = cameraTransform.WorldPosition,
-                ViewDistance = 720f,
-                BlurLength = 20f
+                ViewDistance = ViewDistance,
+                BlurLength = BlurLength
             });
 
             var frustrum = new BoundingFrustum(viewMatrix * context.ProjectionMatrix);
@@ -110,10 +117,10 @@ namespace Clunker.Graphics
         {
             commandList.UpdateBuffer(SceneLightingBuffer, 0, new SceneLighting()
             {
-                AmbientLightColour = RgbaFloat.White,
-                AmbientLightStrength = 0.4f,
-                DiffuseLightColour = RgbaFloat.White,
-                DiffuseLightDirection = Vector3.Normalize(Vector3.Transform(new Vector3(-1, 8, 4), Quaternion.Inverse(transform.WorldOrientation)))
+                AmbientLightColour = AmbientLightColour,
+                AmbientLightStrength = AmbientLightStrength,
+                DiffuseLightColour = DiffuseLightColour,
+                DiffuseLightDirection = Vector3.Normalize(Vector3.Transform(DiffuseLightDirection, Quaternion.Inverse(transform.WorldOrientation)))
             });
 
             commandList.UpdateBuffer(WorldMatrixBuffer, 0, transform.WorldMatrix);

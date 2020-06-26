@@ -1,44 +1,29 @@
 ﻿using Clunker.ECS;
-using Clunker.Editor.Inspector.PropertyEditor;
 using Clunker.Editor.SelectedEntity;
-using Clunker.Geometry;
+using Clunker.Editor.Utilities;
 using DefaultEcs;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Reflection;
-using System.Text;
 
-namespace Clunker.Editor.Inspector
+namespace Clunker.Editor.Scene
 {
-    public class Inspector : Editor
+    public class EntityInspector : Editor
     {
         private PropertyGrid _propertyGrid;
         private World _world;
         private EntitySet _selectedEntities;
         private Dictionary<Type, MethodInfo> _componentEditors;
 
-        public override string Name => "Inspector";
-        public override string Category => "Entities";
+        public override string Name => "Entity Inspector";
+        public override string Category => "Scene";
         public override char? HotKey => 'I';
 
-        public Inspector(World world)
+        public EntityInspector(World world)
         {
-            _propertyGrid = new PropertyGrid(new Dictionary<Type, PropertyEditor.IPropertyEditor>()
-            {
-                { typeof(string), new StringEditor() },
-                { typeof(int), new IntEditor() },
-                { typeof(float), new FloatEditor() },
-                { typeof(bool), new BooleanEditor() },
-                { typeof(Vector2), new Vector2Editor() },
-                { typeof(Vector3), new Vector3Editor() },
-                { typeof(Quaternion), new QuaternionEditor() },
-                { typeof(Vector2i), new Vector2iEditor() },
-                { typeof(Vector3i), new Vector3iEditor() },
-                { typeof(Entity), new EntityEditor(world) }
-            });
+            _propertyGrid = new PropertyGrid(world);
             _world = world;
             _selectedEntities = _world.GetEntities().With<SelectedEntityFlag>().AsSet();
             _componentEditors = new Dictionary<Type, MethodInfo>();

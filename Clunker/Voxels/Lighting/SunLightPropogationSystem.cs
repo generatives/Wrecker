@@ -43,7 +43,7 @@ namespace Clunker.Voxels.Lighting
         public VoxelTypes VoxelTypes;
         public PooledQueue<(int, VoxelGrid)> PropogationQueue;
         public byte NewLightLevel;
-        public byte OriginalLightLevel;
+        public byte SourceLightLevel;
         //public PooledSet<VoxelGrid> ChangedLights;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -64,7 +64,7 @@ namespace Clunker.Voxels.Lighting
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CheckBelow(int flatIndex, VoxelGrid voxels)
         {
-            var newLightLevel = OriginalLightLevel == 15 ? (byte)15 : NewLightLevel;
+            var newLightLevel = SourceLightLevel == 15 ? (byte)15 : NewLightLevel;
             var voxel = voxels.Voxels[flatIndex];
             if ((!voxel.Exists || VoxelTypes[voxel.BlockType].Transparent) && (voxels.Lights[flatIndex] < newLightLevel || voxels.Lights[flatIndex] == 15))
             {
@@ -264,7 +264,7 @@ namespace Clunker.Voxels.Lighting
                     var newLightLevel = (byte)(lightLevel - 1);
 
                     addedLightVisitor.NewLightLevel = newLightLevel;
-                    addedLightVisitor.OriginalLightLevel = lightLevel;
+                    addedLightVisitor.SourceLightLevel = lightLevel;
                     SurroundingVoxelVisitor<AddedLightVisitor>.Check(flatIndex, voxels, addedLightVisitor);
                 }
             }

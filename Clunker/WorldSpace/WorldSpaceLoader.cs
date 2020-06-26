@@ -15,6 +15,7 @@ using System.Numerics;
 using Clunker.Physics.Voxels;
 using Clunker.Voxels.Lighting;
 using Clunker.Voxels.Meshing;
+using Clunker.Editor.Utilities;
 
 namespace Clunker.WorldSpace
 {
@@ -44,6 +45,14 @@ namespace Clunker.WorldSpace
             LoadRadius = loadRadius;
             LoadHeight = loadHeight;
             _chunkLength = chunkLength;
+        }
+
+        public void Clear()
+        {
+            foreach (var coordinates in _voxelSpace.Select(kvp => kvp.Key).ToList())
+            {
+                UnloadChunk(coordinates);
+            }
         }
         
         public void Update(double deltaSec)

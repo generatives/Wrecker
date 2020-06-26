@@ -11,7 +11,7 @@ namespace Clunker.Editor
     {
         public override string Name => "Entity List";
 
-        public override string Category => "Entities";
+        public override string Category => "Scene";
         public override char? HotKey => 'E';
 
         private World _world;

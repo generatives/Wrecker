@@ -3,7 +3,7 @@ using Clunker.Core;
 using Clunker.ECS;
 using Clunker.Editor;
 using Clunker.Editor.EditorConsole;
-using Clunker.Editor.Inspector;
+using Clunker.Editor.Scene;
 using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Toolbar;
 using Clunker.Editor.VoxelSpaceLoader;
@@ -163,8 +163,9 @@ namespace ClunkerECSDemo
                 new Toolbar(tools.ToArray()),
                 new SelectedEntitySystem(Scene.World),
                 new PhysicsEntitySelector(Scene.World, physicsSystem, playerTransform),
-                new Inspector(Scene.World),
+                new EntityInspector(Scene.World),
                 new EntityList(Scene.World),
+                new SystemList(Scene),
                 new VoxelSpaceLoader(Scene.World, playerTransform, setVoxelRender)
             }));
 

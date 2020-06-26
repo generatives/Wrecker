@@ -4,8 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using Veldrid;
 
-namespace Clunker.Editor.Inspector.PropertyEditor
+namespace Clunker.Editor.Utilities.PropertyEditor
 {
     public class StringEditor : IPropertyEditor
     {
@@ -98,6 +99,17 @@ namespace Clunker.Editor.Inspector.PropertyEditor
             var asVec = (Vector3)vector;
             var changed = ImGui.DragFloat3(label, ref asVec);
             return (changed, new Vector3i((int)asVec.X, (int)asVec.Y, (int)asVec.Z));
+        }
+    }
+
+    public class RgbaFloatEditor : IPropertyEditor
+    {
+        public (bool, object) DrawEditor(string label, object value)
+        {
+            var rgbaFloat = (RgbaFloat)value;
+            var asVector = new Vector4(rgbaFloat.R, rgbaFloat.G, rgbaFloat.B, rgbaFloat.A);
+            var changed = ImGui.ColorEdit4(label, ref asVector);
+            return (changed, new RgbaFloat(asVector.X, asVector.Y, asVector.Z, asVector.W));
         }
     }
 }

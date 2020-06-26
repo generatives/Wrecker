@@ -18,7 +18,7 @@ namespace Clunker.Editor.EditorConsole
         private List<string> _outputs;
         private Interpreter _interpreter;
 
-        public EditorConsole(Scene scene)
+        public EditorConsole(Clunker.Scene scene)
         {
             _outputs = new List<string>();
             _interpreter = new Interpreter();

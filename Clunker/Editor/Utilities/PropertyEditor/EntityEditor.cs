@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Clunker.Editor.Inspector.PropertyEditor
+namespace Clunker.Editor.Utilities.PropertyEditor
 {
     public class EntityEditor : IPropertyEditor
     {
