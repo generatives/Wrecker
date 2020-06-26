@@ -8,5 +8,12 @@ namespace Clunker.Resources
     {
         public string Id { get; set; }
         public T Data { get; set; }
+        public event Action<T, T> OnChanged;
+        public void SetData(T data)
+        {
+            var oldData = Data;
+            Data = data;
+            OnChanged?.Invoke(oldData, data);
+        }
     }
 }

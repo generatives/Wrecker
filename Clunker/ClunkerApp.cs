@@ -134,6 +134,8 @@ namespace Clunker
                     GraphicsDevice.SubmitCommands(CommandList);
                     GraphicsDevice.SwapBuffers(GraphicsDevice.MainSwapchain);
                     GraphicsDevice.WaitForIdle();
+
+                    Resources.Update();
                 }
             }, TaskCreationOptions.LongRunning);
         }

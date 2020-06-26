@@ -1,4 +1,5 @@
 ﻿using Clunker.ECS;
+using Clunker.Resources;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,18 +12,46 @@ namespace Clunker.Graphics
     [ClunkerComponent]
     public class Material
     {
+        private GraphicsDevice _device;
+        private MaterialInputLayouts _registry;
+
+        private Resource<string> _vertexShader;
+        private Resource<string> _fragmentShader;
+
         private string[] _vertexInputs;
         private string[] _resourceInputs;
         private Pipeline _pipeline;
 
-        public Material(GraphicsDevice device, string vertexShader, string fragShader, string[] vertexInputs, string[] resourceInputs, MaterialInputLayouts registry)
+        public Material(GraphicsDevice device, Resource<string> vertexShader, Resource<string> fragShader, string[] vertexInputs, string[] resourceInputs, MaterialInputLayouts registry)
         {
+            _device = device;
+            _registry = registry;
+
+            _vertexShader = vertexShader;
+            _fragmentShader = fragShader;
+
+            _vertexShader.OnChanged += _shader_OnChanged;
+            _fragmentShader.OnChanged += _shader_OnChanged;
+
             _vertexInputs = vertexInputs;
             _resourceInputs = resourceInputs;
 
-            var resourceFactory = device.ResourceFactory;
+            Build();
+        }
+
+        private void _shader_OnChanged(string arg1, string arg2)
+        {
+            Build();
+        }
+
+        private void Build()
+        {
+            var vertexShader = _vertexShader.Data;
+            var fragShader = _fragmentShader.Data;
+
+            var resourceFactory = _device.ResourceFactory;
             ShaderSetDescription shaderSet = new ShaderSetDescription(
-                vertexInputs.Select(i => registry.VertexLayouts[i]).ToArray(),
+                _vertexInputs.Select(i => _registry.VertexLayouts[i]).ToArray(),
                 resourceFactory.CreateFromSpirv(
                     new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexShader), "main"),
                     new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragShader), "main")));
@@ -33,8 +62,8 @@ namespace Clunker.Graphics
                 RasterizerStateDescription.Default,
                 PrimitiveTopology.TriangleList,
                 shaderSet,
-                resourceInputs.Select(l => registry.ResourceLayouts[l]).ToArray(),
-                device.MainSwapchain.Framebuffer.OutputDescription));
+                _resourceInputs.Select(l => _registry.ResourceLayouts[l]).ToArray(),
+                _device.MainSwapchain.Framebuffer.OutputDescription));
         }
 
         public void RunPipeline(CommandList commandList, MaterialInputs inputs, uint numIndices)
