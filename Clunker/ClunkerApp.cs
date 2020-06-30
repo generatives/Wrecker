@@ -96,7 +96,7 @@ namespace Clunker
                         _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
                             0.90f,
                             (float)_window.Width / _window.Height,
-                            10f,
+                            0.1f,
                             256f);
                         if (GraphicsDevice.IsClipSpaceYInverted)
                         {
