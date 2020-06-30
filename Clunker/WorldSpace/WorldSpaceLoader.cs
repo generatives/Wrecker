@@ -16,6 +16,7 @@ using Clunker.Physics.Voxels;
 using Clunker.Voxels.Lighting;
 using Clunker.Voxels.Meshing;
 using Clunker.Editor.Utilities;
+using Clunker.Graphics;
 
 namespace Clunker.WorldSpace
 {
@@ -27,19 +28,18 @@ namespace Clunker.WorldSpace
         private Entity _voxelSpaceEntity;
 
         private World _world;
-        private Transform _player;
+        private EntitySet _cameras;
         private int _chunkLength;
-        public Vector3i CenterChunk { get; private set; }
         public int LoadRadius { get; set; }
         public int LoadHeight { get; set; }
 
         private Action<Entity> _setVoxelRendering;
 
-        public WorldSpaceLoader(Action<Entity> setVoxelRendering, World world, Transform player, Entity voxelSpaceEntity, int loadRadius, int loadHeight, int chunkLength)
+        public WorldSpaceLoader(Action<Entity> setVoxelRendering, World world, Entity voxelSpaceEntity, int loadRadius, int loadHeight, int chunkLength)
         {
             _setVoxelRendering = setVoxelRendering;
             _world = world;
-            _player = player;
+            _cameras = _world.GetEntities().With<Transform>().With<Camera>().AsSet();
             _voxelSpace = voxelSpaceEntity.Get<VoxelSpace>();
             _voxelSpaceEntity = voxelSpaceEntity;
             LoadRadius = loadRadius;
@@ -57,15 +57,15 @@ namespace Clunker.WorldSpace
         
         public void Update(double deltaSec)
         {
-            var position = _player.WorldPosition;
-            SetCenterChunk((int)Math.Floor(position.X / _chunkLength), (int)Math.Floor(position.Y / _chunkLength), (int)Math.Floor(position.Z / _chunkLength));
-            //SetCenterChunk(0, 0, 0);
+            foreach(var entity in _cameras.GetEntities())
+            {
+                var chunk = GetChunk(entity);
+                LoadAroundChunk(chunk.X, chunk.Y, chunk.Z);
+            }
         }
 
-        public void SetCenterChunk(int x, int y, int z)
+        public void LoadAroundChunk(int x, int y, int z)
         {
-            CenterChunk = new Vector3i(x, y, z);
-
             foreach (var coordinates in _voxelSpace.Select(kvp => kvp.Key).ToList())
             {
                 if (!AreaContainsChunk(coordinates))
@@ -128,9 +128,24 @@ namespace Clunker.WorldSpace
 
         public bool AreaContainsChunk(int x, int y, int z)
         {
-            return CenterChunk.X - LoadRadius <= x && CenterChunk.X + LoadRadius >= x &&
-                y >= -1 && y < LoadHeight &&
-                CenterChunk.Z - LoadRadius <= z && CenterChunk.Z + LoadRadius >= z;
+            foreach(var entity in _cameras.GetEntities())
+            {
+                var CenterChunk = GetChunk(entity);
+                var contained = CenterChunk.X - LoadRadius <= x && CenterChunk.X + LoadRadius >= x &&
+                    y >= -1 && y < LoadHeight &&
+                    CenterChunk.Z - LoadRadius <= z && CenterChunk.Z + LoadRadius >= z;
+
+                if (contained) return true;
+            }
+
+            return false;
+        }
+
+        public Vector3i GetChunk(Entity entity)
+        {
+            var transform = entity.Get<Transform>();
+            var position = transform.WorldPosition;
+            return new Vector3i((int)Math.Floor(position.X / _chunkLength), (int)Math.Floor(position.Y / _chunkLength), (int)Math.Floor(position.Z / _chunkLength));
         }
 
         public void Dispose() { }

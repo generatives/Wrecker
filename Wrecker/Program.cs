@@ -11,6 +11,8 @@ using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Graphics.Materials;
 using Clunker.Graphics.Systems;
+using Clunker.Networking;
+using Clunker.Networking.EntityExistence;
 using Clunker.Physics;
 using Clunker.Physics.Character;
 using Clunker.Physics.Voxels;
@@ -23,12 +25,15 @@ using Clunker.WorldSpace;
 using DefaultEcs;
 using DefaultEcs.System;
 using DefaultEcs.Threading;
+using MessagePack;
+using MessagePack.Resolvers;
 using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Veldrid;
 using Veldrid.StartupUtilities;
@@ -38,6 +43,14 @@ namespace ClunkerECSDemo
 {
     class Program
     {
+        private static byte _messageId = 0;
+        private static Dictionary<int, Action<MemoryStream, World>> _recievers = new Dictionary<int, Action<MemoryStream, World>>();
+        private static Dictionary<Type, Action<object, MemoryStream>> _serializers = new Dictionary<Type, Action<object, MemoryStream>>();
+        private static MessagePackSerializerOptions _serializerOptions;
+
+        private static ClunkerClientApp _client;
+        private static ClunkerServerApp _server;
+
         static void Main(string[] args)
         {
             WindowCreateInfo wci = new WindowCreateInfo
@@ -59,21 +72,92 @@ namespace ClunkerECSDemo
             options.Debug = true;
 #endif
 
-            var app = new WreckerApp(new ResourceLoader(), new Scene());
+            var resolver = CompositeResolver.Create(CustomResolver.Instance, StandardResolver.Instance);
+            _serializerOptions = MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
-            app.Start(wci, options).Wait();
+            Message<EntityMessage<EntityAdded>>();
+            Message<EntityMessage<EntityRemoved>>();
+            Message<EntityMessage<TransformMessage>>();
+            Message<EntityMessage<SimpleCameraMoverMessage>>();
+            Message<EntityMessage<InputForceApplierMessage>>();
+            Message<EntityMessage<CameraMessage>>();
+
+            var clientSystems = new List<ISystem<ClientSystemUpdate>>();
+
+            _client = new ClunkerClientApp(new ResourceLoader(), new Scene(), _recievers, _serializers);
+            _client.Started += _client_Started;
+
+            _server = new ClunkerServerApp(new Scene(), _recievers, _serializers);
+            _server.Started += _server_Started;
+
+            var clientTask = _client.Start(wci, options);
+            var serverTask = _server.Start();
+
+            Task.WaitAll(clientTask, serverTask);
         }
-    }
 
-    public class WreckerApp : ClunkerApp
-    {
-        public WreckerApp(ResourceLoader resourceLoader, Scene initialScene) : base(resourceLoader, initialScene)
+        private static void _server_Started()
         {
+            var networkedEntities = new NetworkedEntities(_server.Scene.World);
+            var physicsSystem = new PhysicsSystem();
+
+            var parallelRunner = new DefaultParallelRunner(1);
+
+            _server.ServerSystems.Add(new EntityExistenceSender(_server.Scene.World));
+            _server.ServerSystems.Add(new TransformInitServerSystem(_server.Scene.World));
+            _server.ServerSystems.Add(new TransformChangeServerSystem(_server.Scene.World));
+            _server.ServerSystems.Add(new CameraServerSystem(_server.Scene.World));
+
+            _server.MessageListeners.Add(new TransformMessageApplier(networkedEntities));
+            _server.MessageListeners.Add(new InputForceApplier(physicsSystem, networkedEntities));
+            _server.MessageListeners.Add(new SimpleCameraMover(physicsSystem, networkedEntities));
+
+            var voxelTypes = LoadVoxelTypes();
+
+            var player = _client.Scene.World.CreateEntity();
+            var playerTransform = new Transform();
+            playerTransform.Position = new Vector3(0, 40, 0);
+            player.Set(playerTransform);
+            player.Set(new Camera());
+
+            var worldVoxelSpace = _client.Scene.World.CreateEntity();
+            worldVoxelSpace.Set(new Transform());
+            worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
+
+            _server.Scene.LogicSystems.Add(new WorldSpaceLoader((e) => { }, _client.Scene.World, worldVoxelSpace, 5, 2, 32));
+            _server.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_client.Scene, parallelRunner, new ChunkGenerator()));
+
+            _server.Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, _client.Scene.World));
+
+            _server.Scene.LogicSystems.Add(new PhysicsBlockFinder(_client.Scene.World, parallelRunner));
+
+            _server.Scene.LogicSystems.Add(new ParallelSystem<double>(parallelRunner,
+                new SequentialSystem<double>(
+                    new VoxelSpaceChangePropogator(_client.Scene.World),
+                    new VoxelStaticBodyGenerator(physicsSystem, _client.Scene.World),
+                    new VoxelSpaceDynamicBodyGenerator(physicsSystem, _client.Scene.World),
+                    physicsSystem,
+                    new DynamicBodyPositionSync(_client.Scene.World)),
+                new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _client.Scene)));
+
+            _server.Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, _client.Scene.World));
+
+            _server.Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(_client.Scene.World));
         }
 
-        protected override void Initialize()
+        private static void _client_Started()
         {
-            var factory = GraphicsDevice.ResourceFactory;
+            var networkedEntities = new NetworkedEntities(_client.Scene.World);
+
+            _client.MessageListeners.Add(new EntityAdder(_client.Scene.World));
+            _client.MessageListeners.Add(new TransformMessageApplier(networkedEntities));
+            _client.MessageListeners.Add(new CameraMessageApplier(networkedEntities));
+            _client.MessageListeners.Add(new EntityRemover(networkedEntities));
+
+            _client.ClientSystems.Add(new InputForceApplierInputSystem(_client.Scene.World));
+            _client.ClientSystems.Add(new SimpleCameraMoverInputSystem(_client.Scene.World));
+
+            var factory = _client.GraphicsDevice.ResourceFactory;
 
             var materialInputLayouts = new MaterialInputLayouts();
 
@@ -107,16 +191,16 @@ namespace ClunkerECSDemo
             materialInputLayouts.VertexLayouts["Lighting"] = new VertexLayoutDescription(
                     new VertexElementDescription("Light", VertexElementSemantic.Color, VertexElementFormat.Float1));
 
-            var mesh3dMaterial = new Material(GraphicsDevice, MainSceneFramebuffer, Resources.LoadText("Shaders\\Mesh.vs"), Resources.LoadText("Shaders\\Mesh.fg"),
+            var mesh3dMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\Mesh.vs"), _client.Resources.LoadText("Shaders\\Mesh.fg"),
                 new string[] { "Model" }, new string[] { "SceneInputs", "WorldTransform", "Texture" }, materialInputLayouts);
 
-            var lightMeshMaterial = new Material(GraphicsDevice, MainSceneFramebuffer, Resources.LoadText("Shaders\\LightMesh.vs"), Resources.LoadText("Shaders\\LightMesh.fg"),
+            var lightMeshMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\LightMesh.vs"), _client.Resources.LoadText("Shaders\\LightMesh.fg"),
                 new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs" }, materialInputLayouts);
 
-            var voxelTexturesResource = Resources.LoadImage("Textures\\spritesheet_tiles.png");
-            var voxelTexture = new MaterialTexture(GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.White);
-            var redVoxelTexture = new MaterialTexture(GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.Red);
-            var semiTransVoxelColour = new MaterialTexture(GraphicsDevice, textureLayout, voxelTexturesResource, new RgbaFloat(1.0f, 1.0f, 1.0f, 0.8f));
+            var voxelTexturesResource = _client.Resources.LoadImage("Textures\\spritesheet_tiles.png");
+            var voxelTexture = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.White);
+            var redVoxelTexture = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.Red);
+            var semiTransVoxelColour = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, new RgbaFloat(1.0f, 1.0f, 1.0f, 0.8f));
 
             Action<Entity> setVoxelRender = (Entity e) =>
             {
@@ -124,17 +208,7 @@ namespace ClunkerECSDemo
                 e.Set(voxelTexture);
             };
 
-            var parallelRunner = new DefaultParallelRunner(4);
-
-            var player = Scene.World.CreateEntity();
-            var playerTransform = new Transform();
-            playerTransform.Position = new Vector3(0, 40, 0);
-            player.Set(playerTransform);
-            player.Set(new Camera());
-
-            var worldVoxelSpace = Scene.World.CreateEntity();
-            worldVoxelSpace.Set(new Transform());
-            worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
+            var parallelRunner = new DefaultParallelRunner(1);
 
             var px = Image.Load("Assets\\Textures\\cloudtop_rt.png");
             var nx = Image.Load("Assets\\Textures\\cloudtop_lf.png");
@@ -142,63 +216,46 @@ namespace ClunkerECSDemo
             var ny = Image.Load("Assets\\Textures\\cloudtop_dn.png");
             var pz = Image.Load("Assets\\Textures\\cloudtop_bk.png");
             var nz = Image.Load("Assets\\Textures\\cloudtop_ft.png");
-            Scene.RendererSystems.Add(new SkyboxRenderer(GraphicsDevice, MainSceneFramebuffer, px, nx, py, ny, pz, nz));
+            _client.Scene.RendererSystems.Add(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
-            Scene.RendererSystems.Add(new MeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));
-            Scene.RendererSystems.Add(new LightMeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));
-
-            var physicsSystem = new PhysicsSystem();
+            _client.Scene.RendererSystems.Add(new MeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, _client.Scene.World));
+            _client.Scene.RendererSystems.Add(new LightMeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, _client.Scene.World));
 
             var voxelTypes = LoadVoxelTypes();
 
-            var tools = new List<ITool>()
-            {
-                new RemoveVoxelEditingTool((e) => { e.Set(lightMeshMaterial); e.Set(redVoxelTexture); }, Scene.World, physicsSystem, player)
-            };
-            tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, (e) => { e.Set(lightMeshMaterial); e.Set(semiTransVoxelColour); }, Scene.World, physicsSystem, player)));
+            var worldVoxelSpace = _client.Scene.World.CreateEntity();
+            worldVoxelSpace.Set(new Transform());
+            worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
-            Scene.LogicSystems.Add(new EditorMenu(Scene, new List<IEditor>()
-            {
-                new EditorConsole(Scene),
-                new Toolbar(tools.ToArray()),
-                new SelectedEntitySystem(Scene.World),
-                new PhysicsEntitySelector(Scene.World, physicsSystem, playerTransform),
-                new EntityInspector(Scene.World),
-                new EntityList(Scene.World),
-                new SystemList(Scene),
-                new VoxelSpaceLoader(Scene.World, playerTransform, setVoxelRender)
-            }));
+            //var tools = new List<ITool>()
+            //{
+            //    new RemoveVoxelEditingTool((e) => { e.Set(lightMeshMaterial); e.Set(redVoxelTexture); }, _client.Scene.World, physicsSystem, player)
+            //};
+            //tools.AddRange(voxelTypes.Select((type, i) => new BasicVoxelAddingTool(type.Name, (ushort)i, (e) => { e.Set(lightMeshMaterial); e.Set(semiTransVoxelColour); }, Scene.World, physicsSystem, player)));
 
-            Scene.LogicSystems.Add(new SimpleCameraMover(player, physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 5, 2, 32));
-            Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parallelRunner, new ChunkGenerator()));
+            //_client.Scene.LogicSystems.Add(new EditorMenu(_client.Scene, new List<IEditor>()
+            //{
+            //    new EditorConsole(_client.Scene),
+            //    new Toolbar(tools.ToArray()),
+            //    new SelectedEntitySystem(_client.Scene.World),
+            //    new PhysicsEntitySelector(_client.Scene.World, physicsSystem, playerTransform),
+            //    new EntityInspector(_client.Scene.World),
+            //    new EntityList(_client.Scene.World),
+            //    new SystemList(_client.Scene),
+            //    new VoxelSpaceLoader(_client.Scene.World, playerTransform, setVoxelRender)
+            //}));
 
-            Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(setVoxelRender, Scene.World));
+            _client.Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, _client.Scene.World, worldVoxelSpace, 5, 2, 32));
+            _client.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_client.Scene, parallelRunner, new ChunkGenerator()));
 
-            Scene.LogicSystems.Add(new InputForceApplier(physicsSystem, Scene.World));
+            _client.Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _client.Scene));
 
-            Scene.LogicSystems.Add(new PhysicsBlockFinder(Scene.World, parallelRunner));
+            _client.Scene.LogicSystems.Add(new VoxelGridMesher(_client.Scene, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
 
-            Scene.LogicSystems.Add(new ParallelSystem<double>(parallelRunner,
-                new SequentialSystem<double>(
-                    new VoxelSpaceChangePropogator(Scene.World),
-                    new VoxelStaticBodyGenerator(physicsSystem, Scene.World),
-                    new VoxelSpaceDynamicBodyGenerator(physicsSystem, Scene.World),
-                    physicsSystem,
-                    new DynamicBodyPositionSync(Scene.World)),
-                new SunLightPropogationSystem(new VoxelTypes(voxelTypes), Scene)));
+            _client.Scene.LogicSystems.Add(new MeshGeometryCleaner(_client.Scene.World));
+            _client.Scene.LogicSystems.Add(new LightVertexCleaner(_client.Scene.World));
 
-            Scene.LogicSystems.Add(new VoxelGridMesher(Scene, new VoxelTypes(voxelTypes), GraphicsDevice, parallelRunner));
-
-            Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, Scene.World));
-
-            Scene.LogicSystems.Add(new MeshGeometryCleaner(Scene.World));
-            Scene.LogicSystems.Add(new LightVertexCleaner(Scene.World));
-
-            Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(Scene.World));
-
-            //var cylinder = Scene.World.CreateEntity();
-            //AddCylinder(cylinder, mesh3dMaterial, voxelTexture);
+            _client.Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(_client.Scene.World));
         }
 
         private static string[] goodVoxelTypes = new string[]
@@ -246,7 +303,7 @@ namespace ClunkerECSDemo
             var doc = XElement.Load(filePath);
             var byName = doc
                 .Descendants("SubTexture")
-                .Select(st => (st.Attribute("name").Value, st.Attribute("transparent") != null, new Vector2(int.Parse(st.Attribute("x").Value), int.Parse(st.Attribute("y").Value))))
+                .Select(st => (st.Attribute("name").Value, st.Attribute("transparent") != null, new Vector2(int.Parse(st.Attribute("x").Value) + 1, int.Parse(st.Attribute("y").Value) + 1)))
                 .Select(t => new VoxelType(
                     t.Item1.Substring(0, t.Item1.Length - 4).Replace('_', ' '),
                     t.Item2,
@@ -260,5 +317,23 @@ namespace ClunkerECSDemo
                 .Select(n => byName[n])
                 .ToArray();
         }
+
+        private static void Message<T>()
+        {
+            var messageId = _messageId;
+            _recievers[messageId] = (MemoryStream stream, World world) =>
+            {
+                var message = MessagePackSerializer.Deserialize<T>(stream, _serializerOptions);
+                world.Publish(in message);
+            };
+            _serializers[typeof(T)] = (object message, MemoryStream stream) =>
+            {
+                stream.WriteByte(messageId);
+                MessagePackSerializer.Serialize(stream, (T)message, _serializerOptions);
+            };
+            _messageId++;
+        }
     }
+
+    
 }

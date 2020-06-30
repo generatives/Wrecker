@@ -76,7 +76,10 @@ namespace Clunker.ECS
 
             foreach (ref readonly var e in _changedEntities.GetEntities())
             {
-                Compute(state, e);
+                if(e.IsAlive)
+                {
+                    Compute(state, e);
+                }
             }
             _changedEntities.Complete();
         }

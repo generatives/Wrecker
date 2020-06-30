@@ -1,9 +1,11 @@
 ﻿using Clunker.Core;
 using Clunker.Input;
+using Clunker.Networking;
 using Clunker.Physics;
 using Clunker.Physics.Voxels;
 using DefaultEcs;
 using DefaultEcs.System;
+using MessagePack;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -11,25 +13,28 @@ using System.Text;
 
 namespace Wrecker
 {
-    public class InputForceApplier : AEntitySystem<double>
+    [MessagePackObject]
+    public struct InputForceApplierMessage
     {
-        private float _inputForce = 60;
-        private float _inertialCompensationForce = 30;
-        private PhysicsSystem _physicsSystem;
+        [Key(0)]
+        public Vector3 IntendedDirection;
+        [Key(1)]
+        public Vector3 IntendedRotation;
+    }
 
-        public InputForceApplier(PhysicsSystem physicsSystem, World world) : base(world.GetEntities().With<DynamicBody>().With<Transform>().AsSet())
+    [With(typeof(DynamicBody), typeof(Transform), typeof(NetworkedEntity))]
+    public class InputForceApplierInputSystem : AEntitySystem<ClientSystemUpdate>
+    {
+        public InputForceApplierInputSystem(World world) : base(world)
         {
-            _physicsSystem = physicsSystem;
         }
 
-        protected override void Update(double state, in Entity entity)
+        protected override void Update(ClientSystemUpdate state, in Entity entity)
         {
             ref var body = ref entity.Get<DynamicBody>();
             if(body.Body.Exists)
             {
                 ref var transform = ref entity.Get<Transform>();
-
-                var worldOffset = Vector3.Zero;
 
                 var intendedDirection = Vector3.Zero;
                 var intendedRotation = Vector3.Zero;
@@ -67,6 +72,38 @@ namespace Wrecker
                     intendedRotation += -Vector3.UnitY;
                 }
 
+                var message = new InputForceApplierMessage()
+                {
+                    IntendedDirection = intendedDirection,
+                    IntendedRotation = intendedRotation
+                };
+
+                var id = entity.Get<NetworkedEntity>().Id;
+                state.Messages.Add(new EntityMessage<InputForceApplierMessage>() { Id = id, Data = message });
+            }
+        }
+    }
+
+    public class InputForceApplier : EntityMessageApplier<InputForceApplierMessage>
+    {
+        private float _inputForce = 60;
+        private float _inertialCompensationForce = 30;
+        private PhysicsSystem _physicsSystem;
+
+        public InputForceApplier(PhysicsSystem physicsSystem, NetworkedEntities entities) : base(entities)
+        {
+            _physicsSystem = physicsSystem;
+        }
+
+        protected override void On(in InputForceApplierMessage action, in Entity entity)
+        {
+            ref var body = ref entity.Get<DynamicBody>();
+            if (body.Body.Exists)
+            {
+                ref var transform = ref entity.Get<Transform>();
+                var intendedDirection = action.IntendedDirection;
+                var intendedRotation = action.IntendedRotation;
+
                 intendedDirection = intendedDirection == Vector3.Zero ? intendedDirection : Vector3.Normalize(intendedDirection);
 
                 var worldIntendedDirection = Vector3.Transform(intendedDirection, transform.WorldOrientation);
@@ -76,9 +113,8 @@ namespace Wrecker
 
                 var compensationDirection = worldIntendedDirection - actualDirection;
 
-                body.Body.ApplyImpulse(compensationDirection * _inertialCompensationForce, worldOffset);
-                body.Body.ApplyImpulse(worldIntendedDirection * _inputForce, worldOffset);
-
+                body.Body.ApplyImpulse(compensationDirection * _inertialCompensationForce, Vector3.Zero);
+                body.Body.ApplyImpulse(worldIntendedDirection * _inputForce, Vector3.Zero);
 
                 intendedRotation = intendedRotation == Vector3.Zero ? intendedRotation : Vector3.Normalize(intendedRotation);
 

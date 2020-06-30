@@ -105,7 +105,7 @@ namespace Clunker.Voxels.Meshing
                 BoundingRadiusOffset = centerOffset
             };
             var entityRecord = _scene.CommandRecorder.Record(entity);
-            entityRecord.Set(mesh);
+            entity.Set(mesh);
 
             lightBuffer.Update(lights.ToArray());
             lightVertexResources.LightLevels = lightBuffer;
@@ -153,10 +153,10 @@ namespace Clunker.Voxels.Meshing
             indices.Add((ushort)(vertices.Count + 1));
             indices.Add((ushort)(vertices.Count + 2));
             indices.Add((ushort)(vertices.Count + 3));
-            vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0.5f, 128.5f)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0.5f, 0.5f)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128.5f, 0.5f)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128.5f, 128.5f)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0f, 126f)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0f, 0f)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(126f, 0f)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(126f, 126f)) / imageSize, quad.Normal));
 
             var occlusionSide = AmbientOcclusionTable[(int)side];
             foreach(var cornerOffsets in occlusionSide)

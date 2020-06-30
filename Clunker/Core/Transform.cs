@@ -13,7 +13,23 @@ namespace Clunker.Core
     [ClunkerComponent]
     public class Transform
     {
-        public Transform Parent { get; private set; }
+        public Entity Self { get; set; }
+        private Transform _parent;
+        public Transform Parent
+        {
+            get => _parent;
+            set
+            {
+                if (_parent != null)
+                {
+                    _parent.AddChild(this);
+                }
+                else
+                {
+                    Parent = null;
+                }
+            }
+        }
 
         private List<Transform> _children;
         public IEnumerable<Transform> Children { get => _children; }
@@ -102,32 +118,20 @@ namespace Clunker.Core
 
         public void AddChild(Transform child)
         {
-            if(child.Parent != null)
+            if(child._parent != null)
             {
                 child.Parent.RemoveChild(child);
             }
             _children.Add(child);
-            child.Parent = this;
+            child._parent = this;
         }
 
         public void RemoveChild(Transform child)
         {
-            if(child.Parent == this)
+            if(child._parent == this)
             {
-                child.Parent = null;
+                child._parent = null;
                 _children.Remove(child);
-            }
-        }
-
-        public void SetParent(Transform parent)
-        {
-            if(parent != null)
-            {
-                parent.AddChild(this);
-            }
-            else
-            {
-                Parent = null;
             }
         }
 
