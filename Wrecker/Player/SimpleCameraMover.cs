@@ -35,6 +35,10 @@ namespace Wrecker
         public bool Space;
         [Key(6)]
         public bool C;
+        [Key(7)]
+        public float Pitch;
+        [Key(8)]
+        public float Yaw;
     }
 
     [With(typeof(Camera), typeof(Transform), typeof(NetworkedEntity))]
@@ -48,20 +52,6 @@ namespace Wrecker
 
         protected override void Update(ClientSystemUpdate state, in Entity entity)
         {
-            var message = new SimpleCameraMoverMessage()
-            {
-                Forward = GameInputTracker.IsKeyPressed(Key.W),
-                Backward = GameInputTracker.IsKeyPressed(Key.S),
-                Left = GameInputTracker.IsKeyPressed(Key.A),
-                Right = GameInputTracker.IsKeyPressed(Key.D),
-                Space = GameInputTracker.IsKeyPressed(Key.Space),
-                Shift = GameInputTracker.IsKeyPressed(Key.ShiftLeft),
-                C = GameInputTracker.WasKeyDowned(Key.C)
-            };
-
-            var id = entity.Get<NetworkedEntity>().Id;
-            state.Messages.Add(new EntityMessage<SimpleCameraMoverMessage>() { Id = id, Data = message });
-
             ref var camera = ref entity.Get<Camera>();
             camera.Yaw += -GameInputTracker.MouseDelta.X * LookSpeed;
             camera.Pitch += -GameInputTracker.MouseDelta.Y * LookSpeed;
@@ -74,6 +64,22 @@ namespace Wrecker
             var cameraTransform = entity.Get<Transform>();
             cameraTransform.WorldOrientation = Quaternion.CreateFromYawPitchRoll(camera.Yaw, camera.Pitch, camera.Roll);
             entity.Set(cameraTransform);
+
+            var message = new SimpleCameraMoverMessage()
+            {
+                Forward = GameInputTracker.IsKeyPressed(Key.W),
+                Backward = GameInputTracker.IsKeyPressed(Key.S),
+                Left = GameInputTracker.IsKeyPressed(Key.A),
+                Right = GameInputTracker.IsKeyPressed(Key.D),
+                Space = GameInputTracker.IsKeyPressed(Key.Space),
+                Shift = GameInputTracker.IsKeyPressed(Key.ShiftLeft),
+                C = GameInputTracker.WasKeyDowned(Key.C),
+                Pitch = camera.Pitch,
+                Yaw = camera.Yaw
+            };
+
+            var id = entity.Get<NetworkedEntity>().Id;
+            state.Messages.Add(new EntityMessage<SimpleCameraMoverMessage>() { Id = id, Data = message });
         }
     }
 
@@ -117,6 +123,17 @@ namespace Wrecker
             else
             {
                 UpdateFreeMovement(time, in entity, playerTransform, in message);
+            }
+
+            var camera = entity.Get<Camera>();
+            if(camera.Pitch != message.Pitch || camera.Yaw != message.Yaw)
+            {
+                camera.Pitch = message.Pitch;
+                camera.Yaw = message.Yaw;
+                entity.Set(camera);
+
+                playerTransform.WorldOrientation = Quaternion.CreateFromYawPitchRoll(camera.Yaw, camera.Pitch, camera.Roll);
+                entity.Set(playerTransform);
             }
         }
 

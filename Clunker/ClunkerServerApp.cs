@@ -142,7 +142,7 @@ namespace Clunker
                             {
                                 foreach (var conn in _connections)
                                 {
-                                    conn.Send(message, 4, false, _messagesSent++);
+                                    conn.Send(message, 4, true, _messagesSent++);
                                 }
                             });
                         }

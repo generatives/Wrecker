@@ -1,4 +1,5 @@
 ﻿using Clunker.Geometry;
+using Clunker.Utilties.Logging;
 using Clunker.Voxels.Space;
 using Collections.Pooled;
 using DefaultEcs;
@@ -132,8 +133,6 @@ namespace Clunker.Voxels.Lighting
         private IDisposable _changedSubscription;
         private List<VoxelChanged> _voxelChanges;
 
-        private ConcurrentBag<double> _times = new ConcurrentBag<double>();
-
         public bool IsEnabled { get; set; } = true;
 
         public SunLightPropogationSystem(VoxelTypes voxelTypes, Scene scene)
@@ -242,8 +241,8 @@ namespace Clunker.Voxels.Lighting
             if(anyChanged)
             {
                 watch.Stop();
-                _times.Add(watch.Elapsed.TotalMilliseconds);
-                Console.WriteLine($"Time: {watch.Elapsed.TotalMilliseconds}, Initial Prop: {initialProp}");
+                Metrics.LogMetric("SunlightPropogation:Time", watch.Elapsed.TotalMilliseconds, 30);
+                Metrics.LogMetric("SunlightPropogation:InitialBlocks", initialProp, 30);
             }
         }
 

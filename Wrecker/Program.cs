@@ -3,6 +3,7 @@ using Clunker.Core;
 using Clunker.ECS;
 using Clunker.Editor;
 using Clunker.Editor.EditorConsole;
+using Clunker.Editor.Logging.Metrics;
 using Clunker.Editor.Scene;
 using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Toolbar;
@@ -245,6 +246,17 @@ namespace ClunkerECSDemo
             //    new SystemList(_client.Scene),
             //    new VoxelSpaceLoader(_client.Scene.World, playerTransform, setVoxelRender)
             //}));
+
+            _client.Scene.LogicSystems.Add(new EditorMenu(_client.Scene, new List<IEditor>()
+            {
+                new EditorConsole(_client.Scene),
+                new SelectedEntitySystem(_client.Scene.World),
+                new EntityInspector(_client.Scene.World),
+                new EntityList(_client.Scene.World),
+                new SystemList(_client.Scene),
+                new AverageMetricValue(),
+                new MetricGraph()
+            }));
 
             _client.Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, _client.Scene.World, worldVoxelSpace, 5, 2, 32));
             _client.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_client.Scene, parallelRunner, new ChunkGenerator()));

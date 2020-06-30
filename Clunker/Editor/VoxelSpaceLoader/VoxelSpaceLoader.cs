@@ -1,6 +1,6 @@
 ﻿using Clunker.Core;
-using Clunker.Editor.FilePicker;
 using Clunker.Editor.SelectedEntity;
+using Clunker.Editor.Utilities;
 using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Physics;
@@ -52,10 +52,10 @@ namespace Clunker.Editor.VoxelSpaceLoader
                     ImGui.SameLine();
                     if (ImGui.Button("Save"))
                     {
-                        FilePicker.FilePicker.Open("save-voxel-space");
+                        FilePicker.Open("save-voxel-space");
                     }
 
-                    if(FilePicker.FilePicker.Window("save-voxel-space", ref _fileLocation, new[] { ".cvx" }))
+                    if(FilePicker.Window("save-voxel-space", ref _fileLocation, new[] { ".cvx" }))
                     {
                         if(!Directory.Exists(_fileLocation))
                         {
@@ -76,10 +76,10 @@ namespace Clunker.Editor.VoxelSpaceLoader
 
             if (ImGui.Button("Load File"))
             {
-                FilePicker.FilePicker.Open("load-voxel-space");
+                FilePicker.Open("load-voxel-space");
             }
 
-            if (FilePicker.FilePicker.Window("load-voxel-space", ref _fileLocation, new[] { ".cvx" }))
+            if (FilePicker.Window("load-voxel-space", ref _fileLocation, new[] { ".cvx" }))
             {
                 if(File.Exists(_fileLocation))
                 {

@@ -8,7 +8,7 @@ using System.Linq;
 
 // Based on https://github.com/mellinoe/synthapp/blob/master/src/synthapp/Widgets/FilePicker.cs#L58
 
-namespace Clunker.Editor.FilePicker
+namespace Clunker.Editor.Utilities
 {
     public class FilePicker
     {

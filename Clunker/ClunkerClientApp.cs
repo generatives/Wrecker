@@ -159,6 +159,7 @@ namespace Clunker
                     frameTime = Math.Min(frameTime, 0.033333);
                     frameWatch.Restart();
 
+                    var logged = false;
                     NetworkEvent networkEvent = _client.Poll();
                     while (networkEvent.Type != NetworkEventType.Nothing)
                     {
@@ -168,9 +169,12 @@ namespace Clunker
                                 _server = networkEvent.Connection;
                                 break;
                             case NetworkEventType.Data:
-                                var diff = _messageTimer.Elapsed.TotalMilliseconds;
-                                //InfoViewer.Values["Message Time"] = Math.Round(diff, 4).ToString();
-                                _messageTimer.Restart();
+                                if (!logged)
+                                {
+                                    Utilties.Logging.Metrics.LogMetric("Client:Networking:RecievedMessages:Timing", _messageTimer.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+                                    _messageTimer.Restart();
+                                    logged = true;
+                                }
                                 MessageRecieved(networkEvent.Data);
                                 break;
                         }
