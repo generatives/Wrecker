@@ -91,10 +91,8 @@ namespace ClunkerECSDemo
             _server = new ClunkerServerApp(new Scene(), _recievers, _serializers);
             _server.Started += _server_Started;
 
-            var clientTask = _client.Start(wci, options);
             var serverTask = _server.Start();
-
-            Task.WaitAll(clientTask, serverTask);
+            _client.Start(wci, options).Wait();
         }
 
         private static void _server_Started()

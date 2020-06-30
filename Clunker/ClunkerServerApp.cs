@@ -84,12 +84,14 @@ namespace Clunker
                 }
 
                 var frameWatch = Stopwatch.StartNew();
+                var messageTimer = Stopwatch.StartNew();
 
                 while(true)
                 {
                     var frameTime = frameWatch.Elapsed.TotalSeconds;
                     frameWatch.Restart();
 
+                    var logged = false;
                     NetworkEvent networkEvent = _server.Poll();
                     while (networkEvent.Type != NetworkEventType.Nothing)
                     {
@@ -99,6 +101,12 @@ namespace Clunker
                                 _newConnections.Add(networkEvent.Connection);
                                 break;
                             case NetworkEventType.Data:
+                                if (!logged)
+                                {
+                                    //Console.WriteLine($"Server:Networking:RecievedMessages:Timing: {messageTimer.Elapsed.TotalMilliseconds}");
+                                    messageTimer.Restart();
+                                    logged = true;
+                                }
                                 MessageRecieved(networkEvent.Data);
                                 break;
                         }
@@ -109,7 +117,7 @@ namespace Clunker
                     Scene.Update(frameTime);
 
                     _timeSinceUpdate += (float)frameTime;
-                    if (_timeSinceUpdate > 0.05f)
+                    if (_timeSinceUpdate > 0.03f)
                     {
                         var serverUpdate = new ServerSystemUpdate()
                         {
