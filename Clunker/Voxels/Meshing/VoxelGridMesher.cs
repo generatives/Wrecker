@@ -153,10 +153,10 @@ namespace Clunker.Voxels.Meshing
             indices.Add((ushort)(vertices.Count + 1));
             indices.Add((ushort)(vertices.Count + 2));
             indices.Add((ushort)(vertices.Count + 3));
-            vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0, 128)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0, 0)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128, 0)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128, 128)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0.5f, 128.5f)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0.5f, 0.5f)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(128.5f, 0.5f)) / imageSize, quad.Normal));
+            vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128.5f, 128.5f)) / imageSize, quad.Normal));
 
             var occlusionSide = AmbientOcclusionTable[(int)side];
             foreach(var cornerOffsets in occlusionSide)

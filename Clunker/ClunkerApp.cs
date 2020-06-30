@@ -29,6 +29,9 @@ namespace Clunker
         private bool _windowResized;
         public GraphicsDevice GraphicsDevice { get; private set; }
         public CommandList CommandList { get; private set; }
+        private Texture _mainSceneColourTexture;
+        private Texture _mainSceneDepthTexture;
+        public Framebuffer MainSceneFramebuffer { get; private set; }
 
         private EntitySet _cameras;
         public Entity CameraEntity => _cameras.GetEntities().ToArray().FirstOrDefault();
@@ -61,9 +64,12 @@ namespace Clunker
                 _window.Resized += () => _windowResized = true;
                 GraphicsDevice = VeldridStartup.CreateGraphicsDevice(_window, graphicsDeviceOptions, GraphicsBackend.Vulkan);
                 CommandList = GraphicsDevice.ResourceFactory.CreateCommandList();
-                var imGuiRenderer = new ImGuiRenderer(GraphicsDevice, GraphicsDevice.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
+
+                CreateFramebuffer();
 
                 Initialize();
+
+                var imGuiRenderer = new ImGuiRenderer(GraphicsDevice, MainSceneFramebuffer.OutputDescription, _window.Width, _window.Height);
 
                 _windowResized = true;
 
@@ -90,8 +96,8 @@ namespace Clunker
                         _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
                             0.90f,
                             (float)_window.Width / _window.Height,
-                            0.05f,
-                            2048f);
+                            10f,
+                            256f);
                         if (GraphicsDevice.IsClipSpaceYInverted)
                         {
                             _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);
@@ -111,8 +117,7 @@ namespace Clunker
                     Tick?.Invoke();
 
                     CommandList.Begin();
-                    CommandList.SetFramebuffer(GraphicsDevice.MainSwapchain.Framebuffer);
-                    //commandList.ClearColorTarget(0, new RgbaFloat(25f / 255, 25f / 255, 112f / 255, 1.0f));
+                    CommandList.SetFramebuffer(MainSceneFramebuffer);
                     CommandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
                     CommandList.ClearDepthStencil(1f);
 
@@ -130,6 +135,11 @@ namespace Clunker
 
                     imGuiRenderer.Render(GraphicsDevice, CommandList);
 
+                    if (_mainSceneColourTexture != null && _mainSceneColourTexture.SampleCount != TextureSampleCount.Count1)
+                    {
+                        CommandList.ResolveTexture(_mainSceneColourTexture, GraphicsDevice.MainSwapchain.Framebuffer.ColorTargets.First().Target);
+                    }
+
                     CommandList.End();
                     GraphicsDevice.SubmitCommands(CommandList);
                     GraphicsDevice.SwapBuffers(GraphicsDevice.MainSwapchain);
@@ -138,6 +148,45 @@ namespace Clunker
                     Resources.Update();
                 }
             }, TaskCreationOptions.LongRunning);
+        }
+
+        private void CreateFramebuffer()
+        {
+            var factory = GraphicsDevice.ResourceFactory;
+
+            //GraphicsDevice.GetPixelFormatSupport(
+            //    PixelFormat.R16_G16_B16_A16_Float,
+            //    TextureType.Texture2D,
+            //    TextureUsage.RenderTarget,
+            //    out PixelFormatProperties properties);
+
+            //TextureSampleCount sampleCount = TextureSampleCount.Count8;
+            //while (!properties.IsSampleCountSupported(sampleCount))
+            //{
+            //    sampleCount = sampleCount - 1;
+            //}
+
+            //TextureDescription mainColorDesc = TextureDescription.Texture2D(
+            //    GraphicsDevice.SwapchainFramebuffer.Width,
+            //    GraphicsDevice.SwapchainFramebuffer.Height,
+            //    1,
+            //    1,
+            //    PixelFormat.R16_G16_B16_A16_Float,
+            //    TextureUsage.RenderTarget | TextureUsage.Sampled,
+            //    sampleCount);
+
+            //_mainSceneColourTexture = factory.CreateTexture(ref mainColorDesc);
+            //_mainSceneDepthTexture = factory.CreateTexture(TextureDescription.Texture2D(
+            //    GraphicsDevice.SwapchainFramebuffer.Width,
+            //    GraphicsDevice.SwapchainFramebuffer.Height,
+            //    1,
+            //    1,
+            //    PixelFormat.R32_Float,
+            //    TextureUsage.DepthStencil,
+            //    sampleCount));
+            //MainSceneFramebuffer = factory.CreateFramebuffer(new FramebufferDescription(_mainSceneDepthTexture, _mainSceneColourTexture));
+
+            MainSceneFramebuffer = GraphicsDevice.SwapchainFramebuffer;
         }
     }
 }

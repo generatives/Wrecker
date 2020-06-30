@@ -107,10 +107,10 @@ namespace ClunkerECSDemo
             materialInputLayouts.VertexLayouts["Lighting"] = new VertexLayoutDescription(
                     new VertexElementDescription("Light", VertexElementSemantic.Color, VertexElementFormat.Float1));
 
-            var mesh3dMaterial = new Material(GraphicsDevice, Resources.LoadText("Shaders\\Mesh.vs"), Resources.LoadText("Shaders\\Mesh.fg"),
+            var mesh3dMaterial = new Material(GraphicsDevice, MainSceneFramebuffer, Resources.LoadText("Shaders\\Mesh.vs"), Resources.LoadText("Shaders\\Mesh.fg"),
                 new string[] { "Model" }, new string[] { "SceneInputs", "WorldTransform", "Texture" }, materialInputLayouts);
 
-            var lightMeshMaterial = new Material(GraphicsDevice, Resources.LoadText("Shaders\\LightMesh.vs"), Resources.LoadText("Shaders\\LightMesh.fg"),
+            var lightMeshMaterial = new Material(GraphicsDevice, MainSceneFramebuffer, Resources.LoadText("Shaders\\LightMesh.vs"), Resources.LoadText("Shaders\\LightMesh.fg"),
                 new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs" }, materialInputLayouts);
 
             var voxelTexturesResource = Resources.LoadImage("Textures\\spritesheet_tiles.png");
@@ -142,7 +142,7 @@ namespace ClunkerECSDemo
             var ny = Image.Load("Assets\\Textures\\cloudtop_dn.png");
             var pz = Image.Load("Assets\\Textures\\cloudtop_bk.png");
             var nz = Image.Load("Assets\\Textures\\cloudtop_ft.png");
-            Scene.RendererSystems.Add(new SkyboxRenderer(GraphicsDevice, px, nx, py, ny, pz, nz));
+            Scene.RendererSystems.Add(new SkyboxRenderer(GraphicsDevice, MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
             Scene.RendererSystems.Add(new MeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));
             Scene.RendererSystems.Add(new LightMeshGeometryRenderer(GraphicsDevice, materialInputLayouts, Scene.World));

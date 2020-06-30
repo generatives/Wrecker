@@ -30,7 +30,7 @@ namespace Clunker.Graphics
 
         private ImageSharpCubemapTexture _skyboxTexture;
 
-        public SkyboxRenderer(GraphicsDevice device, Image<Rgba32> positiveXImage, Image<Rgba32> negativeXImage,
+        public SkyboxRenderer(GraphicsDevice device, Framebuffer target, Image<Rgba32> positiveXImage, Image<Rgba32> negativeXImage,
             Image<Rgba32> positiveYImage, Image<Rgba32> negativeYImage,
             Image<Rgba32> positiveZImage, Image<Rgba32> negativeZImage)
         {
@@ -72,7 +72,7 @@ namespace Clunker.Graphics
                         new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(SkyboxShader.VertexCode), "main"),
                         new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(SkyboxShader.FragmentCode), "main"))),
                 new ResourceLayout[] { _layout },
-                device.SwapchainFramebuffer.OutputDescription);
+                target.OutputDescription);
 
             _pipeline = factory.CreateGraphicsPipeline(ref pd);
 

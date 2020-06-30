@@ -32,7 +32,7 @@ namespace Clunker.Graphics
             device.UpdateBuffer(TextureColourBuffer, 0, ref colour);
 
             TextureView = factory.CreateTextureView(new TextureViewDescription(deviceTexture));
-            ResourceSet = factory.CreateResourceSet(new ResourceSetDescription(layout, TextureView, device.Aniso4xSampler, TextureColourBuffer));
+            ResourceSet = factory.CreateResourceSet(new ResourceSetDescription(layout, TextureView, device.PointSampler, TextureColourBuffer));
         }
     }
 }

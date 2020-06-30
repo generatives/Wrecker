@@ -13,6 +13,7 @@ namespace Clunker.Graphics
     public class Material
     {
         private GraphicsDevice _device;
+        private Framebuffer _target;
         private MaterialInputLayouts _registry;
 
         private Resource<string> _vertexShader;
@@ -22,9 +23,10 @@ namespace Clunker.Graphics
         private string[] _resourceInputs;
         private Pipeline _pipeline;
 
-        public Material(GraphicsDevice device, Resource<string> vertexShader, Resource<string> fragShader, string[] vertexInputs, string[] resourceInputs, MaterialInputLayouts registry)
+        public Material(GraphicsDevice device, Framebuffer target, Resource<string> vertexShader, Resource<string> fragShader, string[] vertexInputs, string[] resourceInputs, MaterialInputLayouts registry)
         {
             _device = device;
+            _target = target;
             _registry = registry;
 
             _vertexShader = vertexShader;
@@ -72,7 +74,7 @@ namespace Clunker.Graphics
                     PrimitiveTopology.TriangleList,
                     shaderSet,
                     _resourceInputs.Select(l => _registry.ResourceLayouts[l]).ToArray(),
-                    _device.MainSwapchain.Framebuffer.OutputDescription));
+                    _target.OutputDescription));
             }
             catch
             {
