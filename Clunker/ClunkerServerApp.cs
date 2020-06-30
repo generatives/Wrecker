@@ -78,6 +78,11 @@ namespace Clunker
 
                 Started?.Invoke();
 
+                foreach (var listener in MessageListeners)
+                {
+                    Scene.World.Subscribe(listener);
+                }
+
                 var frameWatch = Stopwatch.StartNew();
 
                 while(true)

@@ -116,6 +116,11 @@ namespace Clunker
 
                 Started?.Invoke();
 
+                foreach(var listener in MessageListeners)
+                {
+                    Scene.World.Subscribe(listener);
+                }
+
                 _client.Start();
                 _client.Connect(new IPEndPoint(IPAddress.Loopback, 5674));
 
@@ -204,14 +209,17 @@ namespace Clunker
                     CommandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
                     CommandList.ClearDepthStencil(1f);
 
-                    var context = new RenderingContext()
+                    if(CameraEntity.IsAlive && CameraTransform != null)
                     {
-                        GraphicsDevice = GraphicsDevice,
-                        CommandList = CommandList,
-                        CameraTransform = CameraTransform,
-                        ProjectionMatrix = _projectionMatrix
-                    };
-                    Scene.Render(context);
+                        var context = new RenderingContext()
+                        {
+                            GraphicsDevice = GraphicsDevice,
+                            CommandList = CommandList,
+                            CameraTransform = CameraTransform,
+                            ProjectionMatrix = _projectionMatrix
+                        };
+                        Scene.Render(context);
+                    }
 
                     var displaySize = ImGui.GetIO().DisplaySize;
                     ImGui.GetBackgroundDrawList().AddCircleFilled(displaySize / 2, 2, ImGui.GetColorU32(new Vector4(1, 1, 1, 1)));

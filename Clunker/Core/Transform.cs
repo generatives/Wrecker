@@ -26,7 +26,7 @@ namespace Clunker.Core
                 }
                 else
                 {
-                    Parent = null;
+                    _parent = null;
                 }
             }
         }

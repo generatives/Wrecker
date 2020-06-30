@@ -68,7 +68,7 @@ namespace Clunker.WorldSpace
 
             if (anyExist)
             {
-                entity.Set(voxelSpaceData);
+                entityRecord.Set(voxelSpaceData);
             }
         }
         public void GenerateSpheres(VoxelGrid voxels, Random random)

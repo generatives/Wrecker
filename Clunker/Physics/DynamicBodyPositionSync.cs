@@ -26,6 +26,7 @@ namespace Clunker.Physics
 
                 var worldBodyOffset = Vector3.Transform(body.BodyOffset, transform.WorldOrientation);
                 transform.WorldPosition = body.Body.Pose.Position - worldBodyOffset;
+                entity.Set(transform);
             }
         }
     }

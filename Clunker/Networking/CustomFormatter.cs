@@ -42,6 +42,7 @@ namespace Clunker.Networking
         static readonly Dictionary<Type, object> formatterMap = new Dictionary<Type, object>()
         {
             {typeof(Vector2), new Vector2Formatter()},
+            {typeof(Vector3), new Vector3Formatter()},
             {typeof(RgbaFloat), new RgbaFloatFormatter()},
             {typeof(Quaternion), new QuaternionFormatter()}
             // add more your own custom serializers.

@@ -35,6 +35,7 @@ namespace Clunker.Physics.Character
             var characterBody = new BodyReference(characterInput.BodyHandle, _characters.Simulation.Bodies);
 
             transform.WorldPosition = characterBody.Pose.Position + new Vector3(0, characterInput.Shape.HalfLength + characterInput.Shape.Radius * 0.5f, 0);
+            entity.Set(transform);
 
             // Set new character goals
             Vector2 movementDirection = default;

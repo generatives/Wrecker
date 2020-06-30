@@ -71,7 +71,7 @@ namespace Clunker.Core
                 var transform = entity.Get<Transform>();
                 ref var netEntity = ref entity.Get<NetworkedEntity>();
 
-                var parentId = (transform.Parent.Self.IsAlive && transform.Parent.Self.Has<NetworkedEntity>()) ? transform.Parent.Self.Get<NetworkedEntity>().Id : (Guid?)null;
+                var parentId = (transform.Parent != null && transform.Parent.Self.IsAlive && transform.Parent.Self.Has<NetworkedEntity>()) ? transform.Parent.Self.Get<NetworkedEntity>().Id : (Guid?)null;
 
                 var message = new EntityMessage<TransformMessage>()
                 {

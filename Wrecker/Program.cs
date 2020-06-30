@@ -101,7 +101,7 @@ namespace ClunkerECSDemo
             var networkedEntities = new NetworkedEntities(_server.Scene.World);
             var physicsSystem = new PhysicsSystem();
 
-            var parallelRunner = new DefaultParallelRunner(1);
+            var parallelRunner = new DefaultParallelRunner(4);
 
             _server.ServerSystems.Add(new EntityExistenceSender(_server.Scene.World));
             _server.ServerSystems.Add(new TransformInitServerSystem(_server.Scene.World));
@@ -114,35 +114,36 @@ namespace ClunkerECSDemo
 
             var voxelTypes = LoadVoxelTypes();
 
-            var player = _client.Scene.World.CreateEntity();
+            var player = _server.Scene.World.CreateEntity();
             var playerTransform = new Transform();
             playerTransform.Position = new Vector3(0, 40, 0);
             player.Set(playerTransform);
             player.Set(new Camera());
+            player.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
 
-            var worldVoxelSpace = _client.Scene.World.CreateEntity();
+            var worldVoxelSpace = _server.Scene.World.CreateEntity();
             worldVoxelSpace.Set(new Transform());
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
-            _server.Scene.LogicSystems.Add(new WorldSpaceLoader((e) => { }, _client.Scene.World, worldVoxelSpace, 5, 2, 32));
-            _server.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_client.Scene, parallelRunner, new ChunkGenerator()));
+            _server.Scene.LogicSystems.Add(new WorldSpaceLoader((e) => { }, _server.Scene.World, worldVoxelSpace, 5, 2, 32));
+            _server.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_server.Scene, parallelRunner, new ChunkGenerator()));
 
-            _server.Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, _client.Scene.World));
+            _server.Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, _server.Scene.World));
 
-            _server.Scene.LogicSystems.Add(new PhysicsBlockFinder(_client.Scene.World, parallelRunner));
+            _server.Scene.LogicSystems.Add(new PhysicsBlockFinder(_server.Scene.World, parallelRunner));
 
             _server.Scene.LogicSystems.Add(new ParallelSystem<double>(parallelRunner,
                 new SequentialSystem<double>(
-                    new VoxelSpaceChangePropogator(_client.Scene.World),
-                    new VoxelStaticBodyGenerator(physicsSystem, _client.Scene.World),
-                    new VoxelSpaceDynamicBodyGenerator(physicsSystem, _client.Scene.World),
+                    new VoxelSpaceChangePropogator(_server.Scene.World),
+                    new VoxelStaticBodyGenerator(physicsSystem, _server.Scene.World),
+                    new VoxelSpaceDynamicBodyGenerator(physicsSystem, _server.Scene.World),
                     physicsSystem,
-                    new DynamicBodyPositionSync(_client.Scene.World)),
-                new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _client.Scene)));
+                    new DynamicBodyPositionSync(_server.Scene.World)),
+                new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _server.Scene)));
 
-            _server.Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, _client.Scene.World));
+            _server.Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, _server.Scene.World));
 
-            _server.Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(_client.Scene.World));
+            _server.Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(_server.Scene.World));
         }
 
         private static void _client_Started()
@@ -208,7 +209,7 @@ namespace ClunkerECSDemo
                 e.Set(voxelTexture);
             };
 
-            var parallelRunner = new DefaultParallelRunner(1);
+            var parallelRunner = new DefaultParallelRunner(4);
 
             var px = Image.Load("Assets\\Textures\\cloudtop_rt.png");
             var nx = Image.Load("Assets\\Textures\\cloudtop_lf.png");
@@ -254,6 +255,8 @@ namespace ClunkerECSDemo
 
             _client.Scene.LogicSystems.Add(new MeshGeometryCleaner(_client.Scene.World));
             _client.Scene.LogicSystems.Add(new LightVertexCleaner(_client.Scene.World));
+
+            _client.Scene.LogicSystems.Add(new TransformLerper(networkedEntities, _client.Scene.World));
 
             _client.Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(_client.Scene.World));
         }

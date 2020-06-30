@@ -105,7 +105,7 @@ namespace Clunker.Voxels.Meshing
                 BoundingRadiusOffset = centerOffset
             };
             var entityRecord = _scene.CommandRecorder.Record(entity);
-            entity.Set(mesh);
+            entityRecord.Set(mesh);
 
             lightBuffer.Update(lights.ToArray());
             lightVertexResources.LightLevels = lightBuffer;
