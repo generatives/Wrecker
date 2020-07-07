@@ -43,19 +43,26 @@ namespace Clunker.Voxels.Space
             }
             set
             {
-                _members[memberIndex] = value;
-                var voxelGrid = value.Get<VoxelGrid>();
-
-                foreach(var (side, offset, inverseSide) in GeometricIterators.SixNeighbourSides)
+                if(value == null)
                 {
-                    var otherIndex = memberIndex + offset;
-                    if(_members.ContainsKey(otherIndex))
+                    Remove(memberIndex);
+                }
+                else
+                {
+                    _members[memberIndex] = value;
+                    var voxelGrid = value.Get<VoxelGrid>();
+
+                    foreach (var (side, offset, inverseSide) in GeometricIterators.SixNeighbourSides)
                     {
-                        var member = _members[otherIndex];
-                        var otherVoxels = member.Get<VoxelGrid>();
-                        voxelGrid.NeighborGrids[(int)side] = otherVoxels;
-                        otherVoxels.NeighborGrids[(int)inverseSide] = voxelGrid;
-                        member.NotifyChanged<VoxelGrid>();
+                        var otherIndex = memberIndex + offset;
+                        if (_members.ContainsKey(otherIndex))
+                        {
+                            var member = _members[otherIndex];
+                            var otherVoxels = member.Get<VoxelGrid>();
+                            voxelGrid.NeighborGrids[(int)side] = otherVoxels;
+                            otherVoxels.NeighborGrids[(int)inverseSide] = voxelGrid;
+                            member.NotifyChanged<VoxelGrid>();
+                        }
                     }
                 }
             }
@@ -68,7 +75,23 @@ namespace Clunker.Voxels.Space
 
         public void Remove(Vector3i memberIndex)
         {
-            _members.Remove(memberIndex);
+            if(_members.ContainsKey(memberIndex))
+            {
+                foreach (var (side, offset, inverseSide) in GeometricIterators.SixNeighbourSides)
+                {
+                    var otherIndex = memberIndex + offset;
+                    if (_members.ContainsKey(otherIndex))
+                    {
+                        var otherMember = _members[otherIndex];
+                        var otherVoxels = otherMember.Get<VoxelGrid>();
+                        otherVoxels.NeighborGrids[(int)inverseSide] = null;
+                        otherMember.NotifyChanged<VoxelGrid>();
+                    }
+                }
+
+                _members.Remove(memberIndex);
+            }
+
             foreach (var offset in GeometricIterators.SixNeighbours)
             {
                 var otherIndex = memberIndex + offset;

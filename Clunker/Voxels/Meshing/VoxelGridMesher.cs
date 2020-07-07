@@ -159,24 +159,31 @@ namespace Clunker.Voxels.Meshing
             vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(128.5f, 128.5f)) / imageSize, quad.Normal));
 
             var occlusionSide = AmbientOcclusionTable[(int)side];
-            foreach(var cornerOffsets in occlusionSide)
+            for(int i = 0; i < occlusionSide.Length; i++)
             {
-                var averageLight = cornerOffsets.Select(offset =>
-                {
-                    var lightIndex = voxelIndex + offset;
-                    if (voxels.ContainsIndex(lightIndex))
-                    {
-                        return (float)voxels.GetLight(voxelIndex + offset);
-                    }
-                    else
-                    {
-                        var spaceIndex = voxels.VoxelSpace.GetSpaceIndexFromVoxelIndex(voxels.MemberIndex, lightIndex);
-                        var light = voxels.VoxelSpace.GetLight(spaceIndex);
-                        return light.HasValue ? light.Value : 15;
-                    };
-                }).Average();
+                var cornerOffsets = occlusionSide[i];
+                var side0 = GetLightValue(voxels, voxelIndex + cornerOffsets[0]);
+                var side1 = GetLightValue(voxels, voxelIndex + cornerOffsets[1]);
+                var side2 = GetLightValue(voxels, voxelIndex + cornerOffsets[2]);
+                var side3 = GetLightValue(voxels, voxelIndex + cornerOffsets[3]);
+                var averageLight = (side0 + side1 + side2 + side3) / 4f;
                 lights.Add(averageLight / 15f);
             }
+        }
+
+        private float GetLightValue(VoxelGrid voxels, Vector3i lightIndex)
+        {
+            if (voxels.ContainsIndex(lightIndex))
+            {
+                return (float)voxels.GetLight(lightIndex);
+            }
+            else
+            {
+                var spaceIndex = voxels.VoxelSpace.GetSpaceIndexFromVoxelIndex(voxels.MemberIndex, lightIndex);
+
+                var light = voxels.VoxelSpace.GetLight(spaceIndex);
+                return light.HasValue ? light.Value : 15;
+            };
         }
 
         private Vector2 GetTexCoords(VoxelType type, VoxelSide orientation, VoxelSide side)

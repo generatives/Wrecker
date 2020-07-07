@@ -170,7 +170,7 @@ namespace ClunkerECSDemo
             }));
 
             Scene.LogicSystems.Add(new SimpleCameraMover(player, physicsSystem, Scene.World));
-            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 5, 2, 32));
+            Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, Scene.World, playerTransform, worldVoxelSpace, 10, 3, 32));
             Scene.LogicSystems.Add(new ChunkGeneratorSystem(Scene, parallelRunner, new ChunkGenerator()));
 
             Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem(setVoxelRender, Scene.World));

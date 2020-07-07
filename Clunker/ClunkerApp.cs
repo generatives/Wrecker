@@ -96,8 +96,8 @@ namespace Clunker
                         _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
                             0.90f,
                             (float)_window.Width / _window.Height,
-                            0.1f,
-                            256f);
+                            0.4f,
+                            512f);
                         if (GraphicsDevice.IsClipSpaceYInverted)
                         {
                             _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);

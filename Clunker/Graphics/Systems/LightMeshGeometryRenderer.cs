@@ -32,7 +32,7 @@ namespace Clunker.Graphics
         public float AmbientLightStrength { get; set; } = 0.8f;
         public RgbaFloat DiffuseLightColour { get; set; } = RgbaFloat.White;
         public Vector3 DiffuseLightDirection { get; set; } = new Vector3(-1, 8, 4);
-        public float ViewDistance { get; set; } = 720f;
+        public float ViewDistance { get; set; } = 512f;
         public float BlurLength { get; set; } = 20f;
 
         public LightMeshGeometryRenderer(GraphicsDevice device, MaterialInputLayouts materialInputLayouts, World world) : base(world.GetEntities()
