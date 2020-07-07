@@ -11,7 +11,7 @@ The engine currently features
 
 See the this video for an up to date demo of what it can do
 
-[![Voxel Engine Demo](http://img.youtube.com/vi/XoTpwru-RGg/0.jpg)](https://youtu.be/XoTpwru-RGg "Voxel Engine Demo")
+[![Voxel Engine Demo](https://github.com/generatives/Wrecker/blob/master/docs/DemoVideoScreen.png)](https://youtu.be/kdOAvRUV3as "Voxel Engine Demo")
 
 See this blog post for more info on how it is built and some older videos of the engine in action!
 https://declaneaston.ca/2020/02/09/voxel-engine/
