@@ -9,9 +9,8 @@ The engine currently features
 * Sunlight propogation and lighting
 * Voxel grids as physics entities which can move throughout the world
 
-See the this video for an up to date demo of what it can do
-
+This video demonstrates the engine's dynamic voxel entities
 [![Voxel Engine Demo](https://github.com/generatives/Wrecker/blob/master/docs/DemoVideoScreen.png)](https://youtu.be/kdOAvRUV3as "Voxel Engine Demo")
 
-See this blog post for more info on how it is built and some older videos of the engine in action!
-https://declaneaston.ca/2020/02/09/voxel-engine/
+This video demonstrates the voxel editing and sunlight propogation
+[![Editing and Sunlight](https://github.com/generatives/Wrecker/blob/master/docs/SunlighVideoScreen.png)](https://youtu.be/YUSpiXqSa2c "Editing and Sunlight")
