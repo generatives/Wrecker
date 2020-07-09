@@ -173,8 +173,6 @@ namespace Clunker.Voxels.Meshing
 
         private float GetLightValue(VoxelGrid voxels, Vector3i lightIndex)
         {
-            return 15f;
-
             if (voxels.ContainsIndex(lightIndex))
             {
                 return (float)voxels.GetLight(lightIndex);

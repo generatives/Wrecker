@@ -131,7 +131,7 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new Transform());
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
-            _server.Scene.LogicSystems.Add(new WorldSpaceLoader((e) => { }, _server.Scene.World, worldVoxelSpace, 5, 2, 32));
+            _server.Scene.LogicSystems.Add(new WorldSpaceLoader((e) => { }, _server.Scene.World, worldVoxelSpace, 1, 1, 32));
             _server.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_server.Scene, parallelRunner, new ChunkGenerator()));
 
             _server.Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, _server.Scene.World));
@@ -269,7 +269,7 @@ namespace ClunkerECSDemo
             //_client.Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, _client.Scene.World, worldVoxelSpace, 10, 3, 32));
             //_client.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_client.Scene, parallelRunner, new ChunkGenerator()));
 
-            //_client.Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _client.Scene));
+            _client.Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _client.Scene));
 
             _client.Scene.LogicSystems.Add(new VoxelGridMesher(_client.Scene, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
 

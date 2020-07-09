@@ -109,6 +109,7 @@ namespace Clunker.Voxels.Space
                 var voxelGrid = new VoxelGrid(message.VoxelSize, message.GridSize, voxelSpace, message.MemberIndex, message.Voxels);
                 _setVoxelRendering(entity);
                 entity.Set(voxelGrid);
+                voxelSpace[message.MemberIndex] = entity;
             }
             else
             {
