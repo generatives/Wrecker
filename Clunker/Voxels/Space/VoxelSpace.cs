@@ -14,8 +14,8 @@ namespace Clunker.Voxels.Space
     [ClunkerComponent]
     public class VoxelSpace : IEnumerable<KeyValuePair<Vector3i, Entity>>
     {
-        public int GridSize { get; set; }
-        public float VoxelSize { get; set; }
+        public int GridSize { get; private set; }
+        public float VoxelSize { get; private set; }
         private Dictionary<Vector3i, Entity> _members { get; set; }
         public Entity Self { get; private set; }
 

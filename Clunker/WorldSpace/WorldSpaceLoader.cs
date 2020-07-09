@@ -17,6 +17,7 @@ using Clunker.Voxels.Lighting;
 using Clunker.Voxels.Meshing;
 using Clunker.Editor.Utilities;
 using Clunker.Graphics;
+using Clunker.Networking;
 
 namespace Clunker.WorldSpace
 {
@@ -89,6 +90,7 @@ namespace Clunker.WorldSpace
                                 if (!_voxelSpace.ContainsMember(coordinates))
                                 {
                                     var chunk = _world.CreateEntity();
+                                    chunk.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
                                     chunk.Set(new Transform()
                                     {
                                         Position = new Vector3(coordinates.X * _chunkLength * 1, coordinates.Y * _chunkLength * 1, coordinates.Z * _chunkLength * 1)
@@ -97,7 +99,6 @@ namespace Clunker.WorldSpace
                                     chunk.Set(new Chunk());
                                     chunk.Set(new VoxelStaticBody());
                                     chunk.Set(new PhysicsBlocks());
-                                    chunk.Set(new LightVertexResources());
                                     chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpace, coordinates));
                                     _voxelSpace[coordinates] = chunk;
                                 }

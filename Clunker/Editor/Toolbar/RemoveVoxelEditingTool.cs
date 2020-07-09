@@ -30,7 +30,6 @@ namespace Clunker.Editor.Toolbar
             _displaySpaceEntity.Set(spaceTransform);
 
             _displayGridEntity = world.CreateEntity();
-            _displayGridEntity.Set(new LightVertexResources());
             _displayGridEntity.Set(new VoxelGrid(1, 1, voxelSpace, Vector3i.Zero));
             voxelSpace[Vector3i.Zero] = _displayGridEntity;
             setVoxelRender(_displayGridEntity);

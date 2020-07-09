@@ -45,8 +45,8 @@ namespace ClunkerECSDemo
     class Program
     {
         private static byte _messageId = 0;
-        private static Dictionary<int, Action<MemoryStream, World>> _recievers = new Dictionary<int, Action<MemoryStream, World>>();
-        private static Dictionary<Type, Action<object, MemoryStream>> _serializers = new Dictionary<Type, Action<object, MemoryStream>>();
+        private static Dictionary<int, Action<Stream, World>> _recievers = new Dictionary<int, Action<Stream, World>>();
+        private static Dictionary<Type, Action<object, Stream>> _serializers = new Dictionary<Type, Action<object, Stream>>();
         private static MessagePackSerializerOptions _serializerOptions;
 
         private static ClunkerClientApp _client;
@@ -82,6 +82,8 @@ namespace ClunkerECSDemo
             Message<EntityMessage<SimpleCameraMoverMessage>>();
             Message<EntityMessage<InputForceApplierMessage>>();
             Message<EntityMessage<CameraMessage>>();
+            Message<EntityMessage<VoxelSpaceMessage>>();
+            Message<EntityMessage<VoxelGridMessage>>();
 
             var clientSystems = new List<ISystem<ClientSystemUpdate>>();
 
@@ -105,6 +107,10 @@ namespace ClunkerECSDemo
             _server.ServerSystems.Add(new EntityExistenceSender(_server.Scene.World));
             _server.ServerSystems.Add(new TransformInitServerSystem(_server.Scene.World));
             _server.ServerSystems.Add(new TransformChangeServerSystem(_server.Scene.World));
+            _server.ServerSystems.Add(new VoxelSpaceInitServerSystem(_server.Scene.World));
+            _server.ServerSystems.Add(new VoxelSpaceAddedServerSystem(_server.Scene.World));
+            _server.ServerSystems.Add(new VoxelGridInitServerSystem(_server.Scene.World));
+            _server.ServerSystems.Add(new VoxelGridChangeServerSystem(_server.Scene.World));
             _server.ServerSystems.Add(new CameraServerSystem(_server.Scene.World));
 
             _server.MessageListeners.Add(new TransformMessageApplier(networkedEntities));
@@ -121,6 +127,7 @@ namespace ClunkerECSDemo
             player.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
 
             var worldVoxelSpace = _server.Scene.World.CreateEntity();
+            worldVoxelSpace.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
             worldVoxelSpace.Set(new Transform());
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
@@ -131,14 +138,14 @@ namespace ClunkerECSDemo
 
             _server.Scene.LogicSystems.Add(new PhysicsBlockFinder(_server.Scene.World, parallelRunner));
 
-            _server.Scene.LogicSystems.Add(new ParallelSystem<double>(parallelRunner,
+            _server.Scene.LogicSystems.Add(/*new ParallelSystem<double>(parallelRunner,*/
                 new SequentialSystem<double>(
                     new VoxelSpaceChangePropogator(_server.Scene.World),
                     new VoxelStaticBodyGenerator(physicsSystem, _server.Scene.World),
                     new VoxelSpaceDynamicBodyGenerator(physicsSystem, _server.Scene.World),
                     physicsSystem,
-                    new DynamicBodyPositionSync(_server.Scene.World)),
-                new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _server.Scene)));
+                    new DynamicBodyPositionSync(_server.Scene.World)
+                /*new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _server.Scene)*/));
 
             _server.Scene.LogicSystems.Add(new CharacterInputSystem(physicsSystem, _server.Scene.World));
 
@@ -147,16 +154,6 @@ namespace ClunkerECSDemo
 
         private static void _client_Started()
         {
-            var networkedEntities = new NetworkedEntities(_client.Scene.World);
-
-            _client.MessageListeners.Add(new EntityAdder(_client.Scene.World));
-            _client.MessageListeners.Add(new TransformMessageApplier(networkedEntities));
-            _client.MessageListeners.Add(new CameraMessageApplier(networkedEntities));
-            _client.MessageListeners.Add(new EntityRemover(networkedEntities));
-
-            _client.ClientSystems.Add(new InputForceApplierInputSystem(_client.Scene.World));
-            _client.ClientSystems.Add(new SimpleCameraMoverInputSystem(_client.Scene.World));
-
             var factory = _client.GraphicsDevice.ResourceFactory;
 
             var materialInputLayouts = new MaterialInputLayouts();
@@ -204,9 +201,22 @@ namespace ClunkerECSDemo
 
             Action<Entity> setVoxelRender = (Entity e) =>
             {
+                e.Set(new LightVertexResources());
                 e.Set(lightMeshMaterial);
                 e.Set(voxelTexture);
             };
+
+            var networkedEntities = new NetworkedEntities(_client.Scene.World);
+
+            _client.MessageListeners.Add(new EntityAdder(_client.Scene.World));
+            _client.MessageListeners.Add(new TransformMessageApplier(networkedEntities));
+            _client.MessageListeners.Add(new CameraMessageApplier(networkedEntities));
+            _client.MessageListeners.Add(new VoxelSpaceMessageApplier(networkedEntities));
+            _client.MessageListeners.Add(new VoxelGridMessageApplier(setVoxelRender, networkedEntities));
+            _client.MessageListeners.Add(new EntityRemover(networkedEntities));
+
+            _client.ClientSystems.Add(new InputForceApplierInputSystem(_client.Scene.World));
+            _client.ClientSystems.Add(new SimpleCameraMoverInputSystem(_client.Scene.World));
 
             var parallelRunner = new DefaultParallelRunner(4);
 
@@ -256,10 +266,10 @@ namespace ClunkerECSDemo
                 new MetricGraph()
             }));
 
-            _client.Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, _client.Scene.World, worldVoxelSpace, 10, 3, 32));
-            _client.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_client.Scene, parallelRunner, new ChunkGenerator()));
+            //_client.Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, _client.Scene.World, worldVoxelSpace, 10, 3, 32));
+            //_client.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_client.Scene, parallelRunner, new ChunkGenerator()));
 
-            _client.Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _client.Scene));
+            //_client.Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _client.Scene));
 
             _client.Scene.LogicSystems.Add(new VoxelGridMesher(_client.Scene, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
 
@@ -334,14 +344,16 @@ namespace ClunkerECSDemo
         private static void Message<T>()
         {
             var messageId = _messageId;
-            _recievers[messageId] = (MemoryStream stream, World world) =>
+            _recievers[messageId] = (Stream stream, World world) =>
             {
                 var message = MessagePackSerializer.Deserialize<T>(stream, _serializerOptions);
+                Console.WriteLine($"Recieved: {message}");
                 world.Publish(in message);
             };
-            _serializers[typeof(T)] = (object message, MemoryStream stream) =>
+            _serializers[typeof(T)] = (object message, Stream stream) =>
             {
                 stream.WriteByte(messageId);
+                Console.WriteLine($"Serialized: {message}");
                 MessagePackSerializer.Serialize(stream, (T)message, _serializerOptions);
             };
             _messageId++;

@@ -23,6 +23,7 @@ using Ruffles.Core;
 using Ruffles.Connections;
 using DefaultEcs.System;
 using System.Net;
+using System.IO.Compression;
 
 namespace Clunker
 {
@@ -68,12 +69,12 @@ namespace Clunker
         private ulong _messagesSent;
         private Stopwatch _messageTimer;
 
-        private Dictionary<int, Action<MemoryStream, World>> _messageRecievers;
-        private Dictionary<Type, Action<object, MemoryStream>> _messageSerializer;
+        private Dictionary<int, Action<Stream, World>> _messageRecievers;
+        private Dictionary<Type, Action<object, Stream>> _messageSerializer;
         public ResourceLoader Resources { get; private set; }
 
         public ClunkerClientApp(ResourceLoader resourceLoader, Scene initialScene,
-            Dictionary<int, Action<MemoryStream, World>> recievers, Dictionary<Type, Action<object, MemoryStream>> serializers)
+            Dictionary<int, Action<Stream, World>> recievers, Dictionary<Type, Action<object, Stream>> serializers)
         {
             Resources = resourceLoader;
             Scene = initialScene;

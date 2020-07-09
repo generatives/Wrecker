@@ -57,7 +57,6 @@ namespace Clunker.Voxels.Space
                             _setVoxelRender(voxelGridObj);
                             voxelGridObj.Set(new PhysicsBlocks());
                             voxelGridObj.Set(new VoxelSpaceExpander());
-                            voxelGridObj.Set(new LightVertexResources());
                             voxelGridObj.Set(new VoxelGrid(space.GridSize, space.VoxelSize, space, index));
 
                             space[index] = voxelGridObj;

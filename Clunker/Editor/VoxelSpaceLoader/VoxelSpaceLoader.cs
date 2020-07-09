@@ -124,7 +124,6 @@ namespace Clunker.Editor.VoxelSpaceLoader
                 _setVoxelRender(gridEntity);
                 gridEntity.Set(new PhysicsBlocks());
                 gridEntity.Set(new VoxelSpaceExpander());
-                gridEntity.Set(new LightVertexResources());
                 gridEntity.Set(new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, space, index, voxels));
 
                 space[index] = gridEntity;
