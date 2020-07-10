@@ -125,9 +125,9 @@ namespace Clunker
                             var serverUpdate = new ServerSystemUpdate()
                             {
                                 DeltaTime = _timeSinceUpdate,
-                                Messages = new MessageQueues(),
+                                Messages = new List<object>(),
                                 NewClients = _newConnections.Any(),
-                                NewClientMessages = new MessageQueues()
+                                NewClientMessages = new List<object>()
                             };
 
                             foreach (var system in ServerSystems)
@@ -137,18 +137,7 @@ namespace Clunker
 
                             if (_newConnections.Any())
                             {
-                                if(serverUpdate.NewClientMessages.GenericQueue.Any())
-                                {
-                                    SerializeMessages(serverUpdate.NewClientMessages.GenericQueue, (newConnectionMessage) =>
-                                    {
-                                        foreach (var conn in _newConnections)
-                                        {
-                                            conn.Send(newConnectionMessage, 4, false, _messagesSent++);
-                                        }
-                                    });
-                                }
-
-                                foreach (var message in serverUpdate.NewClientMessages.VoxelQueue)
+                                foreach(var message in serverUpdate.NewClientMessages)
                                 {
                                     var messages = new List<object>() { message };
                                     SerializeMessages(messages, (newConnectionMessage) =>
@@ -161,27 +150,19 @@ namespace Clunker
                                 }
                             }
 
-                            if (serverUpdate.Messages.GenericQueue.Any())
+                            if (serverUpdate.Messages.Any())
                             {
-                                SerializeMessages(serverUpdate.Messages.GenericQueue, (message) =>
+                                foreach (var message in serverUpdate.Messages)
                                 {
-                                    foreach (var conn in _connections)
+                                    var messages = new List<object>() { message };
+                                    SerializeMessages(messages, (message) =>
                                     {
-                                        conn.Send(message, 4, true, _messagesSent++);
-                                    }
-                                });
-                            }
-
-                            foreach (var message in serverUpdate.Messages.VoxelQueue)
-                            {
-                                var messages = new List<object>() { message };
-                                SerializeMessages(messages, (message) =>
-                                {
-                                    foreach (var conn in _connections)
-                                    {
-                                        conn.Send(message, 4, true, _messagesSent++);
-                                    }
-                                });
+                                        foreach (var conn in _connections)
+                                        {
+                                            conn.Send(message, 4, true, _messagesSent++);
+                                        }
+                                    });
+                                }
                             }
 
                             _connections.AddRange(_newConnections);
