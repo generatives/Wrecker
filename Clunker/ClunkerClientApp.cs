@@ -176,6 +176,7 @@ namespace Clunker
                                     _messageTimer.Restart();
                                     logged = true;
                                 }
+                                Utilties.Logging.Metrics.LogMetric("Client:Networking:RecievedMessages:Size", networkEvent.Data.Count, TimeSpan.FromSeconds(5));
                                 MessageRecieved(networkEvent.Data);
                                 break;
                         }

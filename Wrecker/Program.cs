@@ -131,7 +131,7 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new Transform());
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
-            _server.Scene.LogicSystems.Add(new WorldSpaceLoader((e) => { }, _server.Scene.World, worldVoxelSpace, 1, 1, 32));
+            _server.Scene.LogicSystems.Add(new WorldSpaceLoader((e) => { }, _server.Scene.World, worldVoxelSpace, 10, 2, 32));
             _server.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_server.Scene, parallelRunner, new ChunkGenerator()));
 
             _server.Scene.LogicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, _server.Scene.World));
@@ -266,9 +266,6 @@ namespace ClunkerECSDemo
                 new MetricGraph()
             }));
 
-            //_client.Scene.LogicSystems.Add(new WorldSpaceLoader(setVoxelRender, _client.Scene.World, worldVoxelSpace, 10, 3, 32));
-            //_client.Scene.LogicSystems.Add(new ChunkGeneratorSystem(_client.Scene, parallelRunner, new ChunkGenerator()));
-
             _client.Scene.LogicSystems.Add(new SunLightPropogationSystem(new VoxelTypes(voxelTypes), _client.Scene));
 
             _client.Scene.LogicSystems.Add(new VoxelGridMesher(_client.Scene, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
@@ -279,6 +276,15 @@ namespace ClunkerECSDemo
             _client.Scene.LogicSystems.Add(new TransformLerper(networkedEntities, _client.Scene.World));
 
             _client.Scene.LogicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(_client.Scene.World));
+
+            _client.Scene.World.SubscribeEntityDisposed((in Entity e) =>
+            {
+                if(e.Has<VoxelGrid>())
+                {
+                    var voxelGrid = e.Get<VoxelGrid>();
+                    voxelGrid.VoxelSpace.Remove(voxelGrid.MemberIndex);
+                }
+            });
         }
 
         private static string[] goodVoxelTypes = new string[]
@@ -347,13 +353,13 @@ namespace ClunkerECSDemo
             _recievers[messageId] = (Stream stream, World world) =>
             {
                 var message = MessagePackSerializer.Deserialize<T>(stream, _serializerOptions);
-                Console.WriteLine($"Recieved: {message}");
+                //Console.WriteLine($"Recieved: {message}");
                 world.Publish(in message);
             };
             _serializers[typeof(T)] = (object message, Stream stream) =>
             {
                 stream.WriteByte(messageId);
-                Console.WriteLine($"Serialized: {message}");
+                //Console.WriteLine($"Serialized: {message}");
                 MessagePackSerializer.Serialize(stream, (T)message, _serializerOptions);
             };
             _messageId++;

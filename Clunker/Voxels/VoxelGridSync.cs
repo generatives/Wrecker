@@ -23,7 +23,7 @@ namespace Clunker.Voxels.Space
         [Key(3)]
         public Vector3i MemberIndex;
         [Key(4)]
-        public Voxel[] Voxels;
+        public long[] Voxels;
     }
 
     [With(typeof(NetworkedEntity))]
@@ -50,7 +50,7 @@ namespace Clunker.Voxels.Space
                     VoxelSize = voxelGrid.VoxelSize,
                     VoxelSpaceId = voxelSpaceId,
                     MemberIndex = voxelGrid.MemberIndex,
-                    Voxels = voxelGrid.Voxels
+                    Voxels = LengthEncodedVoxels.FromVoxels(voxelGrid.Voxels)
                 }
             };
 
@@ -83,7 +83,7 @@ namespace Clunker.Voxels.Space
                         VoxelSize = voxelGrid.VoxelSize,
                         VoxelSpaceId = voxelSpaceId,
                         MemberIndex = voxelGrid.MemberIndex,
-                        Voxels = voxelGrid.Voxels
+                        Voxels = LengthEncodedVoxels.FromVoxels(voxelGrid.Voxels)
                     }
                 };
 
@@ -106,7 +106,8 @@ namespace Clunker.Voxels.Space
             if (!entity.Has<VoxelGrid>())
             {
                 var voxelSpace = Entities[message.VoxelSpaceId].Get<VoxelSpace>();
-                var voxelGrid = new VoxelGrid(message.VoxelSize, message.GridSize, voxelSpace, message.MemberIndex, message.Voxels);
+                var length = message.GridSize * message.GridSize * message.GridSize;
+                var voxelGrid = new VoxelGrid(message.VoxelSize, message.GridSize, voxelSpace, message.MemberIndex, LengthEncodedVoxels.ToVoxels(length, message.Voxels));
                 _setVoxelRendering(entity);
                 entity.Set(voxelGrid);
                 voxelSpace[message.MemberIndex] = entity;
