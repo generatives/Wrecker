@@ -56,6 +56,8 @@ namespace Clunker
 
                 EventBasedNetListener listener = new EventBasedNetListener();
                 NetManager server = new NetManager(listener);
+                server.SimulatePacketLoss = true;
+                server.SimulationPacketLossChance = 5;
                 server.Start(9050 /* port */);
 
                 listener.ConnectionRequestEvent += request =>
