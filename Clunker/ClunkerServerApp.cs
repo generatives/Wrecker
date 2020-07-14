@@ -51,6 +51,9 @@ namespace Clunker
         {
             return Task.Factory.StartNew(() =>
             {
+                using var mainChannelStream = new MemoryStream();
+                using var newClientChannelStream = new MemoryStream();
+
                 EventBasedNetListener listener = new EventBasedNetListener();
                 NetManager server = new NetManager(listener);
                 server.Start(9050 /* port */);
@@ -90,8 +93,8 @@ namespace Clunker
                     {
                         if(_connections.Any() || _newConnections.Any())
                         {
-                            using var mainChannelStream = new MemoryStream();
-                            using var newClientChannelStream = new MemoryStream();
+                            mainChannelStream.Seek(0, SeekOrigin.Begin);
+                            newClientChannelStream.Seek(0, SeekOrigin.Begin);
 
                             var serverUpdate = new ServerSystemUpdate()
                             {

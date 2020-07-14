@@ -102,6 +102,8 @@ namespace Clunker
 
                 Started?.Invoke();
 
+                using var stream = new MemoryStream();
+
                 EventBasedNetListener listener = new EventBasedNetListener();
                 NetManager client = new NetManager(listener);
                 NetPeer server = null;
@@ -115,6 +117,7 @@ namespace Clunker
 
                 listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
                 {
+                    Utilties.Logging.Metrics.LogMetric("Client:Networking:RecievedMessages:Size", dataReader.UserDataSize, TimeSpan.FromSeconds(5));
                     MessageRecieved(new ArraySegment<byte>(dataReader.RawData, dataReader.UserDataOffset, dataReader.UserDataSize));
                     dataReader.Recycle();
                 };
@@ -164,7 +167,7 @@ namespace Clunker
 
                     if (server != null)
                     {
-                        using var stream = new MemoryStream();
+                        stream.Seek(0, SeekOrigin.Begin);
 
                         var clientUpdate = new ClientSystemUpdate()
                         {

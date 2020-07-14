@@ -82,29 +82,26 @@ namespace Clunker.WorldSpace
                 {
                     if ((xOffset * xOffset + zOffset * zOffset) <= LoadRadius * LoadRadius)
                     {
-                        if(!_voxelSpace.ContainsMember(new Vector3i(x + xOffset, 0, z + zOffset)))
+                        for (int yLoad = 0; yLoad < LoadHeight; yLoad++)
                         {
-                            for (int yLoad = 0; yLoad < LoadHeight; yLoad++)
+                            var coordinates = new Vector3i(x + xOffset, yLoad, z + zOffset);
+                            if (!_voxelSpace.ContainsMember(coordinates))
                             {
-                                var coordinates = new Vector3i(x + xOffset, yLoad, z + zOffset);
-                                if (!_voxelSpace.ContainsMember(coordinates))
+                                var chunk = _world.CreateEntity();
+                                chunk.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
+                                chunk.Set(new Transform()
                                 {
-                                    var chunk = _world.CreateEntity();
-                                    chunk.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
-                                    chunk.Set(new Transform()
-                                    {
-                                        Position = new Vector3(coordinates.X * _chunkLength * 1, coordinates.Y * _chunkLength * 1, coordinates.Z * _chunkLength * 1)
-                                    });
-                                    _setVoxelRendering(chunk);
-                                    chunk.Set(new Chunk());
-                                    chunk.Set(new VoxelStaticBody());
-                                    chunk.Set(new PhysicsBlocks());
-                                    chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpace, coordinates));
-                                    _voxelSpace[coordinates] = chunk;
+                                    Position = new Vector3(coordinates.X * _chunkLength * 1, coordinates.Y * _chunkLength * 1, coordinates.Z * _chunkLength * 1)
+                                });
+                                _setVoxelRendering(chunk);
+                                chunk.Set(new Chunk());
+                                chunk.Set(new VoxelStaticBody());
+                                chunk.Set(new PhysicsBlocks());
+                                chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpace, coordinates));
+                                _voxelSpace[coordinates] = chunk;
 
-                                    chunksLoaded++;
-                                    if (chunksLoaded == 1) return;
-                                }
+                                chunksLoaded++;
+                                if (chunksLoaded == LoadHeight * 2) return;
                             }
                         }
                     }
