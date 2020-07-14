@@ -79,7 +79,7 @@ namespace Wrecker
                 };
 
                 var id = entity.Get<NetworkedEntity>().Id;
-                state.Messages.Add(new EntityMessage<InputForceApplierMessage>() { Id = id, Data = message });
+                state.MainChannel.Add<InputForceApplier, EntityMessage<InputForceApplierMessage>>(new EntityMessage<InputForceApplierMessage>() { Id = id, Data = message });
             }
         }
     }
@@ -95,7 +95,7 @@ namespace Wrecker
             _physicsSystem = physicsSystem;
         }
 
-        protected override void On(in InputForceApplierMessage action, in Entity entity)
+        protected override void MessageReceived(in InputForceApplierMessage action, in Entity entity)
         {
             ref var body = ref entity.Get<DynamicBody>();
             if (body.Body.Exists)

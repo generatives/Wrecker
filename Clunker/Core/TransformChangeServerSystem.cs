@@ -53,7 +53,7 @@ namespace Clunker.Core
                 }
             };
 
-            state.Messages.Add(message);
+            state.MainChannel.Add<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
         }
     }
 
@@ -86,7 +86,7 @@ namespace Clunker.Core
                     }
                 };
 
-                state.NewClientMessages.Add(message);
+                state.NewClientChannel.Add<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
             }
         }
     }
@@ -95,7 +95,7 @@ namespace Clunker.Core
     {
         public TransformMessageApplier(NetworkedEntities entities) : base(entities) { }
 
-        protected override void On(in TransformMessage message, in Entity entity)
+        protected override void MessageReceived(in TransformMessage message, in Entity entity)
         {
             if (!entity.Has<Transform>())
             {

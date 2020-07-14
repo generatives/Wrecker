@@ -79,7 +79,7 @@ namespace Wrecker
             };
 
             var id = entity.Get<NetworkedEntity>().Id;
-            state.Messages.Add(new EntityMessage<SimpleCameraMoverMessage>() { Id = id, Data = message });
+            state.MainChannel.Add<SimpleCameraMover, EntityMessage<SimpleCameraMoverMessage>>(new EntityMessage<SimpleCameraMoverMessage>() { Id = id, Data = message });
         }
     }
 
@@ -95,7 +95,7 @@ namespace Wrecker
             _physicsSystem = physicsSystem;
         }
 
-        protected override void On(in SimpleCameraMoverMessage message, in Entity entity)
+        protected override void MessageReceived(in SimpleCameraMoverMessage message, in Entity entity)
         {
             var playerTransform = entity.Get<Transform>();
 

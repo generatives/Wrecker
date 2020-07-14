@@ -23,10 +23,9 @@ namespace Clunker
 
         public Scene Scene { get; set; }
 
-        private Dictionary<int, Action<Stream, World>> _messageRecievers;
-        private Dictionary<Type, Action<object, Stream>> _messageSerializer;
+        private MessageTargetMap _messageTargetMap;
         public List<ISystem<ServerSystemUpdate>> ServerSystems { get; private set; }
-        public List<object> MessageListeners { get; private set; }
+        public Dictionary<Type, IMessageReceiver> MessageListeners { get; private set; }
 
         private SocketConfig _serverConfig = new SocketConfig()
         {
@@ -41,6 +40,7 @@ namespace Clunker
                 ChannelType.ReliableFragmented
             },
             DualListenPort = 5674,
+            MaxFragments = 2048,
             SimulatorConfig = new Ruffles.Simulation.SimulatorConfig()
             {
                 DropPercentage = 0.05f,
@@ -57,17 +57,21 @@ namespace Clunker
 
         private float _timeSinceUpdate = 0f;
 
-        public ClunkerServerApp(Scene scene, Dictionary<int, Action<Stream, World>> recievers, Dictionary<Type, Action<object, Stream>> serializers)
+        public ClunkerServerApp(Scene scene, MessageTargetMap messageTargetMap)
         {
             Scene = scene;
-            _messageRecievers = recievers;
-            _messageSerializer = serializers;
+            _messageTargetMap = messageTargetMap;
 
             ServerSystems = new List<ISystem<ServerSystemUpdate>>();
-            MessageListeners = new List<object>();
+            MessageListeners = new Dictionary<Type, IMessageReceiver>();
 
             _newConnections = new List<Connection>();
             _connections = new List<Connection>();
+        }
+
+        public void AddListener(IMessageReceiver listener)
+        {
+            MessageListeners[listener.GetType()] = listener;
         }
 
         public Task Start()
@@ -78,11 +82,6 @@ namespace Clunker
                 _server.Start();
 
                 Started?.Invoke();
-
-                foreach (var listener in MessageListeners)
-                {
-                    Scene.World.Subscribe(listener);
-                }
 
                 var frameWatch = Stopwatch.StartNew();
                 var messageTimer = Stopwatch.StartNew();
@@ -122,12 +121,15 @@ namespace Clunker
                     {
                         if(_connections.Any() || _newConnections.Any())
                         {
+                            using var mainChannelStream = new MemoryStream();
+                            using var newClientChannelStream = new MemoryStream();
+
                             var serverUpdate = new ServerSystemUpdate()
                             {
                                 DeltaTime = _timeSinceUpdate,
-                                Messages = new List<object>(),
+                                MainChannel = new TargetedMessageChannel(mainChannelStream, _messageTargetMap),
                                 NewClients = _newConnections.Any(),
-                                NewClientMessages = new List<object>()
+                                NewClientChannel = new TargetedMessageChannel(newClientChannelStream, _messageTargetMap)
                             };
 
                             foreach (var system in ServerSystems)
@@ -137,31 +139,19 @@ namespace Clunker
 
                             if (_newConnections.Any())
                             {
-                                foreach(var message in serverUpdate.NewClientMessages)
+                                var buffer = new ArraySegment<byte>(newClientChannelStream.GetBuffer(), 0, (int)newClientChannelStream.Position);
+                                foreach (var conn in _newConnections)
                                 {
-                                    var messages = new List<object>() { message };
-                                    SerializeMessages(messages, (newConnectionMessage) =>
-                                    {
-                                        foreach (var conn in _newConnections)
-                                        {
-                                            conn.Send(newConnectionMessage, 4, false, _messagesSent++);
-                                        }
-                                    });
+                                    conn.Send(buffer, 4, false, _messagesSent++);
                                 }
                             }
 
-                            if (serverUpdate.Messages.Any())
+                            if (mainChannelStream.Position > 0)
                             {
-                                foreach (var message in serverUpdate.Messages)
+                                var buffer = new ArraySegment<byte>(mainChannelStream.GetBuffer(), 0, (int)mainChannelStream.Position);
+                                foreach (var conn in _connections)
                                 {
-                                    var messages = new List<object>() { message };
-                                    SerializeMessages(messages, (message) =>
-                                    {
-                                        foreach (var conn in _connections)
-                                        {
-                                            conn.Send(message, 4, true, _messagesSent++);
-                                        }
-                                    });
+                                    conn.Send(buffer, 4, true, _messagesSent++);
                                 }
                             }
 
@@ -181,40 +171,16 @@ namespace Clunker
             TaskCreationOptions.LongRunning);
         }
 
-        public void SerializeMessages(List<object> messages, Action<ArraySegment<byte>> send)
-        {
-            using (var stream = new MemoryStream())
-            {
-                byte[] lengthBytes = BitConverter.GetBytes(messages.Count);
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(lengthBytes);
-                stream.Write(lengthBytes, 0, 4);
-
-                foreach (var message in messages)
-                {
-                    _messageSerializer[message.GetType()](message, stream);
-                }
-
-                var segment = new ArraySegment<byte>(stream.GetBuffer(), 0, (int)stream.Position);
-
-                send(segment);
-            }
-        }
-
         public void MessageRecieved(ArraySegment<byte> message)
         {
             using (var stream = new MemoryStream(message.Array, message.Offset, message.Count))
             {
-                var lengthBytes = new byte[4];
-                stream.Read(lengthBytes, 0, 4);
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(lengthBytes);
-                var length = BitConverter.ToInt32(lengthBytes, 0);
-
-                for (int i = 0; i < length; i++)
+                var targetedMessageChannel = new TargetedMessageChannel(stream, _messageTargetMap);
+                while (stream.Position < stream.Length)
                 {
-                    var messageType = stream.ReadByte();
-                    _messageRecievers[messageType](stream, Scene.World);
+                    var target = targetedMessageChannel.ReadNextTarget();
+                    var receiver = MessageListeners[target];
+                    receiver.MessageReceived(stream);
                 }
             }
         }

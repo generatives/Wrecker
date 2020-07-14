@@ -45,9 +45,8 @@ namespace ClunkerECSDemo
     class Program
     {
         private static byte _messageId = 0;
-        private static Dictionary<int, Action<Stream, World>> _recievers = new Dictionary<int, Action<Stream, World>>();
-        private static Dictionary<Type, Action<object, Stream>> _serializers = new Dictionary<Type, Action<object, Stream>>();
-        private static MessagePackSerializerOptions _serializerOptions;
+        private static Dictionary<int, Type> _byNum = new Dictionary<int, Type>();
+        private static Dictionary<Type, int> _byType = new Dictionary<Type, int>();
 
         private static ClunkerClientApp _client;
         private static ClunkerServerApp _server;
@@ -73,24 +72,24 @@ namespace ClunkerECSDemo
             options.Debug = true;
 #endif
 
-            var resolver = CompositeResolver.Create(CustomResolver.Instance, StandardResolver.Instance);
-            _serializerOptions = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+            Message<TransformMessageApplier>();
+            Message<InputForceApplier>();
+            Message<SimpleCameraMover>();
+            Message<EntityAdder>();
+            Message<TransformMessageApplier>();
+            Message<CameraMessageApplier>();
+            Message<VoxelSpaceMessageApplier>();
+            Message<VoxelGridMessageApplier>();
+            Message<EntityRemover>();
 
-            Message<EntityMessage<EntityAdded>>();
-            Message<EntityMessage<EntityRemoved>>();
-            Message<EntityMessage<TransformMessage>>();
-            Message<EntityMessage<SimpleCameraMoverMessage>>();
-            Message<EntityMessage<InputForceApplierMessage>>();
-            Message<EntityMessage<CameraMessage>>();
-            Message<EntityMessage<VoxelSpaceMessage>>();
-            Message<EntityMessage<VoxelGridMessage>>();
+            var messageTargetMap = new MessageTargetMap(_byType, _byNum);
 
             var clientSystems = new List<ISystem<ClientSystemUpdate>>();
 
-            _client = new ClunkerClientApp(new ResourceLoader(), new Scene(), _recievers, _serializers);
+            _client = new ClunkerClientApp(new ResourceLoader(), new Scene(), messageTargetMap);
             _client.Started += _client_Started;
 
-            _server = new ClunkerServerApp(new Scene(), _recievers, _serializers);
+            _server = new ClunkerServerApp(new Scene(), messageTargetMap);
             _server.Started += _server_Started;
 
             var serverTask = _server.Start();
@@ -113,9 +112,9 @@ namespace ClunkerECSDemo
             _server.ServerSystems.Add(new VoxelGridChangeServerSystem(_server.Scene.World));
             _server.ServerSystems.Add(new CameraServerSystem(_server.Scene.World));
 
-            _server.MessageListeners.Add(new TransformMessageApplier(networkedEntities));
-            _server.MessageListeners.Add(new InputForceApplier(physicsSystem, networkedEntities));
-            _server.MessageListeners.Add(new SimpleCameraMover(physicsSystem, networkedEntities));
+            _server.AddListener(new TransformMessageApplier(networkedEntities));
+            _server.AddListener(new InputForceApplier(physicsSystem, networkedEntities));
+            _server.AddListener(new SimpleCameraMover(physicsSystem, networkedEntities));
 
             var voxelTypes = LoadVoxelTypes();
 
@@ -208,12 +207,12 @@ namespace ClunkerECSDemo
 
             var networkedEntities = new NetworkedEntities(_client.Scene.World);
 
-            _client.MessageListeners.Add(new EntityAdder(_client.Scene.World));
-            _client.MessageListeners.Add(new TransformMessageApplier(networkedEntities));
-            _client.MessageListeners.Add(new CameraMessageApplier(networkedEntities));
-            _client.MessageListeners.Add(new VoxelSpaceMessageApplier(networkedEntities));
-            _client.MessageListeners.Add(new VoxelGridMessageApplier(setVoxelRender, networkedEntities));
-            _client.MessageListeners.Add(new EntityRemover(networkedEntities));
+            _client.AddListener(new EntityAdder(_client.Scene.World));
+            _client.AddListener(new TransformMessageApplier(networkedEntities));
+            _client.AddListener(new CameraMessageApplier(networkedEntities));
+            _client.AddListener(new VoxelSpaceMessageApplier(networkedEntities));
+            _client.AddListener(new VoxelGridMessageApplier(setVoxelRender, networkedEntities));
+            _client.AddListener(new EntityRemover(networkedEntities));
 
             _client.ClientSystems.Add(new InputForceApplierInputSystem(_client.Scene.World));
             _client.ClientSystems.Add(new SimpleCameraMoverInputSystem(_client.Scene.World));
@@ -349,19 +348,8 @@ namespace ClunkerECSDemo
 
         private static void Message<T>()
         {
-            var messageId = _messageId;
-            _recievers[messageId] = (Stream stream, World world) =>
-            {
-                var message = MessagePackSerializer.Deserialize<T>(stream, _serializerOptions);
-                //Console.WriteLine($"Recieved: {message}");
-                world.Publish(in message);
-            };
-            _serializers[typeof(T)] = (object message, Stream stream) =>
-            {
-                stream.WriteByte(messageId);
-                //Console.WriteLine($"Serialized: {message}");
-                MessagePackSerializer.Serialize(stream, (T)message, _serializerOptions);
-            };
+            _byNum[_messageId] = typeof(T);
+            _byType[typeof(T)] = _messageId;
             _messageId++;
         }
     }

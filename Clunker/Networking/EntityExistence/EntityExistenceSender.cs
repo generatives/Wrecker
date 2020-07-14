@@ -12,7 +12,8 @@ namespace Clunker.Networking.EntityExistence
         private readonly IDisposable _componentAdded;
         private readonly IDisposable _componentRemoved;
 
-        private List<object> _messages;
+        private List<EntityMessage<EntityAdded>> _added;
+        private List<EntityMessage<EntityRemoved>> _removed;
 
         public EntityExistenceSender(World world)
         {
@@ -20,32 +21,41 @@ namespace Clunker.Networking.EntityExistence
             _componentAdded = world.SubscribeComponentAdded<NetworkedEntity>(Added);
             _componentRemoved = world.SubscribeComponentRemoved<NetworkedEntity>(Removed);
 
-            _messages = new List<object>();
+            _added = new List<EntityMessage<EntityAdded>>();
+            _removed = new List<EntityMessage<EntityRemoved>>();
         }
 
         public bool IsEnabled { get; set; }
 
         private void Added(in Entity entity, in NetworkedEntity networked)
         {
-            _messages.Add(new EntityMessage<EntityAdded>(networked.Id, new EntityAdded()));
+            _added.Add(new EntityMessage<EntityAdded>(networked.Id, new EntityAdded()));
         }
 
         private void Removed(in Entity entity, in NetworkedEntity networked)
         {
-            _messages.Add(new EntityMessage<EntityRemoved>(networked.Id, new EntityRemoved()));
+            _removed.Add(new EntityMessage<EntityRemoved>(networked.Id, new EntityRemoved()));
         }
 
         public void Update(ServerSystemUpdate state)
         {
-            state.Messages.AddRange(_messages);
-            _messages.Clear();
+            foreach(var message in _added)
+            {
+                state.MainChannel.Add<EntityAdder, EntityMessage<EntityAdded>>(message);
+            }
+            _added.Clear();
+            foreach (var message in _removed)
+            {
+                state.MainChannel.Add<EntityRemover, EntityMessage<EntityRemoved>>(message);
+            }
+            _removed.Clear();
 
             if(state.NewClients)
             {
                 foreach(var entity in _networkedEntities.GetEntities())
                 {
                     var id = entity.Get<NetworkedEntity>().Id;
-                    state.NewClientMessages.Add(new EntityMessage<EntityAdded>(id, new EntityAdded()));
+                    state.NewClientChannel.Add<EntityAdder, EntityMessage<EntityAdded>>(new EntityMessage<EntityAdded>(id, new EntityAdded()));
                 }
             }
         }

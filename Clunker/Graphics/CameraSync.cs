@@ -25,7 +25,7 @@ namespace Clunker.Graphics
             if(update.NewClients)
             {
                 var id = entity.Get<NetworkedEntity>().Id;
-                update.NewClientMessages.Add(new EntityMessage<CameraMessage>() { Id = id, Data = new CameraMessage() });
+                update.NewClientChannel.Add<CameraMessageApplier, EntityMessage<CameraMessage>>(new EntityMessage<CameraMessage>() { Id = id, Data = new CameraMessage() });
             }
         }
     }
@@ -34,7 +34,7 @@ namespace Clunker.Graphics
     {
         public CameraMessageApplier(NetworkedEntities entities) : base(entities) { }
 
-        protected override void On(in CameraMessage action, in Entity entity)
+        protected override void MessageReceived(in CameraMessage action, in Entity entity)
         {
             entity.Set(new Camera());
         }

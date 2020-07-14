@@ -41,7 +41,7 @@ namespace Clunker.Voxels.Space
                 }
             };
 
-            state.Messages.Add(message);
+            state.MainChannel.Add<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
         }
     }
 
@@ -69,7 +69,7 @@ namespace Clunker.Voxels.Space
                     }
                 };
 
-                state.NewClientMessages.Add(message);
+                state.NewClientChannel.Add<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
             }
         }
     }
@@ -78,7 +78,7 @@ namespace Clunker.Voxels.Space
     {
         public VoxelSpaceMessageApplier(NetworkedEntities entities) : base(entities) { }
 
-        protected override void On(in VoxelSpaceMessage message, in Entity entity)
+        protected override void MessageReceived(in VoxelSpaceMessage message, in Entity entity)
         {
             if (!entity.Has<VoxelSpace>())
             {

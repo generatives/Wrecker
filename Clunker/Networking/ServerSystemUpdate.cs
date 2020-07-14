@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace Clunker.Networking
@@ -7,8 +8,8 @@ namespace Clunker.Networking
     public struct ServerSystemUpdate
     {
         public double DeltaTime { get; set; }
-        public List<object> Messages { get; set; }
+        public TargetedMessageChannel MainChannel { get; set; }
         public bool NewClients { get; set; }
-        public List<object> NewClientMessages { get; set; }
+        public TargetedMessageChannel NewClientChannel { get; set; }
     }
 }

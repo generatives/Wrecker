@@ -49,12 +49,13 @@ namespace Clunker
 
 
         public List<ISystem<ClientSystemUpdate>> ClientSystems { get; private set; }
-        public List<object> MessageListeners { get; private set; }
+        public Dictionary<Type, IMessageReceiver> MessageListeners { get; private set; }
 
         private SocketConfig _clientConfig = new SocketConfig()
         {
             ChallengeDifficulty = 20, // Difficulty 20 is fairly hard
             DualListenPort = 0, // Port 0 means we get a port by the operating system
+            MaxFragments = 2048,
             SimulatorConfig = new Ruffles.Simulation.SimulatorConfig()
             {
                 DropPercentage = 0.05f,
@@ -69,24 +70,22 @@ namespace Clunker
         private ulong _messagesSent;
         private Stopwatch _messageTimer;
 
-        private Dictionary<int, Action<Stream, World>> _messageRecievers;
-        private Dictionary<Type, Action<object, Stream>> _messageSerializer;
+        private MessageTargetMap _messageTargetMap;
+
         public ResourceLoader Resources { get; private set; }
 
-        public ClunkerClientApp(ResourceLoader resourceLoader, Scene initialScene,
-            Dictionary<int, Action<Stream, World>> recievers, Dictionary<Type, Action<object, Stream>> serializers)
+        public ClunkerClientApp(ResourceLoader resourceLoader, Scene initialScene, MessageTargetMap messageTargetMap)
         {
             Resources = resourceLoader;
             Scene = initialScene;
 
             ClientSystems = new List<ISystem<ClientSystemUpdate>>();
-            MessageListeners = new List<object>();
+            MessageListeners = new Dictionary<Type, IMessageReceiver>();
 
             _client = new RuffleSocket(_clientConfig);
             _messageTimer = new Stopwatch();
 
-            _messageRecievers = recievers;
-            _messageSerializer = serializers;
+            _messageTargetMap = messageTargetMap;
 
             _cameras = Scene.World.GetEntities().With<Camera>().With<Transform>().AsSet();
         }
@@ -94,6 +93,11 @@ namespace Clunker
         protected virtual void Initialize()
         {
 
+        }
+
+        public void AddListener(IMessageReceiver listener)
+        {
+            MessageListeners[listener.GetType()] = listener;
         }
 
         public Task Start(WindowCreateInfo wci, GraphicsDeviceOptions graphicsDeviceOptions)
@@ -116,11 +120,6 @@ namespace Clunker
                 _windowResized = true;
 
                 Started?.Invoke();
-
-                foreach(var listener in MessageListeners)
-                {
-                    Scene.World.Subscribe(listener);
-                }
 
                 _client.Start();
                 _client.Connect(new IPEndPoint(IPAddress.Loopback, 5674));
@@ -190,24 +189,22 @@ namespace Clunker
 
                     Tick?.Invoke();
 
-                    var serverMessages = new List<object>();
-
-                    var clientUpdate = new ClientSystemUpdate()
-                    {
-                        Messages = serverMessages,
-                    };
-
-                    foreach (var system in ClientSystems)
-                    {
-                        system.Update(clientUpdate);
-                    }
-
                     if (_server != null)
                     {
-                        SerializeMessages(serverMessages, (messages) =>
+                        using var stream = new MemoryStream();
+
+                        var clientUpdate = new ClientSystemUpdate()
                         {
-                            _server.Send(messages, 5, true, _messagesSent++);
-                        });
+                            MainChannel = new TargetedMessageChannel(stream, _messageTargetMap)
+                        };
+
+                        foreach (var system in ClientSystems)
+                        {
+                            system.Update(clientUpdate);
+                        }
+
+                        var buffer = new ArraySegment<byte>(stream.GetBuffer(), 0, (int)stream.Position);
+                        _server.Send(buffer, 5, true, _messagesSent++);
                     }
 
                     CommandList.Begin();
@@ -286,40 +283,16 @@ namespace Clunker
             MainSceneFramebuffer = GraphicsDevice.SwapchainFramebuffer;
         }
 
-        public void SerializeMessages(List<object> messages, Action<ArraySegment<byte>> send)
-        {
-            using (var stream = new MemoryStream())
-            {
-                byte[] lengthBytes = BitConverter.GetBytes(messages.Count);
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(lengthBytes);
-                stream.Write(lengthBytes, 0, 4);
-
-                foreach (var message in messages)
-                {
-                    _messageSerializer[message.GetType()](message, stream);
-                }
-
-                var segment = new ArraySegment<byte>(stream.GetBuffer(), 0, (int)stream.Position);
-
-                send(segment);
-            }
-        }
-
         public void MessageRecieved(ArraySegment<byte> message)
         {
             using (var stream = new MemoryStream(message.Array, message.Offset, message.Count))
             {
-                var lengthBytes = new byte[4];
-                stream.Read(lengthBytes, 0, 4);
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(lengthBytes);
-                var length = BitConverter.ToInt32(lengthBytes, 0);
-
-                for (int i = 0; i < length; i++)
+                var targetedMessageChannel = new TargetedMessageChannel(stream, _messageTargetMap);
+                while(stream.Position < stream.Length)
                 {
-                    var messageType = stream.ReadByte();
-                    _messageRecievers[messageType](stream, Scene.World);
+                    var target = targetedMessageChannel.ReadNextTarget();
+                    var receiver = MessageListeners[target];
+                    receiver.MessageReceived(stream);
                 }
             }
         }

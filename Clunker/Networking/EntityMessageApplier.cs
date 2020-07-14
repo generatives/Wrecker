@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Clunker.Networking
 {
-    public class EntityMessageApplier<TData> : IMessageReciever
+    public class EntityMessageApplier<TData> : MessagePackMessageReciever<EntityMessage<TData>>
     {
         protected NetworkedEntities Entities { get; private set; }
 
@@ -14,13 +14,12 @@ namespace Clunker.Networking
             Entities = entities;
         }
 
-        [Subscribe]
-        public void On(in EntityMessage<TData> message)
+        protected override void MessageReceived(in EntityMessage<TData> message)
         {
             var entity = Entities[message.Id];
-            On(message.Data, entity);
+            MessageReceived(message.Data, entity);
         }
 
-        protected virtual void On(in TData messageData, in Entity entity) { }
+        protected virtual void MessageReceived(in TData messageData, in Entity entity) { }
     }
 }

@@ -54,7 +54,7 @@ namespace Clunker.Voxels.Space
                 }
             };
 
-            state.Messages.Add(message);
+            state.MainChannel.Add<VoxelGridMessageApplier, EntityMessage<VoxelGridMessage>>(message);
         }
     }
 
@@ -87,7 +87,7 @@ namespace Clunker.Voxels.Space
                     }
                 };
 
-                state.NewClientMessages.Add(message);
+                state.NewClientChannel.Add<VoxelGridMessageApplier, EntityMessage<VoxelGridMessage>>(message);
             }
         }
     }
@@ -101,7 +101,7 @@ namespace Clunker.Voxels.Space
             _setVoxelRendering = setVoxelRendering;
         }
 
-        protected override void On(in VoxelGridMessage message, in Entity entity)
+        protected override void MessageReceived(in VoxelGridMessage message, in Entity entity)
         {
             if (!entity.Has<VoxelGrid>())
             {
