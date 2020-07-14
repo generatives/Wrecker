@@ -75,7 +75,7 @@ namespace Clunker.WorldSpace
                 }
             }
 
-            var columnsLoaded = 0;
+            var chunksLoaded = 0;
             for (int xOffset = -LoadRadius; xOffset <= LoadRadius; xOffset++)
             {
                 for (int zOffset = -LoadRadius; zOffset <= LoadRadius; zOffset++)
@@ -101,11 +101,11 @@ namespace Clunker.WorldSpace
                                     chunk.Set(new PhysicsBlocks());
                                     chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpace, coordinates));
                                     _voxelSpace[coordinates] = chunk;
+
+                                    chunksLoaded++;
+                                    if (chunksLoaded == 1) return;
                                 }
                             }
-
-                            columnsLoaded++;
-                            if (columnsLoaded == 2) return;
                         }
                     }
                 }
