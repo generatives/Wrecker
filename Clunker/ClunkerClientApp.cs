@@ -18,12 +18,10 @@ using DefaultEcs;
 using Clunker.Core;
 using ImGuiNET;
 using Clunker.Networking;
-using Ruffles.Configuration;
-using Ruffles.Core;
-using Ruffles.Connections;
 using DefaultEcs.System;
 using System.Net;
 using System.IO.Compression;
+using LiteNetLib;
 
 namespace Clunker
 {
@@ -51,22 +49,6 @@ namespace Clunker
         public List<ISystem<ClientSystemUpdate>> ClientSystems { get; private set; }
         public Dictionary<Type, IMessageReceiver> MessageListeners { get; private set; }
 
-        private SocketConfig _clientConfig = new SocketConfig()
-        {
-            ChallengeDifficulty = 20, // Difficulty 20 is fairly hard
-            DualListenPort = 0, // Port 0 means we get a port by the operating system
-            MaxFragments = 2048,
-            SimulatorConfig = new Ruffles.Simulation.SimulatorConfig()
-            {
-                DropPercentage = 0.05f,
-                MaxLatency = 10,
-                MinLatency = 0
-            },
-            UseSimulator = false
-        };
-
-        private RuffleSocket _client;
-        private Connection _server;
         private ulong _messagesSent;
         private Stopwatch _messageTimer;
 
@@ -82,7 +64,6 @@ namespace Clunker
             ClientSystems = new List<ISystem<ClientSystemUpdate>>();
             MessageListeners = new Dictionary<Type, IMessageReceiver>();
 
-            _client = new RuffleSocket(_clientConfig);
             _messageTimer = new Stopwatch();
 
             _messageTargetMap = messageTargetMap;
@@ -121,8 +102,22 @@ namespace Clunker
 
                 Started?.Invoke();
 
-                _client.Start();
-                _client.Connect(new IPEndPoint(IPAddress.Loopback, 5674));
+                EventBasedNetListener listener = new EventBasedNetListener();
+                NetManager client = new NetManager(listener);
+                NetPeer server = null;
+                client.Start();
+                client.Connect("localhost" /* host ip or name */, 9050 /* port */, "SomeConnectionKey" /* text key or NetDataWriter */);
+
+                listener.PeerConnectedEvent += (netPeer) =>
+                {
+                    server = netPeer;
+                };
+
+                listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
+                {
+                    MessageRecieved(new ArraySegment<byte>(dataReader.RawData, dataReader.UserDataOffset, dataReader.UserDataSize));
+                    dataReader.Recycle();
+                };
 
                 var frameWatch = Stopwatch.StartNew();
 
@@ -159,29 +154,7 @@ namespace Clunker
                     frameTime = Math.Min(frameTime, 0.033333);
                     frameWatch.Restart();
 
-                    var logged = false;
-                    NetworkEvent networkEvent = _client.Poll();
-                    while (networkEvent.Type != NetworkEventType.Nothing)
-                    {
-                        switch (networkEvent.Type)
-                        {
-                            case NetworkEventType.Connect:
-                                _server = networkEvent.Connection;
-                                break;
-                            case NetworkEventType.Data:
-                                if (!logged)
-                                {
-                                    Utilties.Logging.Metrics.LogMetric("Client:Networking:RecievedMessages:Timing", _messageTimer.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
-                                    _messageTimer.Restart();
-                                    logged = true;
-                                }
-                                Utilties.Logging.Metrics.LogMetric("Client:Networking:RecievedMessages:Size", networkEvent.Data.Count, TimeSpan.FromSeconds(5));
-                                MessageRecieved(networkEvent.Data);
-                                break;
-                        }
-                        networkEvent.Recycle();
-                        networkEvent = _client.Poll();
-                    }
+                    client.PollEvents();
 
                     imGuiRenderer.Update((float)frameTime, InputTracker.LockMouse ? new EmptyInputSnapshot() : InputTracker.FrameSnapshot );
 
@@ -189,7 +162,7 @@ namespace Clunker
 
                     Tick?.Invoke();
 
-                    if (_server != null)
+                    if (server != null)
                     {
                         using var stream = new MemoryStream();
 
@@ -203,8 +176,7 @@ namespace Clunker
                             system.Update(clientUpdate);
                         }
 
-                        var buffer = new ArraySegment<byte>(stream.GetBuffer(), 0, (int)stream.Position);
-                        _server.Send(buffer, 5, true, _messagesSent++);
+                        server.Send(stream.GetBuffer(), 0, (int)stream.Position, DeliveryMethod.ReliableOrdered);
                     }
 
                     CommandList.Begin();
@@ -241,6 +213,8 @@ namespace Clunker
 
                     Resources.Update();
                 }
+
+                client.Stop();
             }, TaskCreationOptions.LongRunning);
         }
 

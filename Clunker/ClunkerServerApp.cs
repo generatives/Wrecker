@@ -1,10 +1,7 @@
 ﻿using Clunker.Networking;
 using DefaultEcs;
 using DefaultEcs.System;
-using Ruffles.Channeling;
-using Ruffles.Configuration;
-using Ruffles.Connections;
-using Ruffles.Core;
+using LiteNetLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,32 +24,8 @@ namespace Clunker
         public List<ISystem<ServerSystemUpdate>> ServerSystems { get; private set; }
         public Dictionary<Type, IMessageReceiver> MessageListeners { get; private set; }
 
-        private SocketConfig _serverConfig = new SocketConfig()
-        {
-            ChallengeDifficulty = 20, // Difficulty 20 is fairly hard
-            ChannelTypes = new ChannelType[]
-            {
-                ChannelType.Reliable,
-                ChannelType.ReliableSequenced,
-                ChannelType.Unreliable,
-                ChannelType.UnreliableOrdered,
-                ChannelType.ReliableSequencedFragmented,
-                ChannelType.ReliableFragmented
-            },
-            DualListenPort = 5674,
-            MaxFragments = 2048,
-            SimulatorConfig = new Ruffles.Simulation.SimulatorConfig()
-            {
-                DropPercentage = 0.05f,
-                MaxLatency = 10,
-                MinLatency = 0
-            },
-            UseSimulator = false
-        };
-
-        private RuffleSocket _server;
-        private List<Connection> _newConnections;
-        private List<Connection> _connections;
+        private List<NetPeer> _newConnections;
+        private List<NetPeer> _connections;
         private ulong _messagesSent;
 
         private float _timeSinceUpdate = 0f;
@@ -65,8 +38,8 @@ namespace Clunker
             ServerSystems = new List<ISystem<ServerSystemUpdate>>();
             MessageListeners = new Dictionary<Type, IMessageReceiver>();
 
-            _newConnections = new List<Connection>();
-            _connections = new List<Connection>();
+            _newConnections = new List<NetPeer>();
+            _connections = new List<NetPeer>();
         }
 
         public void AddListener(IMessageReceiver listener)
@@ -78,8 +51,25 @@ namespace Clunker
         {
             return Task.Factory.StartNew(() =>
             {
-                _server = new RuffleSocket(_serverConfig);
-                _server.Start();
+                EventBasedNetListener listener = new EventBasedNetListener();
+                NetManager server = new NetManager(listener);
+                server.Start(9050 /* port */);
+
+                listener.ConnectionRequestEvent += request =>
+                {
+                    request.AcceptIfKey("SomeConnectionKey");
+                };
+
+                listener.PeerConnectedEvent += peer =>
+                {
+                    _newConnections.Add(peer);
+                };
+
+                listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
+                {
+                    MessageRecieved(new ArraySegment<byte>(dataReader.RawData, dataReader.UserDataOffset, dataReader.UserDataSize));
+                    dataReader.Recycle();
+                };
 
                 Started?.Invoke();
 
@@ -91,28 +81,7 @@ namespace Clunker
                     var frameTime = frameWatch.Elapsed.TotalSeconds;
                     frameWatch.Restart();
 
-                    var logged = false;
-                    NetworkEvent networkEvent = _server.Poll();
-                    while (networkEvent.Type != NetworkEventType.Nothing)
-                    {
-                        switch (networkEvent.Type)
-                        {
-                            case NetworkEventType.Connect:
-                                _newConnections.Add(networkEvent.Connection);
-                                break;
-                            case NetworkEventType.Data:
-                                if (!logged)
-                                {
-                                    //Console.WriteLine($"Server:Networking:RecievedMessages:Timing: {messageTimer.Elapsed.TotalMilliseconds}");
-                                    messageTimer.Restart();
-                                    logged = true;
-                                }
-                                MessageRecieved(networkEvent.Data);
-                                break;
-                        }
-                        networkEvent.Recycle();
-                        networkEvent = _server.Poll();
-                    }
+                    server.PollEvents();
 
                     Scene.Update(frameTime);
 
@@ -139,19 +108,17 @@ namespace Clunker
 
                             if (_newConnections.Any())
                             {
-                                var buffer = new ArraySegment<byte>(newClientChannelStream.GetBuffer(), 0, (int)newClientChannelStream.Position);
                                 foreach (var conn in _newConnections)
                                 {
-                                    conn.Send(buffer, 4, false, _messagesSent++);
+                                    conn.Send(newClientChannelStream.GetBuffer(), 0, (int)newClientChannelStream.Position, DeliveryMethod.ReliableOrdered);
                                 }
                             }
 
                             if (mainChannelStream.Position > 0)
                             {
-                                var buffer = new ArraySegment<byte>(mainChannelStream.GetBuffer(), 0, (int)mainChannelStream.Position);
                                 foreach (var conn in _connections)
                                 {
-                                    conn.Send(buffer, 4, true, _messagesSent++);
+                                    conn.Send(mainChannelStream.GetBuffer(), 0, (int)mainChannelStream.Position, DeliveryMethod.ReliableOrdered);
                                 }
                             }
 
@@ -167,6 +134,8 @@ namespace Clunker
                         Thread.Sleep(1);
                     }
                 }
+
+                server.Stop();
             },
             TaskCreationOptions.LongRunning);
         }
