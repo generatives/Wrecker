@@ -18,6 +18,7 @@ using Clunker.Geometry;
 using System.Collections.Concurrent;
 using System.Linq;
 using Clunker.Voxels.Space;
+using DefaultEcs.Command;
 
 namespace Clunker.Voxels.Meshing
 {
@@ -30,13 +31,13 @@ namespace Clunker.Voxels.Meshing
     [WhenChangedEither(typeof(VoxelGrid))]
     public class VoxelGridMesher : AEntitySystem<double>
     {
-        private Scene _scene;
+        private EntityCommandRecorder _commandRecorder;
         private VoxelTypes _types;
         private GraphicsDevice _device;
 
-        public VoxelGridMesher(Scene scene, VoxelTypes types, GraphicsDevice device, IParallelRunner runner) : base(scene.World, runner)
+        public VoxelGridMesher(EntityCommandRecorder commandRecorder, World world, VoxelTypes types, GraphicsDevice device, IParallelRunner runner) : base(world, runner)
         {
-            _scene = scene;
+            _commandRecorder = commandRecorder;
             _types = types;
             _device = device;
         }
@@ -104,7 +105,7 @@ namespace Clunker.Voxels.Meshing
                 BoundingRadius = centerOffset.Length(),
                 BoundingRadiusOffset = centerOffset
             };
-            var entityRecord = _scene.CommandRecorder.Record(entity);
+            var entityRecord = _commandRecorder.Record(entity);
             entityRecord.Set(mesh);
 
             lightBuffer.Update(lights.ToArray());

@@ -41,12 +41,12 @@ namespace Clunker.Networking.EntityExistence
         {
             foreach(var message in _added)
             {
-                state.MainChannel.Add<EntityAdder, EntityMessage<EntityAdded>>(message);
+                state.MainChannel.AddBuffered<EntityAdder, EntityMessage<EntityAdded>>(message);
             }
             _added.Clear();
             foreach (var message in _removed)
             {
-                state.MainChannel.Add<EntityRemover, EntityMessage<EntityRemoved>>(message);
+                state.MainChannel.AddBuffered<EntityRemover, EntityMessage<EntityRemoved>>(message);
             }
             _removed.Clear();
 
@@ -55,7 +55,7 @@ namespace Clunker.Networking.EntityExistence
                 foreach(var entity in _networkedEntities.GetEntities())
                 {
                     var id = entity.Get<NetworkedEntity>().Id;
-                    state.NewClientChannel.Add<EntityAdder, EntityMessage<EntityAdded>>(new EntityMessage<EntityAdded>(id, new EntityAdded()));
+                    state.NewClientChannel.AddBuffered<EntityAdder, EntityMessage<EntityAdded>>(new EntityMessage<EntityAdded>(id, new EntityAdded()));
                 }
             }
         }

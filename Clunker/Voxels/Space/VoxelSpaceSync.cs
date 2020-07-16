@@ -41,7 +41,7 @@ namespace Clunker.Voxels.Space
                 }
             };
 
-            state.MainChannel.Add<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
+            state.MainChannel.AddBuffered<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
         }
     }
 
@@ -69,7 +69,7 @@ namespace Clunker.Voxels.Space
                     }
                 };
 
-                state.NewClientChannel.Add<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
+                state.NewClientChannel.AddBuffered<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
             }
         }
     }

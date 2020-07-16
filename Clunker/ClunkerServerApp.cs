@@ -24,22 +24,28 @@ namespace Clunker
         public List<ISystem<ServerSystemUpdate>> ServerSystems { get; private set; }
         public Dictionary<Type, IMessageReceiver> MessageListeners { get; private set; }
 
-        private List<NetPeer> _newConnections;
+        private List<NetPeer> _newPeers;
         private List<NetPeer> _connections;
+        private MessagingChannel _mainMessagingChannel;
         private ulong _messagesSent;
 
         private float _timeSinceUpdate = 0f;
 
-        public ClunkerServerApp(Scene scene, MessageTargetMap messageTargetMap)
+        public ClunkerServerApp(MessageTargetMap messageTargetMap, MessagingChannel mainMessagingChannel)
         {
-            Scene = scene;
             _messageTargetMap = messageTargetMap;
+            _mainMessagingChannel = mainMessagingChannel;
 
             ServerSystems = new List<ISystem<ServerSystemUpdate>>();
             MessageListeners = new Dictionary<Type, IMessageReceiver>();
 
-            _newConnections = new List<NetPeer>();
+            _newPeers = new List<NetPeer>();
             _connections = new List<NetPeer>();
+        }
+
+        public void SetScene(Scene scene)
+        {
+            Scene = scene;
         }
 
         public void AddListener(IMessageReceiver listener)
@@ -67,7 +73,7 @@ namespace Clunker
 
                 listener.PeerConnectedEvent += peer =>
                 {
-                    _newConnections.Add(peer);
+                    _newPeers.Add(peer);
                 };
 
                 listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
@@ -93,42 +99,22 @@ namespace Clunker
                     _timeSinceUpdate += (float)frameTime;
                     if (_timeSinceUpdate > 0.03f)
                     {
-                        if(_connections.Any() || _newConnections.Any())
+                        _mainMessagingChannel.SendBuffered();
+
+                        if (_newPeers.Any())
                         {
-                            mainChannelStream.Seek(0, SeekOrigin.Begin);
-                            newClientChannelStream.Seek(0, SeekOrigin.Begin);
-
-                            var serverUpdate = new ServerSystemUpdate()
+                            var newPeersChannel = new MessagingChannel(_messageTargetMap);
+                            foreach (var peer in _newPeers)
                             {
-                                DeltaTime = _timeSinceUpdate,
-                                MainChannel = new TargetedMessageChannel(mainChannelStream, _messageTargetMap),
-                                NewClients = _newConnections.Any(),
-                                NewClientChannel = new TargetedMessageChannel(newClientChannelStream, _messageTargetMap)
-                            };
-
-                            foreach (var system in ServerSystems)
-                            {
-                                system.Update(serverUpdate);
+                                newPeersChannel.PeerAdded(peer);
                             }
-
-                            if (_newConnections.Any())
+                            Scene.World.Publish(new NewClientsConnected(newPeersChannel));
+                            newPeersChannel.SendBuffered();
+                            foreach (var peer in _newPeers)
                             {
-                                foreach (var conn in _newConnections)
-                                {
-                                    conn.Send(newClientChannelStream.GetBuffer(), 0, (int)newClientChannelStream.Position, DeliveryMethod.ReliableOrdered);
-                                }
+                                _mainMessagingChannel.PeerAdded(peer);
                             }
-
-                            if (mainChannelStream.Position > 0)
-                            {
-                                foreach (var conn in _connections)
-                                {
-                                    conn.Send(mainChannelStream.GetBuffer(), 0, (int)mainChannelStream.Position, DeliveryMethod.ReliableOrdered);
-                                }
-                            }
-
-                            _connections.AddRange(_newConnections);
-                            _newConnections.Clear();
+                            _newPeers.Clear();
                         }
 
                         _timeSinceUpdate = 0;
@@ -149,10 +135,9 @@ namespace Clunker
         {
             using (var stream = new MemoryStream(message.Array, message.Offset, message.Count))
             {
-                var targetedMessageChannel = new TargetedMessageChannel(stream, _messageTargetMap);
                 while (stream.Position < stream.Length)
                 {
-                    var target = targetedMessageChannel.ReadNextTarget();
+                    var target = _messageTargetMap.ReadType(stream);
                     var receiver = MessageListeners[target];
                     receiver.MessageReceived(stream);
                 }

@@ -40,7 +40,7 @@ namespace Clunker.Voxels
 
         public override int GetHashCode()
         {
-            return (int)Data;
+            return Data;
         }
     }
 

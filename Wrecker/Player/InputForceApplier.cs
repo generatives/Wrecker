@@ -79,7 +79,7 @@ namespace Wrecker
                 };
 
                 var id = entity.Get<NetworkedEntity>().Id;
-                state.MainChannel.Add<InputForceApplier, EntityMessage<InputForceApplierMessage>>(new EntityMessage<InputForceApplierMessage>() { Id = id, Data = message });
+                state.MainChannel.AddBuffered<InputForceApplier, EntityMessage<InputForceApplierMessage>>(new EntityMessage<InputForceApplierMessage>() { Id = id, Data = message });
             }
         }
     }

@@ -6,6 +6,6 @@ namespace Clunker.Networking
 {
     public struct ClientSystemUpdate
     {
-        public TargetedMessageChannel MainChannel { get; set; }
+        public MessagingChannel MainChannel { get; set; }
     }
 }

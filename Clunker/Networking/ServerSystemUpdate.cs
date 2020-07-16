@@ -8,8 +8,8 @@ namespace Clunker.Networking
     public struct ServerSystemUpdate
     {
         public double DeltaTime { get; set; }
-        public TargetedMessageChannel MainChannel { get; set; }
+        public MessagingChannel MainChannel { get; set; }
         public bool NewClients { get; set; }
-        public TargetedMessageChannel NewClientChannel { get; set; }
+        public MessagingChannel NewClientChannel { get; set; }
     }
 }

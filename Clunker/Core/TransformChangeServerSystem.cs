@@ -53,7 +53,7 @@ namespace Clunker.Core
                 }
             };
 
-            state.MainChannel.Add<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
+            state.MainChannel.AddBuffered<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
         }
     }
 
@@ -86,7 +86,7 @@ namespace Clunker.Core
                     }
                 };
 
-                state.NewClientChannel.Add<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
+                state.NewClientChannel.AddBuffered<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
             }
         }
     }

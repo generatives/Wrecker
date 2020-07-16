@@ -53,13 +53,13 @@ namespace Clunker
         private Stopwatch _messageTimer;
 
         private MessageTargetMap _messageTargetMap;
+        private MessagingChannel _messagingChannel;
 
         public ResourceLoader Resources { get; private set; }
 
-        public ClunkerClientApp(ResourceLoader resourceLoader, Scene initialScene, MessageTargetMap messageTargetMap)
+        public ClunkerClientApp(ResourceLoader resourceLoader, MessageTargetMap messageTargetMap, MessagingChannel messagingChannel)
         {
             Resources = resourceLoader;
-            Scene = initialScene;
 
             ClientSystems = new List<ISystem<ClientSystemUpdate>>();
             MessageListeners = new Dictionary<Type, IMessageReceiver>();
@@ -67,13 +67,18 @@ namespace Clunker
             _messageTimer = new Stopwatch();
 
             _messageTargetMap = messageTargetMap;
-
-            _cameras = Scene.World.GetEntities().With<Camera>().With<Transform>().AsSet();
+            _messagingChannel = messagingChannel;
         }
 
         protected virtual void Initialize()
         {
 
+        }
+
+        public void SetScene(Scene scene)
+        {
+            Scene = scene;
+            _cameras = Scene.World.GetEntities().With<Camera>().With<Transform>().AsSet();
         }
 
         public void AddListener(IMessageReceiver listener)
@@ -108,13 +113,13 @@ namespace Clunker
                 NetManager client = new NetManager(listener);
                 client.SimulatePacketLoss = true;
                 client.SimulationPacketLossChance = 5;
-                NetPeer server = null;
+
                 client.Start();
                 client.Connect("localhost" /* host ip or name */, 9050 /* port */, "SomeConnectionKey" /* text key or NetDataWriter */);
 
                 listener.PeerConnectedEvent += (netPeer) =>
                 {
-                    server = netPeer;
+                    _messagingChannel.PeerAdded(netPeer);
                 };
 
                 listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
@@ -163,26 +168,11 @@ namespace Clunker
 
                     imGuiRenderer.Update((float)frameTime, InputTracker.LockMouse ? new EmptyInputSnapshot() : InputTracker.FrameSnapshot );
 
-                    Scene.Update(frameTime);
+                    Scene?.Update(frameTime);
 
                     Tick?.Invoke();
 
-                    if (server != null)
-                    {
-                        stream.Seek(0, SeekOrigin.Begin);
-
-                        var clientUpdate = new ClientSystemUpdate()
-                        {
-                            MainChannel = new TargetedMessageChannel(stream, _messageTargetMap)
-                        };
-
-                        foreach (var system in ClientSystems)
-                        {
-                            system.Update(clientUpdate);
-                        }
-
-                        server.Send(stream.GetBuffer(), 0, (int)stream.Position, DeliveryMethod.ReliableOrdered);
-                    }
+                    _messagingChannel.SendBuffered();
 
                     CommandList.Begin();
                     CommandList.SetFramebuffer(MainSceneFramebuffer);
@@ -198,7 +188,7 @@ namespace Clunker
                             CameraTransform = CameraTransform,
                             ProjectionMatrix = _projectionMatrix
                         };
-                        Scene.Render(context);
+                        Scene?.Render(context);
                     }
 
                     var displaySize = ImGui.GetIO().DisplaySize;
@@ -266,10 +256,9 @@ namespace Clunker
         {
             using (var stream = new MemoryStream(message.Array, message.Offset, message.Count))
             {
-                var targetedMessageChannel = new TargetedMessageChannel(stream, _messageTargetMap);
                 while(stream.Position < stream.Length)
                 {
-                    var target = targetedMessageChannel.ReadNextTarget();
+                    var target = _messageTargetMap.ReadType(stream);
                     var receiver = MessageListeners[target];
                     receiver.MessageReceived(stream);
                 }

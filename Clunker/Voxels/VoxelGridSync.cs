@@ -8,6 +8,7 @@ using System.Text;
 using Clunker.Networking;
 using Clunker.Geometry;
 using Clunker.Graphics;
+using System.IO;
 
 namespace Clunker.Voxels.Space
 {
@@ -49,12 +50,15 @@ namespace Clunker.Voxels.Space
                     GridSize = voxelGrid.GridSize,
                     VoxelSize = voxelGrid.VoxelSize,
                     VoxelSpaceId = voxelSpaceId,
-                    MemberIndex = voxelGrid.MemberIndex,
-                    Voxels = LengthEncodedVoxels.FromVoxels(voxelGrid.Voxels)
+                    MemberIndex = voxelGrid.MemberIndex
                 }
             };
 
-            state.MainChannel.Add<VoxelGridMessageApplier, EntityMessage<VoxelGridMessage>>(message);
+            state.MainChannel.AddBuffered<VoxelGridMessageApplier>((stream) =>
+            {
+                Serializer.Serialize(message, stream);
+                LengthEncodedVoxels.ToStream(voxelGrid.Voxels, stream);
+            });
         }
     }
 
@@ -82,32 +86,41 @@ namespace Clunker.Voxels.Space
                         GridSize = voxelGrid.GridSize,
                         VoxelSize = voxelGrid.VoxelSize,
                         VoxelSpaceId = voxelSpaceId,
-                        MemberIndex = voxelGrid.MemberIndex,
-                        Voxels = LengthEncodedVoxels.FromVoxels(voxelGrid.Voxels)
+                        MemberIndex = voxelGrid.MemberIndex
                     }
                 };
 
-                state.NewClientChannel.Add<VoxelGridMessageApplier, EntityMessage<VoxelGridMessage>>(message);
+                state.NewClientChannel.AddBuffered<VoxelGridMessageApplier>((stream) =>
+                {
+                    Serializer.Serialize(message, stream);
+                    LengthEncodedVoxels.ToStream(voxelGrid.Voxels, stream);
+                });
             }
         }
     }
 
-    public class VoxelGridMessageApplier : EntityMessageApplier<VoxelGridMessage>
+    public class VoxelGridMessageApplier : IMessageReceiver
     {
         private Action<Entity> _setVoxelRendering;
+        private NetworkedEntities _networkedEntities;
 
-        public VoxelGridMessageApplier(Action<Entity> setVoxelRendering, NetworkedEntities entities) : base(entities)
+        public VoxelGridMessageApplier(Action<Entity> setVoxelRendering, NetworkedEntities entities)
         {
             _setVoxelRendering = setVoxelRendering;
+            _networkedEntities = entities;
         }
 
-        protected override void MessageReceived(in VoxelGridMessage message, in Entity entity)
+        public void MessageReceived(Stream stream)
         {
+            var entityMessage = Serializer.Deserialize<EntityMessage<VoxelGridMessage>>(stream);
+            var entity = _networkedEntities[entityMessage.Id];
+            var message = entityMessage.Data;
+
             if (!entity.Has<VoxelGrid>())
             {
-                var voxelSpace = Entities[message.VoxelSpaceId].Get<VoxelSpace>();
+                var voxelSpace = _networkedEntities[message.VoxelSpaceId].Get<VoxelSpace>();
                 var length = message.GridSize * message.GridSize * message.GridSize;
-                var voxelGrid = new VoxelGrid(message.VoxelSize, message.GridSize, voxelSpace, message.MemberIndex, LengthEncodedVoxels.ToVoxels(length, message.Voxels));
+                var voxelGrid = new VoxelGrid(message.VoxelSize, message.GridSize, voxelSpace, message.MemberIndex, LengthEncodedVoxels.FromStream(length, stream));
                 _setVoxelRendering(entity);
                 entity.Set(voxelGrid);
                 voxelSpace[message.MemberIndex] = entity;

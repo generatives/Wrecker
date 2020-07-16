@@ -79,7 +79,7 @@ namespace Wrecker
             };
 
             var id = entity.Get<NetworkedEntity>().Id;
-            state.MainChannel.Add<SimpleCameraMover, EntityMessage<SimpleCameraMoverMessage>>(new EntityMessage<SimpleCameraMoverMessage>() { Id = id, Data = message });
+            state.MainChannel.AddBuffered<SimpleCameraMover, EntityMessage<SimpleCameraMoverMessage>>(new EntityMessage<SimpleCameraMoverMessage>() { Id = id, Data = message });
         }
     }
 

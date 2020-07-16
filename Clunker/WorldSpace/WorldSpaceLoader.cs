@@ -101,7 +101,7 @@ namespace Clunker.WorldSpace
                                 _voxelSpace[coordinates] = chunk;
 
                                 chunksLoaded++;
-                                if (chunksLoaded == 1) return;
+                                if (chunksLoaded == LoadHeight) return;
                             }
                         }
                     }

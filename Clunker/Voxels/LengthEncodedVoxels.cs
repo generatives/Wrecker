@@ -1,53 +1,59 @@
 ﻿using Collections.Pooled;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace Clunker.Voxels
 {
     public static class LengthEncodedVoxels
     {
-        public static long[] FromVoxels(Voxel[] voxels)
+        public static void ToStream(Voxel[] voxels, Stream stream)
         {
-            var encoded = new PooledList<long>();
-            var currentVoxel = voxels[0];
-            var currentLength = 1;
-            for(int i = 1; i < voxels.Length; i++)
+            using(var writer = new BinaryWriter(stream, Encoding.ASCII, true))
             {
-                if(voxels[i] == currentVoxel)
+                var encoded = new PooledList<long>();
+                var currentVoxel = voxels[0];
+                ushort currentLength = 1;
+                for (int i = 1; i < voxels.Length; i++)
                 {
-                    currentLength++;
+                    if (voxels[i] == currentVoxel)
+                    {
+                        currentLength++;
+                    }
+                    else
+                    {
+                        writer.Write(currentLength);
+                        writer.Write(currentVoxel.Data);
+                        currentVoxel = voxels[i];
+                        currentLength = 1;
+                    }
                 }
-                else
-                {
-                    encoded.Add(((long)currentLength << 32) | (long)currentVoxel.Data);
-                    currentVoxel = voxels[i];
-                    currentLength = 1;
-                }
+                writer.Write(currentLength);
+                writer.Write(currentVoxel.Data);
             }
-            encoded.Add(((long)currentLength << 32) | (long)currentVoxel.Data);
-
-            return encoded.ToArray();
         }
 
-        public static Voxel[] ToVoxels(int length, long[] encoded)
+        public static Voxel[] FromStream(int length, Stream stream)
         {
-            var voxels = new Voxel[length];
-            var voxelIndex = 0;
-            for(int i = 0; i < encoded.Length; i++)
+            using(var reader = new BinaryReader(stream, Encoding.ASCII, true))
             {
-                var run = encoded[i];
-                var voxelData = (int)(run & uint.MaxValue);
-                var runLength = (int)(run >> 32);
-                var end = voxelIndex + runLength;
-                while(voxelIndex < end)
+                var voxels = new Voxel[length];
+                var voxelIndex = 0;
+                while(voxelIndex < length)
                 {
-                    voxels[voxelIndex] = new Voxel() { Data = voxelData };
-                    voxelIndex++;
+                    var runLength = reader.ReadUInt16();
+                    var voxelData = reader.ReadInt32();
+                    var end = voxelIndex + runLength;
+                    while (voxelIndex < end)
+                    {
+                        voxels[voxelIndex] = new Voxel() { Data = voxelData };
+                        voxelIndex++;
+                    }
                 }
-            }
 
-            return voxels;
+                return voxels;
+            }
         }
     }
 }

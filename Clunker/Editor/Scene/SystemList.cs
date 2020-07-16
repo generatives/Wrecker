@@ -20,9 +20,9 @@ namespace Clunker.Editor.Scene
         public override string Category => "Scene";
         public override char? HotKey => 'S';
 
-        public SystemList(Clunker.Scene scene)
+        public SystemList(World world, Clunker.Scene scene)
         {
-            _propertyGrid = new PropertyGrid(scene.World);
+            _propertyGrid = new PropertyGrid(world);
             _scene = scene;
         }
 

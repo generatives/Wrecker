@@ -25,7 +25,7 @@ namespace Clunker.Graphics
             if(update.NewClients)
             {
                 var id = entity.Get<NetworkedEntity>().Id;
-                update.NewClientChannel.Add<CameraMessageApplier, EntityMessage<CameraMessage>>(new EntityMessage<CameraMessage>() { Id = id, Data = new CameraMessage() });
+                update.NewClientChannel.AddBuffered<CameraMessageApplier, EntityMessage<CameraMessage>>(new EntityMessage<CameraMessage>() { Id = id, Data = new CameraMessage() });
             }
         }
     }

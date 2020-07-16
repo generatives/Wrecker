@@ -1,5 +1,6 @@
 ﻿using Clunker.Voxels;
 using DefaultEcs;
+using DefaultEcs.Command;
 using DefaultEcs.System;
 using DefaultEcs.Threading;
 using System;
@@ -10,12 +11,12 @@ namespace Clunker.WorldSpace
 {
     public class ChunkGeneratorSystem : AEntitySystem<double>
     {
-        private Scene _scene;
+        private EntityCommandRecorder _commandRecorder;
         private ChunkGenerator _generator;
 
-        public ChunkGeneratorSystem(Scene scene, IParallelRunner runner, ChunkGenerator generator) : base(scene.World.GetEntities().WhenAdded<Chunk>().AsSet(), runner)
+        public ChunkGeneratorSystem(EntityCommandRecorder commandRecorder, IParallelRunner runner, ChunkGenerator generator, World world) : base(world.GetEntities().WhenAdded<Chunk>().AsSet(), runner)
         {
-            _scene = scene;
+            _commandRecorder = commandRecorder;
             _generator = generator;
         }
 
@@ -24,7 +25,7 @@ namespace Clunker.WorldSpace
             ref var chunk = ref entity.Get<Chunk>();
             ref var grid = ref entity.Get<VoxelGrid>();
 
-            _generator.GenerateChunk(entity, _scene.CommandRecorder.Record(entity), grid.MemberIndex);
+            _generator.GenerateChunk(entity, _commandRecorder.Record(entity), grid.MemberIndex);
         }
     }
 }

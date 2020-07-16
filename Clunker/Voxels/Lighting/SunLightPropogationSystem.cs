@@ -126,7 +126,6 @@ namespace Clunker.Voxels.Lighting
     public class SunLightPropogationSystem : ISystem<double>
     {
         private VoxelTypes _voxelTypes;
-        private Scene _scene;
 
         private EntitySet _addedGrids;
         private EntitySet _grids;
@@ -135,14 +134,13 @@ namespace Clunker.Voxels.Lighting
 
         public bool IsEnabled { get; set; } = true;
 
-        public SunLightPropogationSystem(VoxelTypes voxelTypes, Scene scene)
+        public SunLightPropogationSystem(World world, VoxelTypes voxelTypes)
         {
             _voxelTypes = voxelTypes;
-            _scene = scene;
 
-            _addedGrids = scene.World.GetEntities().WhenAdded<VoxelGrid>().AsSet();
-            _grids = scene.World.GetEntities().With<VoxelGrid>().AsSet();
-            _changedSubscription = scene.World.Subscribe<VoxelChanged>(VoxelChanged);
+            _addedGrids = world.GetEntities().WhenAdded<VoxelGrid>().AsSet();
+            _grids = world.GetEntities().With<VoxelGrid>().AsSet();
+            _changedSubscription = world.Subscribe<VoxelChanged>(VoxelChanged);
             _voxelChanges = new List<VoxelChanged>();
         }
 
