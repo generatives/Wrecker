@@ -13,20 +13,38 @@ namespace Clunker.Graphics
     {
     }
 
-    [With(typeof(Camera), typeof(NetworkedEntity))]
-    public class CameraServerSystem : AEntitySystem<ServerSystemUpdate>
+
+    public class CameraServerSystem : ISystem<double>
     {
-        public CameraServerSystem(World world) : base(world)
+        private EntitySet _cameras;
+
+        public bool IsEnabled { get; set; } = false;
+
+        public CameraServerSystem(World world)
+        {
+            _cameras = world.GetEntities().With<NetworkedEntity>().With<Camera>().AsSet();
+        }
+
+        [Subscribe]
+        public void On(in NewClientConnected clientConnected)
+        {
+            foreach(var entity in _cameras.GetEntities())
+            {
+                var id = entity.Get<NetworkedEntity>().Id;
+                var message = new EntityMessage<CameraMessage>() { Id = id, Data = new CameraMessage() };
+
+                var target = clientConnected.Entity.Get<ClientMessagingTarget>();
+                target.Channel.AddBuffered<CameraMessageApplier, EntityMessage<CameraMessage>>(message);
+            }
+        }
+
+        public void Update(double state)
         {
         }
 
-        protected override void Update(ServerSystemUpdate update, in Entity entity)
+        public void Dispose()
         {
-            if(update.NewClients)
-            {
-                var id = entity.Get<NetworkedEntity>().Id;
-                update.NewClientChannel.AddBuffered<CameraMessageApplier, EntityMessage<CameraMessage>>(new EntityMessage<CameraMessage>() { Id = id, Data = new CameraMessage() });
-            }
+            _cameras.Dispose();
         }
     }
 

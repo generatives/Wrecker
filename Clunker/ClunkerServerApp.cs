@@ -21,22 +21,19 @@ namespace Clunker
         public Scene Scene { get; set; }
 
         private MessageTargetMap _messageTargetMap;
-        public List<ISystem<ServerSystemUpdate>> ServerSystems { get; private set; }
         public Dictionary<Type, IMessageReceiver> MessageListeners { get; private set; }
 
         private List<NetPeer> _newPeers;
         private List<NetPeer> _connections;
-        private MessagingChannel _mainMessagingChannel;
         private ulong _messagesSent;
+        private EntitySet _clientEntities;
 
         private float _timeSinceUpdate = 0f;
 
-        public ClunkerServerApp(MessageTargetMap messageTargetMap, MessagingChannel mainMessagingChannel)
+        public ClunkerServerApp(MessageTargetMap messageTargetMap)
         {
             _messageTargetMap = messageTargetMap;
-            _mainMessagingChannel = mainMessagingChannel;
 
-            ServerSystems = new List<ISystem<ServerSystemUpdate>>();
             MessageListeners = new Dictionary<Type, IMessageReceiver>();
 
             _newPeers = new List<NetPeer>();
@@ -45,7 +42,9 @@ namespace Clunker
 
         public void SetScene(Scene scene)
         {
+            _clientEntities?.Dispose();
             Scene = scene;
+            _clientEntities = Scene.World.GetEntities().With<ClientMessagingTarget>().AsSet();
         }
 
         public void AddListener(IMessageReceiver listener)
@@ -99,20 +98,21 @@ namespace Clunker
                     _timeSinceUpdate += (float)frameTime;
                     if (_timeSinceUpdate > 0.03f)
                     {
-                        _mainMessagingChannel.SendBuffered();
+                        foreach(var entity in _clientEntities.GetEntities())
+                        {
+                            var target = entity.Get<ClientMessagingTarget>();
+                            target.Channel.SendBuffered();
+                        }
 
                         if (_newPeers.Any())
                         {
-                            var newPeersChannel = new MessagingChannel(_messageTargetMap);
                             foreach (var peer in _newPeers)
                             {
-                                newPeersChannel.PeerAdded(peer);
-                            }
-                            Scene.World.Publish(new NewClientsConnected(newPeersChannel));
-                            newPeersChannel.SendBuffered();
-                            foreach (var peer in _newPeers)
-                            {
-                                _mainMessagingChannel.PeerAdded(peer);
+                                var clientEntity = Scene.World.CreateEntity();
+                                var channel = new MessagingChannel(_messageTargetMap, peer);
+                                clientEntity.Set(new ClientMessagingTarget() { Channel = channel });
+                                Scene.World.Publish(new NewClientConnected(frameTime, clientEntity));
+                                channel.SendBuffered();
                             }
                             _newPeers.Clear();
                         }

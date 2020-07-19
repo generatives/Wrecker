@@ -1,5 +1,6 @@
 ﻿using Clunker.Core;
 using Clunker.Geometry;
+using Clunker.Graphics;
 using Clunker.Input;
 using Clunker.Networking;
 using Clunker.Physics;
@@ -32,13 +33,16 @@ namespace Clunker.Editor.VoxelEditor
         public override string Category => "Voxels";
         public override char? HotKey => 'T';
 
-        private Entity _entity;
         private (string Name, Voxel Voxel)[] _voxels;
         private int _index;
 
-        public VoxelEditor(Entity entity, (string, Voxel)[] voxels)
+        private MessagingChannel _serverChannel;
+        private EntitySet _cameras;
+
+        public VoxelEditor(MessagingChannel serverChannel, World world, (string, Voxel)[] voxels)
         {
-            _entity = entity;
+            _serverChannel = serverChannel;
+            _cameras = world.GetEntities().With<Camera>().AsSet();
             _voxels = voxels;
         }
 
@@ -60,16 +64,19 @@ namespace Clunker.Editor.VoxelEditor
                 ImGui.EndCombo();
             }
 
-
             if (InputTracker.LockMouse && InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left))
             {
-                var transform = _entity.Get<Transform>();
-                var message = new VoxelEditMessage()
+                foreach (var entity in _cameras.GetEntities())
                 {
-                    Position = transform.WorldPosition,
-                    Orientation = transform.WorldOrientation,
-                    Voxel = _voxels[_index].Voxel
-                };
+                    var transform = entity.Get<Transform>();
+                    var message = new VoxelEditMessage()
+                    {
+                        Position = transform.WorldPosition,
+                        Orientation = transform.WorldOrientation,
+                        Voxel = _voxels[_index].Voxel
+                    };
+                    _serverChannel.AddBuffered<VoxelEditReceiver, VoxelEditMessage>(message);
+                }
             }
         }
     }

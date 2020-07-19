@@ -23,13 +23,16 @@ namespace Wrecker
     }
 
     [With(typeof(DynamicBody), typeof(Transform), typeof(NetworkedEntity))]
-    public class InputForceApplierInputSystem : AEntitySystem<ClientSystemUpdate>
+    public class InputForceApplierInputSystem : AEntitySystem<double>
     {
-        public InputForceApplierInputSystem(World world) : base(world)
+        private MessagingChannel _serverChannel;
+
+        public InputForceApplierInputSystem(MessagingChannel serverChannel, World world) : base(world)
         {
+            _serverChannel = serverChannel;
         }
 
-        protected override void Update(ClientSystemUpdate state, in Entity entity)
+        protected override void Update(double state, in Entity entity)
         {
             ref var body = ref entity.Get<DynamicBody>();
             if(body.Body.Exists)
@@ -79,7 +82,7 @@ namespace Wrecker
                 };
 
                 var id = entity.Get<NetworkedEntity>().Id;
-                state.MainChannel.AddBuffered<InputForceApplier, EntityMessage<InputForceApplierMessage>>(new EntityMessage<InputForceApplierMessage>() { Id = id, Data = message });
+                _serverChannel.AddBuffered<InputForceApplier, EntityMessage<InputForceApplierMessage>>(new EntityMessage<InputForceApplierMessage>() { Id = id, Data = message });
             }
         }
     }

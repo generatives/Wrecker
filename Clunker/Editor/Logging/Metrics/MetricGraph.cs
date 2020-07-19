@@ -36,6 +36,9 @@ namespace Clunker.Editor.Logging.Metrics
                 var values = metrics.Select(t => (float)t.Item2).ToArray();
 
                 ImGui.PlotLines("Values", ref values[0], values.Length);
+                ImGui.Text($"Max: {values.Max()}");
+                ImGui.Text($"Min: {values.Min()}");
+                ImGui.Text($"Avg: {values.Average()}");
             }
         }
     }

@@ -7,6 +7,7 @@ using Clunker.Editor.Logging.Metrics;
 using Clunker.Editor.Scene;
 using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Toolbar;
+using Clunker.Editor.VoxelEditor;
 using Clunker.Editor.VoxelSpaceLoader;
 using Clunker.Geometry;
 using Clunker.Graphics;
@@ -51,7 +52,7 @@ namespace ClunkerECSDemo
 
         private static MessagingChannel _clientMessagingChannel;
         private static ClunkerClientApp _client;
-        private static MessagingChannel _serverMessagingChannel;
+
         private static ClunkerServerApp _server;
 
         static void Main(string[] args)
@@ -79,22 +80,19 @@ namespace ClunkerECSDemo
             Message<InputForceApplier>();
             Message<SimpleCameraMover>();
             Message<EntityAdder>();
-            Message<TransformMessageApplier>();
             Message<CameraMessageApplier>();
             Message<VoxelSpaceMessageApplier>();
             Message<VoxelGridMessageApplier>();
             Message<EntityRemover>();
+            Message<VoxelEditReceiver>();
 
             var messageTargetMap = new MessageTargetMap(_byType, _byNum);
-
-            var clientSystems = new List<ISystem<ClientSystemUpdate>>();
 
             _clientMessagingChannel = new MessagingChannel(messageTargetMap);
             _client = new ClunkerClientApp(new ResourceLoader(), messageTargetMap, _clientMessagingChannel);
             _client.Started += _client_Started;
 
-            _serverMessagingChannel = new MessagingChannel(messageTargetMap);
-            _server = new ClunkerServerApp(messageTargetMap, _serverMessagingChannel);
+            _server = new ClunkerServerApp(messageTargetMap);
             _server.Started += _server_Started;
 
             var serverTask = _server.Start();
@@ -112,15 +110,6 @@ namespace ClunkerECSDemo
             var physicsSystem = new PhysicsSystem();
 
             var parallelRunner = new DefaultParallelRunner(4);
-
-            _server.ServerSystems.Add(new EntityExistenceSender(world));
-            _server.ServerSystems.Add(new TransformInitServerSystem(world));
-            _server.ServerSystems.Add(new TransformChangeServerSystem(world));
-            _server.ServerSystems.Add(new VoxelSpaceInitServerSystem(world));
-            _server.ServerSystems.Add(new VoxelSpaceAddedServerSystem(world));
-            _server.ServerSystems.Add(new VoxelGridInitServerSystem(world));
-            _server.ServerSystems.Add(new VoxelGridChangeServerSystem(world));
-            _server.ServerSystems.Add(new CameraServerSystem(world));
 
             _server.AddListener(new TransformMessageApplier(networkedEntities));
             _server.AddListener(new InputForceApplier(physicsSystem, networkedEntities));
@@ -154,6 +143,12 @@ namespace ClunkerECSDemo
             logicSystems.Add(new DynamicBodyPositionSync(world));
 
             logicSystems.Add(new CharacterInputSystem(physicsSystem, world));
+
+            logicSystems.Add(new EntityExistenceSync(world));
+            logicSystems.Add(new TransformChangeServerSystem(world));
+            logicSystems.Add(new VoxelSpaceAddedServerSystem(world));
+            logicSystems.Add(new VoxelGridChangeServerSystem(world));
+            logicSystems.Add(new CameraServerSystem(world));
 
             logicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(world));
 
@@ -262,16 +257,20 @@ namespace ClunkerECSDemo
             //    new VoxelSpaceLoader(_client.Scene.World, playerTransform, setVoxelRender)
             //}));
 
-            //logicSystems.Add(new EditorMenu(_client.Scene, new List<IEditor>()
-            //{
-            //    //new EditorConsole(_client.Scene),
-            //    new SelectedEntitySystem(world),
-            //    new EntityInspector(world),
-            //    new EntityList(world),
-            //    //new SystemList(world, _client.Scene),
-            //    new AverageMetricValue(),
-            //    new MetricGraph()
-            //}));
+            var editorMenu = new EditorMenu(new List<IEditor>()
+            {
+                //new EditorConsole(_client.Scene),
+                new SelectedEntitySystem(world),
+                new EntityInspector(world),
+                new EntityList(world),
+                //new SystemList(world, _client.Scene),
+                new AverageMetricValue(),
+                new MetricGraph(),
+                new VoxelEditor(_clientMessagingChannel, world, voxelTypes.Select((t, i) => (t.Name, new Voxel() { Exists = true, BlockType = (ushort)i })).ToArray())
+            });
+
+            logicSystems.Add(editorMenu);
+            logicSystems.AddRange(editorMenu.Editors);
 
             logicSystems.Add(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
 
@@ -284,8 +283,8 @@ namespace ClunkerECSDemo
 
             logicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(world));
 
-            _client.ClientSystems.Add(new InputForceApplierInputSystem(world));
-            _client.ClientSystems.Add(new SimpleCameraMoverInputSystem(world));
+            logicSystems.Add(new InputForceApplierInputSystem(_clientMessagingChannel, world));
+            logicSystems.Add(new SimpleCameraMoverInputSystem(_clientMessagingChannel, world));
 
             world.SubscribeEntityDisposed((in Entity e) =>
             {

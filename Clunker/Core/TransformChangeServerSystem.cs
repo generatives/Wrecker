@@ -24,16 +24,13 @@ namespace Clunker.Core
         public float DeltaTime;
     }
 
-    [With(typeof(NetworkedEntity))]
-    [WhenAddedEither(typeof(Transform))]
-    [WhenChangedEither(typeof(Transform))]
-    public class TransformChangeServerSystem : AEntitySystem<ServerSystemUpdate>
+    public class TransformChangeServerSystem : ServerSyncSystem<Transform>
     {
         public TransformChangeServerSystem(World world) : base(world)
         {
         }
 
-        protected override void Update(ServerSystemUpdate state, in Entity entity)
+        protected override void Sync(double deltaTime, Entity entity, ClientMessagingTarget target, Entity targetEntity)
         {
             var transform = entity.Get<Transform>();
             ref var netEntity = ref entity.Get<NetworkedEntity>();
@@ -49,45 +46,11 @@ namespace Clunker.Core
                     Position = transform.Position,
                     Orientation = transform.Orientation,
                     Scale = transform.Scale,
-                    DeltaTime = (float)state.DeltaTime
+                    DeltaTime = (float)deltaTime
                 }
             };
 
-            state.MainChannel.AddBuffered<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
-        }
-    }
-
-    [With(typeof(NetworkedEntity), typeof(Transform))]
-    public class TransformInitServerSystem : AEntitySystem<ServerSystemUpdate>
-    {
-        public TransformInitServerSystem(World world) : base(world)
-        {
-        }
-
-        protected override void Update(ServerSystemUpdate state, in Entity entity)
-        {
-            if (state.NewClients)
-            {
-                var transform = entity.Get<Transform>();
-                ref var netEntity = ref entity.Get<NetworkedEntity>();
-
-                var parentId = (transform.Parent != null && transform.Parent.Self.IsAlive && transform.Parent.Self.Has<NetworkedEntity>()) ? transform.Parent.Self.Get<NetworkedEntity>().Id : (Guid?)null;
-
-                var message = new EntityMessage<TransformMessage>()
-                {
-                    Id = netEntity.Id,
-                    Data = new TransformMessage()
-                    {
-                        ParentId = parentId,
-                        Position = transform.Position,
-                        Orientation = transform.Orientation,
-                        Scale = transform.Scale,
-                        DeltaTime = (float)state.DeltaTime
-                    }
-                };
-
-                state.NewClientChannel.AddBuffered<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
-            }
+            target.Channel.AddBuffered<TransformMessageApplier, EntityMessage<TransformMessage>>(message);
         }
     }
 

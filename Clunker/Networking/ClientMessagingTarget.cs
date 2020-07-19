@@ -4,8 +4,8 @@ using System.Text;
 
 namespace Clunker.Networking
 {
-    public struct ClientSystemUpdate
+    public struct ClientMessagingTarget
     {
-        public MessagingChannel MainChannel { get; set; }
+        public MessagingChannel Channel;
     }
 }

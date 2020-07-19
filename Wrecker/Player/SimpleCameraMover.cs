@@ -42,15 +42,18 @@ namespace Wrecker
     }
 
     [With(typeof(Camera), typeof(Transform), typeof(NetworkedEntity))]
-    public class SimpleCameraMoverInputSystem : AEntitySystem<ClientSystemUpdate>
+    public class SimpleCameraMoverInputSystem : AEntitySystem<double>
     {
         public float LookSpeed { get; set; } = 0.001f;
 
-        public SimpleCameraMoverInputSystem(World world) : base(world)
+        private MessagingChannel _serverChannel;
+
+        public SimpleCameraMoverInputSystem(MessagingChannel serverChannel, World world) : base(world)
         {
+            _serverChannel = serverChannel;
         }
 
-        protected override void Update(ClientSystemUpdate state, in Entity entity)
+        protected override void Update(double state, in Entity entity)
         {
             ref var camera = ref entity.Get<Camera>();
             camera.Yaw += -GameInputTracker.MouseDelta.X * LookSpeed;
@@ -79,7 +82,7 @@ namespace Wrecker
             };
 
             var id = entity.Get<NetworkedEntity>().Id;
-            state.MainChannel.AddBuffered<SimpleCameraMover, EntityMessage<SimpleCameraMoverMessage>>(new EntityMessage<SimpleCameraMoverMessage>() { Id = id, Data = message });
+            _serverChannel.AddBuffered<SimpleCameraMover, EntityMessage<SimpleCameraMoverMessage>>(new EntityMessage<SimpleCameraMoverMessage>() { Id = id, Data = message });
         }
     }
 

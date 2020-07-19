@@ -12,10 +12,9 @@ namespace Clunker.Editor
         public List<IEditor> Editors { get; private set; }
         public bool IsEnabled { get; set; } = true;
 
-        public EditorMenu(Clunker.Scene scene, List<IEditor> editors)
+        public EditorMenu(List<IEditor> editors)
         {
             Editors = editors;
-            scene.LogicSystems.AddRange(editors);
         }
 
         public void Update(double delta)

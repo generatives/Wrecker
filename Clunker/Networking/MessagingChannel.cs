@@ -15,17 +15,26 @@ namespace Clunker.Networking
 
         private List<NetPeer> _peers;
 
-        public MessagingChannel(MessageTargetMap messageTargetMap)
+        public MessagingChannel(MessageTargetMap messageTargetMap) : this(messageTargetMap, new List<NetPeer>()) { }
+        public MessagingChannel(MessageTargetMap messageTargetMap, NetPeer peer) : this(messageTargetMap, new List<NetPeer>() { peer }) { }
+        public MessagingChannel(MessageTargetMap messageTargetMap, List<NetPeer> peers)
         {
             _messageTargetMap = messageTargetMap;
 
             _bufferStream = new MemoryStream();
             _immediateStream = new MemoryStream();
+
+            _peers = peers;
         }
 
         public void PeerAdded(NetPeer peer)
         {
             _peers.Add(peer);
+        }
+
+        public void PeerRemoved(NetPeer peer)
+        {
+            _peers.Remove(peer);
         }
 
         public void SendBuffered()

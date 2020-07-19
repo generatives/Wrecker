@@ -20,13 +20,13 @@ namespace Clunker.Voxels.Space
 
     [With(typeof(NetworkedEntity))]
     [WhenAdded(typeof(VoxelSpace))]
-    public class VoxelSpaceAddedServerSystem : AEntitySystem<ServerSystemUpdate>
+    public class VoxelSpaceAddedServerSystem : ServerSyncSystem<VoxelSpace>
     {
         public VoxelSpaceAddedServerSystem(World world) : base(world)
         {
         }
 
-        protected override void Update(ServerSystemUpdate state, in Entity entity)
+        protected override void Sync(double deltaTime, Entity entity, ClientMessagingTarget target, Entity targetEntity)
         {
             var voxelSpace = entity.Get<VoxelSpace>();
             ref var netEntity = ref entity.Get<NetworkedEntity>();
@@ -41,36 +41,7 @@ namespace Clunker.Voxels.Space
                 }
             };
 
-            state.MainChannel.AddBuffered<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
-        }
-    }
-
-    [With(typeof(NetworkedEntity), typeof(VoxelSpace))]
-    public class VoxelSpaceInitServerSystem : AEntitySystem<ServerSystemUpdate>
-    {
-        public VoxelSpaceInitServerSystem(World world) : base(world)
-        {
-        }
-
-        protected override void Update(ServerSystemUpdate state, in Entity entity)
-        {
-            if (state.NewClients)
-            {
-                var voxelSpace = entity.Get<VoxelSpace>();
-                ref var netEntity = ref entity.Get<NetworkedEntity>();
-
-                var message = new EntityMessage<VoxelSpaceMessage>()
-                {
-                    Id = netEntity.Id,
-                    Data = new VoxelSpaceMessage()
-                    {
-                        GridSize = voxelSpace.GridSize,
-                        VoxelSize = voxelSpace.VoxelSize
-                    }
-                };
-
-                state.NewClientChannel.AddBuffered<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
-            }
+            target.Channel.AddBuffered<VoxelSpaceMessageApplier, EntityMessage<VoxelSpaceMessage>>(message);
         }
     }
 
@@ -83,10 +54,6 @@ namespace Clunker.Voxels.Space
             if (!entity.Has<VoxelSpace>())
             {
                 entity.Set(new VoxelSpace(message.GridSize, message.VoxelSize, entity));
-            }
-            else
-            {
-                throw new Exception("Voxel Space Already Exists");
             }
         }
     }

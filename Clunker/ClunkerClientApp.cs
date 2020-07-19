@@ -45,8 +45,6 @@ namespace Clunker
 
         private Matrix4x4 _projectionMatrix;
 
-
-        public List<ISystem<ClientSystemUpdate>> ClientSystems { get; private set; }
         public Dictionary<Type, IMessageReceiver> MessageListeners { get; private set; }
 
         private ulong _messagesSent;
@@ -61,7 +59,6 @@ namespace Clunker
         {
             Resources = resourceLoader;
 
-            ClientSystems = new List<ISystem<ClientSystemUpdate>>();
             MessageListeners = new Dictionary<Type, IMessageReceiver>();
 
             _messageTimer = new Stopwatch();
@@ -161,6 +158,7 @@ namespace Clunker
                     }
 
                     var frameTime = frameWatch.Elapsed.TotalSeconds;
+                    Utilties.Logging.Metrics.LogMetric("Client:Frame:Time", frameTime, TimeSpan.FromSeconds(5));
                     frameTime = Math.Min(frameTime, 0.033333);
                     frameWatch.Restart();
 
@@ -202,9 +200,9 @@ namespace Clunker
                     }
 
                     CommandList.End();
+                    GraphicsDevice.WaitForIdle();
                     GraphicsDevice.SubmitCommands(CommandList);
                     GraphicsDevice.SwapBuffers(GraphicsDevice.MainSwapchain);
-                    GraphicsDevice.WaitForIdle();
 
                     Resources.Update();
                 }
