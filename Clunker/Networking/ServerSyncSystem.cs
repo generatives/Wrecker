@@ -37,7 +37,7 @@ namespace Clunker.Networking
 
             foreach (var entity in _allEntities.GetEntities())
             {
-                Sync(clientConnected.DeltaTime, entity, target, clientConnected.Entity);
+                Sync(0, entity, target, clientConnected.Entity);
             }
         }
 
@@ -51,10 +51,11 @@ namespace Clunker.Networking
                     var target = client.Get<ClientMessagingTarget>();
                     foreach (var entity in _changedEntities.GetEntities())
                     {
-                        Sync(state, entity, target, client);
+                        Sync(_timeSinceLast, entity, target, client);
                     }
                 }
                 _changedEntities.Complete();
+                _timeSinceLast = 0;
             }
         }
 
