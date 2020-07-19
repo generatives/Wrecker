@@ -25,9 +25,9 @@ namespace Clunker.Voxels.Space
         public Vector3i MemberIndex;
     }
 
-    public class VoxelGridChangeServerSystem : ServerSyncSystem<VoxelGrid>
+    public class VoxelGridExistenceServerSystem : ServerSyncSystem<VoxelGrid>
     {
-        public VoxelGridChangeServerSystem(World world) : base(world, false)
+        public VoxelGridExistenceServerSystem(World world) : base(world, false)
         {
         }
 

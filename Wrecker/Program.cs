@@ -82,6 +82,7 @@ namespace ClunkerECSDemo
             Message<ClientEntityAssignmentApplier>();
             Message<VoxelSpaceMessageApplier>();
             Message<VoxelGridMessageApplier>();
+            Message<VoxelGridChangeMessageApplier>();
             Message<EntityRemover>();
             Message<VoxelEditReceiver>();
 
@@ -113,6 +114,7 @@ namespace ClunkerECSDemo
             _server.AddListener(new TransformMessageApplier(networkedEntities));
             _server.AddListener(new InputForceApplier(physicsSystem, networkedEntities));
             _server.AddListener(new SimpleCameraMover(physicsSystem, networkedEntities));
+            _server.AddListener(new VoxelEditReceiver(physicsSystem));
 
             var voxelTypes = LoadVoxelTypes();
 
@@ -121,7 +123,7 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new Transform());
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
-            logicSystems.Add(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 10, 3, 32));
+            logicSystems.Add(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
             logicSystems.Add(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             logicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, world));
@@ -140,6 +142,7 @@ namespace ClunkerECSDemo
             logicSystems.Add(new ClientEntityAssignmentSystem());
             logicSystems.Add(new TransformChangeServerSystem(world));
             logicSystems.Add(new VoxelSpaceAddedServerSystem(world));
+            logicSystems.Add(new VoxelGridExistenceServerSystem(world));
             logicSystems.Add(new VoxelGridChangeServerSystem(world));
 
             logicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(world));
@@ -213,6 +216,7 @@ namespace ClunkerECSDemo
             _client.AddListener(new ClientEntityAssignmentApplier(networkedEntities));
             _client.AddListener(new VoxelSpaceMessageApplier(networkedEntities));
             _client.AddListener(new VoxelGridMessageApplier(setVoxelRender, networkedEntities));
+            _client.AddListener(new VoxelGridChangeMessageApplier(networkedEntities));
             _client.AddListener(new EntityRemover(networkedEntities));
 
             var parallelRunner = new DefaultParallelRunner(8);

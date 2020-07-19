@@ -144,7 +144,7 @@ namespace Clunker.Voxels.Space
 
                 grid.SetVoxel(voxelIndex, voxel);
                 member.Set(grid);
-                member.World.Publish(new VoxelChanged() { Entity = member, VoxelIndex = voxelIndex, PreviousValue = previousVoxel });
+                member.World.Publish(new VoxelChanged() { Entity = member, VoxelIndex = voxelIndex, PreviousValue = previousVoxel, Value = voxel });
 
                 if (voxelIndex.X == 0)
                     TryNotifyNeighbor(memberIndex - Vector3i.UnitX);

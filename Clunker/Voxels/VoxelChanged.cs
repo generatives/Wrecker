@@ -11,5 +11,6 @@ namespace Clunker.Voxels
         public Entity Entity;
         public Vector3i VoxelIndex;
         public Voxel PreviousValue;
+        public Voxel Value;
     }
 }

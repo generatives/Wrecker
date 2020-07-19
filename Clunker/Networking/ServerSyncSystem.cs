@@ -6,19 +6,17 @@ using System.Text;
 
 namespace Clunker.Networking
 {
-    public abstract class ServerSyncSystem<T> : ISystem<double>
+    public abstract class ServerSyncSystem<T> : ServerMessagingSystem, ISystem<double>
     {
         private double _timeSinceLast;
-        private EntitySet _clients;
         private EntitySet _changedEntities;
         private EntitySet _allEntities;
 
         public bool IsEnabled { get; set; } = true;
 
-        public ServerSyncSystem(World world, bool trackChanged = true)
+        public ServerSyncSystem(World world, bool trackChanged = true) : base(world)
         {
             _timeSinceLast = 0;
-            _clients = world.GetEntities().With<ClientMessagingTarget>().AsSet();
             if(trackChanged)
             {
                 _changedEntities = world.GetEntities().With<NetworkedEntity>().WhenAddedEither<T>().WhenChangedEither<T>().AsSet();
@@ -46,7 +44,7 @@ namespace Clunker.Networking
             _timeSinceLast += state;
             if(_timeSinceLast > 0.03)
             {
-                foreach (var client in _clients.GetEntities())
+                foreach (var client in Clients.GetEntities())
                 {
                     var target = client.Get<ClientMessagingTarget>();
                     foreach (var entity in _changedEntities.GetEntities())
@@ -61,9 +59,9 @@ namespace Clunker.Networking
 
         protected abstract void Sync(double deltaTime, Entity entity, ClientMessagingTarget target, Entity targetEntity);
 
-        public void Dispose()
+        public override void Dispose()
         {
-            _clients.Dispose();
+            base.Dispose();
             _changedEntities.Dispose();
             _allEntities.Dispose();
         }

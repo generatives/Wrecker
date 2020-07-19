@@ -25,6 +25,8 @@ namespace Clunker.Editor.VoxelEditor
         public Quaternion Orientation;
         [Key(2)]
         public Voxel Voxel;
+        [Key(3)]
+        public bool Remove;
     }
 
     public class VoxelEditor : Editor
@@ -73,7 +75,24 @@ namespace Clunker.Editor.VoxelEditor
                     {
                         Position = transform.WorldPosition,
                         Orientation = transform.WorldOrientation,
-                        Voxel = _voxels[_index].Voxel
+                        Voxel = _voxels[_index].Voxel,
+                        Remove = false
+                    };
+                    _serverChannel.AddBuffered<VoxelEditReceiver, VoxelEditMessage>(message);
+                }
+            }
+
+            if (InputTracker.LockMouse && InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Right))
+            {
+                foreach (var entity in _cameras.GetEntities())
+                {
+                    var transform = entity.Get<Transform>();
+                    var message = new VoxelEditMessage()
+                    {
+                        Position = transform.WorldPosition,
+                        Orientation = transform.WorldOrientation,
+                        Voxel = _voxels[_index].Voxel,
+                        Remove = true
                     };
                     _serverChannel.AddBuffered<VoxelEditReceiver, VoxelEditMessage>(message);
                 }
@@ -81,27 +100,28 @@ namespace Clunker.Editor.VoxelEditor
         }
     }
 
-    public class VoxelEditReceiver : EntityMessageApplier<VoxelEditMessage>
+    public class VoxelEditReceiver : MessagePackMessageReciever<VoxelEditMessage>
     {
-        public World World;
-        public PhysicsSystem PhysicsSystem;
+        private PhysicsSystem _physicsSystem;
 
-        public VoxelEditReceiver(NetworkedEntities entities) : base(entities)
+        public VoxelEditReceiver(PhysicsSystem physicsSystem)
         {
+            _physicsSystem = physicsSystem;
         }
 
-        protected override void MessageReceived(in VoxelEditMessage messageData, in Entity entity)
+        protected override void MessageReceived(in VoxelEditMessage message)
         {
-            base.MessageReceived(messageData, entity);
+            Run(message.Position, message.Orientation, message.Voxel, message.Remove);
         }
-        public void Run(Vector3 position, Quaternion orientation, Voxel voxel)
+
+        public void Run(Vector3 position, Quaternion orientation, Voxel voxel, bool remove)
         {
             var transform = new Transform()
             {
                 WorldPosition = position,
                 WorldOrientation = orientation
             };
-            var result = PhysicsSystem.Raycast(transform);
+            var result = _physicsSystem.Raycast(transform);
             if (result.Hit)
             {
                 var forward = transform.WorldOrientation.GetForwardVector();
@@ -119,7 +139,7 @@ namespace Clunker.Editor.VoxelEditor
                         (int)Math.Floor(insideHitLocation.Y),
                         (int)Math.Floor(insideHitLocation.Z));
 
-                    space.SetVoxel(index, voxel);
+                    SetVoxel(space, hitTransform, hitLocation, index, voxel, remove);
                 }
                 if (hitEntity.Has<VoxelGrid>())
                 {
@@ -133,9 +153,62 @@ namespace Clunker.Editor.VoxelEditor
                         (int)Math.Floor(insideHitLocation.Y),
                         (int)Math.Floor(insideHitLocation.Z));
 
-                    voxels.VoxelSpace.SetVoxel(index, voxel);
+                    SetVoxel(voxels.VoxelSpace, hitTransform, hitLocation, index, voxel, remove);
                 }
             }
         }
+
+        private static void SetVoxel(VoxelSpace space, Transform hitTransform, Vector3 hitLocation, Vector3i index, Voxel voxel, bool remove)
+        {
+            if (remove)
+            {
+                space.SetVoxel(index, new Voxel() { Exists = false });
+            }
+            else
+            {
+                var addIndex = CalculateAddIndex(space, hitTransform, hitLocation, index);
+                if (addIndex.HasValue)
+                {
+                    space.SetVoxel(addIndex.Value, voxel);
+                }
+            }
+        }
+
+        private static Vector3i? CalculateAddIndex(VoxelSpace voxels, Transform hitTransform, Vector3 hitLocation, Vector3i index)
+        {
+            var size = voxels.VoxelSize;
+            var voxelLocation = index * size;
+            var relativeLocation = hitTransform.GetLocal(hitLocation);
+            if (NearlyEqual(relativeLocation.X, voxelLocation.X))
+            {
+                return new Vector3i(index.X - 1, index.Y, index.Z);
+            }
+            else if (NearlyEqual(relativeLocation.X, voxelLocation.X + size))
+            {
+                return new Vector3i(index.X + 1, index.Y, index.Z);
+            }
+            else if (NearlyEqual(relativeLocation.Y, voxelLocation.Y))
+            {
+                return new Vector3i(index.X, index.Y - 1, index.Z);
+            }
+            else if (NearlyEqual(relativeLocation.Y, voxelLocation.Y + size))
+            {
+                return new Vector3i(index.X, index.Y + 1, index.Z);
+            }
+            else if (NearlyEqual(relativeLocation.Z, voxelLocation.Z))
+            {
+                return new Vector3i(index.X, index.Y, index.Z - 1);
+            }
+            else if (NearlyEqual(relativeLocation.Z, voxelLocation.Z + size))
+            {
+                return new Vector3i(index.X, index.Y, index.Z + 1);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public static bool NearlyEqual(float f1, float f2) => System.Math.Abs(f1 - f2) < 0.01;
     }
 }
