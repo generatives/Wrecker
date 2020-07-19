@@ -67,7 +67,7 @@ namespace Clunker.Core
                     Position = message.Position,
                     Orientation = message.Orientation,
                     Scale = message.Scale,
-                    Parent = message.ParentId.HasValue ? Entities[message.ParentId.Value].Get<Transform>() : null
+                    Parent = message.ParentId.HasValue ? Entities.GetEntity(message.ParentId.Value).Get<Transform>() : null
                 });
             }
             else

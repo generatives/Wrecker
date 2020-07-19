@@ -79,7 +79,6 @@ namespace ClunkerECSDemo
             Message<TransformMessageApplier>();
             Message<InputForceApplier>();
             Message<SimpleCameraMover>();
-            Message<EntityAdder>();
             Message<ClientEntityAssignmentApplier>();
             Message<VoxelSpaceMessageApplier>();
             Message<VoxelGridMessageApplier>();
@@ -137,7 +136,7 @@ namespace ClunkerECSDemo
 
             logicSystems.Add(new CharacterInputSystem(physicsSystem, world));
 
-            logicSystems.Add(new EntityExistenceSync(world));
+            logicSystems.Add(new EntityRemovalSync(world));
             logicSystems.Add(new ClientEntityAssignmentSystem());
             logicSystems.Add(new TransformChangeServerSystem(world));
             logicSystems.Add(new VoxelSpaceAddedServerSystem(world));
@@ -210,7 +209,6 @@ namespace ClunkerECSDemo
 
             var networkedEntities = new NetworkedEntities(world);
 
-            _client.AddListener(new EntityAdder(networkedEntities, world));
             _client.AddListener(new TransformMessageApplier(networkedEntities));
             _client.AddListener(new ClientEntityAssignmentApplier(networkedEntities));
             _client.AddListener(new VoxelSpaceMessageApplier(networkedEntities));

@@ -62,7 +62,7 @@ namespace Clunker.Core
             if (lerp.Messages.Any())
             {
                 lerp.CurrentTarget = lerp.Messages.Dequeue();
-                transform.Parent = lerp.CurrentTarget.Value.ParentId.HasValue ? _entities[lerp.CurrentTarget.Value.ParentId.Value].Get<Transform>() : null;
+                transform.Parent = lerp.CurrentTarget.Value.ParentId.HasValue ? _entities.GetEntity(lerp.CurrentTarget.Value.ParentId.Value).Get<Transform>() : null;
             }
             else
             {

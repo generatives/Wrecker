@@ -16,7 +16,7 @@ namespace Clunker.Networking
 
         protected override void MessageReceived(in EntityMessage<TData> message)
         {
-            var entity = Entities[message.Id];
+            var entity = Entities.GetEntity(message.Id);
             MessageReceived(message.Data, entity);
         }
 

@@ -7,21 +7,27 @@ namespace Clunker.Networking
 {
     public class NetworkedEntities
     {
+        private World _world;
         private EntityMap<NetworkedEntity> _entities;
-
-        public Entity this[Guid id]
-        {
-            get
-            {
-                return _entities[new NetworkedEntity() { Id = id }];
-            }
-        }
 
         public NetworkedEntities(World world)
         {
+            _world = world;
             _entities = world.GetEntities().With<NetworkedEntity>().AsMap<NetworkedEntity>();
         }
 
-        public bool Contains(Guid id) => _entities.ContainsKey(new NetworkedEntity() { Id = id });
+        public Entity GetEntity(Guid id)
+        {
+            if(_entities.ContainsKey(new NetworkedEntity() { Id = id }))
+            {
+                return _entities[new NetworkedEntity() { Id = id }];
+            }
+            else
+            {
+                var entity = _world.CreateEntity();
+                entity.Set(new NetworkedEntity() { Id = id });
+                return entity;
+            }
+        }
     }
 }

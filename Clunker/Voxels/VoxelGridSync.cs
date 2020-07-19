@@ -72,12 +72,12 @@ namespace Clunker.Voxels.Space
         public void MessageReceived(Stream stream)
         {
             var entityMessage = Serializer.Deserialize<EntityMessage<VoxelGridMessage>>(stream);
-            var entity = _networkedEntities[entityMessage.Id];
+            var entity = _networkedEntities.GetEntity(entityMessage.Id);
             var message = entityMessage.Data;
 
             if (!entity.Has<VoxelGrid>())
             {
-                var voxelSpace = _networkedEntities[message.VoxelSpaceId].Get<VoxelSpace>();
+                var voxelSpace = _networkedEntities.GetEntity(message.VoxelSpaceId).Get<VoxelSpace>();
                 var length = message.GridSize * message.GridSize * message.GridSize;
                 var voxelGrid = new VoxelGrid(message.VoxelSize, message.GridSize, voxelSpace, message.MemberIndex, LengthEncodedVoxels.FromStream(length, stream));
                 _setVoxelRendering(entity);
