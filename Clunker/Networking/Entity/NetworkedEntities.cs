@@ -21,5 +21,7 @@ namespace Clunker.Networking
         {
             _entities = world.GetEntities().With<NetworkedEntity>().AsMap<NetworkedEntity>();
         }
+
+        public bool Contains(Guid id) => _entities.ContainsKey(new NetworkedEntity() { Id = id });
     }
 }

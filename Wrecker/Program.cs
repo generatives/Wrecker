@@ -80,7 +80,7 @@ namespace ClunkerECSDemo
             Message<InputForceApplier>();
             Message<SimpleCameraMover>();
             Message<EntityAdder>();
-            Message<CameraMessageApplier>();
+            Message<ClientEntityAssignmentApplier>();
             Message<VoxelSpaceMessageApplier>();
             Message<VoxelGridMessageApplier>();
             Message<EntityRemover>();
@@ -117,13 +117,6 @@ namespace ClunkerECSDemo
 
             var voxelTypes = LoadVoxelTypes();
 
-            var player = world.CreateEntity();
-            var playerTransform = new Transform();
-            playerTransform.Position = new Vector3(0, 40, 0);
-            player.Set(playerTransform);
-            player.Set(new Camera());
-            player.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
-
             var worldVoxelSpace = world.CreateEntity();
             worldVoxelSpace.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
             worldVoxelSpace.Set(new Transform());
@@ -145,10 +138,10 @@ namespace ClunkerECSDemo
             logicSystems.Add(new CharacterInputSystem(physicsSystem, world));
 
             logicSystems.Add(new EntityExistenceSync(world));
+            logicSystems.Add(new ClientEntityAssignmentSystem());
             logicSystems.Add(new TransformChangeServerSystem(world));
             logicSystems.Add(new VoxelSpaceAddedServerSystem(world));
             logicSystems.Add(new VoxelGridChangeServerSystem(world));
-            logicSystems.Add(new CameraServerSystem(world));
 
             logicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(world));
 
@@ -217,9 +210,9 @@ namespace ClunkerECSDemo
 
             var networkedEntities = new NetworkedEntities(world);
 
-            _client.AddListener(new EntityAdder(world));
+            _client.AddListener(new EntityAdder(networkedEntities, world));
             _client.AddListener(new TransformMessageApplier(networkedEntities));
-            _client.AddListener(new CameraMessageApplier(networkedEntities));
+            _client.AddListener(new ClientEntityAssignmentApplier(networkedEntities));
             _client.AddListener(new VoxelSpaceMessageApplier(networkedEntities));
             _client.AddListener(new VoxelGridMessageApplier(setVoxelRender, networkedEntities));
             _client.AddListener(new EntityRemover(networkedEntities));

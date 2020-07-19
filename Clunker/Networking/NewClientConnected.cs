@@ -7,11 +7,9 @@ namespace Clunker.Networking
 {
     public struct NewClientConnected
     {
-        public double DeltaTime;
         public Entity Entity;
-        public NewClientConnected(double deltaTime, Entity entity)
+        public NewClientConnected(Entity entity)
         {
-            DeltaTime = deltaTime;
             Entity = entity;
         }
     }

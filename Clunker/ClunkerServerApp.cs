@@ -1,4 +1,6 @@
-﻿using Clunker.Networking;
+﻿using Clunker.Core;
+using Clunker.Graphics;
+using Clunker.Networking;
 using DefaultEcs;
 using DefaultEcs.System;
 using LiteNetLib;
@@ -8,6 +10,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -108,11 +111,7 @@ namespace Clunker
                         {
                             foreach (var peer in _newPeers)
                             {
-                                var clientEntity = Scene.World.CreateEntity();
-                                var channel = new MessagingChannel(_messageTargetMap, peer);
-                                clientEntity.Set(new ClientMessagingTarget() { Channel = channel });
-                                Scene.World.Publish(new NewClientConnected(frameTime, clientEntity));
-                                channel.SendBuffered();
+                                OnboardNewClient(peer);
                             }
                             _newPeers.Clear();
                         }
@@ -129,6 +128,21 @@ namespace Clunker
                 server.Stop();
             },
             TaskCreationOptions.LongRunning);
+        }
+
+        private void OnboardNewClient(NetPeer peer)
+        {
+            var channel = new MessagingChannel(_messageTargetMap, peer);
+            var clientId = Guid.NewGuid();
+
+
+            var clientEntity = Scene.World.CreateEntity();
+            clientEntity.Set(new ClientMessagingTarget() { Channel = channel });
+            clientEntity.Set(new Transform() { WorldPosition = new Vector3(0, 40, 0) });
+            clientEntity.Set(new NetworkedEntity() { Id = clientId });
+            clientEntity.Set(new Camera());
+            Scene.World.Publish(new NewClientConnected(clientEntity));
+            channel.SendBuffered();
         }
 
         public void MessageRecieved(ArraySegment<byte> message)

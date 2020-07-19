@@ -89,17 +89,22 @@ namespace Clunker.Networking.EntityExistence
     }
     public class EntityAdder : MessagePackMessageReciever<EntityMessage<EntityAdded>>
     {
+        private NetworkedEntities _networkedEntities;
         private World _world;
 
-        public EntityAdder(World world)
+        public EntityAdder(NetworkedEntities networkedEntities, World world)
         {
+            _networkedEntities = networkedEntities;
             _world = world;
         }
 
         protected override void MessageReceived(in EntityMessage<EntityAdded> message)
         {
-            var newEntity = _world.CreateEntity();
-            newEntity.Set(new NetworkedEntity() { Id = message.Id });
+            if(!_networkedEntities.Contains(message.Id))
+            {
+                var newEntity = _world.CreateEntity();
+                newEntity.Set(new NetworkedEntity() { Id = message.Id });
+            }
         }
     }
     public class EntityRemover : EntityMessageApplier<EntityRemoved>

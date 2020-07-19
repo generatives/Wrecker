@@ -159,6 +159,7 @@ namespace Clunker
 
                     var frameTime = frameWatch.Elapsed.TotalSeconds;
                     Utilties.Logging.Metrics.LogMetric("Client:Frame:Time", frameTime, TimeSpan.FromSeconds(5));
+                    Utilties.Logging.Metrics.LogMetric("Client:Frame:Rate", 1f / frameTime, TimeSpan.FromSeconds(5));
                     frameTime = Math.Min(frameTime, 0.033333);
                     frameWatch.Restart();
 
