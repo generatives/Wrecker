@@ -13,20 +13,21 @@ namespace Clunker.Core
     [ClunkerComponent]
     public class Transform
     {
-        public Entity Self { get; set; }
+        public Entity Self { get; private set; }
         private Transform _parent;
         public Transform Parent
         {
             get => _parent;
             set
             {
-                if (_parent != null)
+                if(_parent != null)
                 {
-                    _parent.AddChild(this);
+                    _parent.RemoveChild(this);
                 }
-                else
+
+                if(value != null)
                 {
-                    _parent = null;
+                    value.AddChild(this);
                 }
             }
         }
@@ -110,8 +111,9 @@ namespace Clunker.Core
             return IsInheiritingParentTransform ? Parent.GetWorldMatrix(transformed) : transformed;
         }
 
-        public Transform()
+        public Transform(Entity self)
         {
+            Self = self;
             _children = new List<Transform>(0);
             Scale = Vector3.One;
         }

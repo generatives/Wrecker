@@ -1,4 +1,5 @@
 ﻿using Clunker.Core;
+using Clunker.ECS;
 using Clunker.Input;
 using Clunker.Networking;
 using Clunker.Physics;
@@ -22,116 +23,116 @@ namespace Wrecker
         public Vector3 IntendedRotation;
     }
 
-    [With(typeof(DynamicBody), typeof(Transform), typeof(NetworkedEntity))]
-    public class InputForceApplierInputSystem : AEntitySystem<double>
+    public class InputForceApplierInputSystem : UpdateSystem<double>
     {
         private MessagingChannel _serverChannel;
 
-        public InputForceApplierInputSystem(MessagingChannel serverChannel, World world) : base(world)
+        public InputForceApplierInputSystem(MessagingChannel serverChannel, World world)
         {
             _serverChannel = serverChannel;
         }
 
-        protected override void Update(double state, in Entity entity)
+        public override void Update(double state)
         {
-            ref var body = ref entity.Get<DynamicBody>();
-            if(body.Body.Exists)
+            var intendedDirection = Vector3.Zero;
+            var intendedRotation = Vector3.Zero;
+
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad4))
             {
-                ref var transform = ref entity.Get<Transform>();
+                intendedDirection += -Vector3.UnitX;
+            }
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad6))
+            {
+                intendedDirection += Vector3.UnitX;
+            }
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad8))
+            {
+                intendedDirection += -Vector3.UnitZ;
+            }
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad2))
+            {
+                intendedDirection += Vector3.UnitZ;
+            }
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.KeypadPlus))
+            {
+                intendedDirection += Vector3.UnitY;
+            }
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.KeypadMinus))
+            {
+                intendedDirection += -Vector3.UnitY;
+            }
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad7))
+            {
+                intendedRotation += Vector3.UnitY;
+            }
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad9))
+            {
+                intendedRotation += -Vector3.UnitY;
+            }
 
-                var intendedDirection = Vector3.Zero;
-                var intendedRotation = Vector3.Zero;
-
-                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad4))
-                {
-                    intendedDirection += -Vector3.UnitX;
-                }
-                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad6))
-                {
-                    intendedDirection += Vector3.UnitX;
-                }
-                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad8))
-                {
-                    intendedDirection += -Vector3.UnitZ;
-                }
-                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad2))
-                {
-                    intendedDirection += Vector3.UnitZ;
-                }
-                if (GameInputTracker.IsKeyPressed(Veldrid.Key.KeypadPlus))
-                {
-                    intendedDirection += Vector3.UnitY;
-                }
-                if (GameInputTracker.IsKeyPressed(Veldrid.Key.KeypadMinus))
-                {
-                    intendedDirection += -Vector3.UnitY;
-                }
-                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad7))
-                {
-                    intendedRotation += Vector3.UnitY;
-                }
-                if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad9))
-                {
-                    intendedRotation += -Vector3.UnitY;
-                }
-
+            if(intendedDirection != Vector3.Zero || intendedRotation != Vector3.Zero)
+            {
                 var message = new InputForceApplierMessage()
                 {
                     IntendedDirection = intendedDirection,
                     IntendedRotation = intendedRotation
                 };
 
-                var id = entity.Get<NetworkedEntity>().Id;
-                _serverChannel.AddBuffered<InputForceApplier, EntityMessage<InputForceApplierMessage>>(new EntityMessage<InputForceApplierMessage>() { Id = id, Data = message });
+                _serverChannel.AddBuffered<InputForceApplier, InputForceApplierMessage>(message);
             }
         }
     }
 
-    public class InputForceApplier : EntityMessageApplier<InputForceApplierMessage>
+    public class InputForceApplier : MessagePackMessageReciever<InputForceApplierMessage>
     {
         private float _inputForce = 60;
         private float _inertialCompensationForce = 30;
         private PhysicsSystem _physicsSystem;
+        private EntitySet _dynamicBodies;
 
-        public InputForceApplier(PhysicsSystem physicsSystem, NetworkedEntities entities) : base(entities)
+        public InputForceApplier(PhysicsSystem physicsSystem, World world)
         {
             _physicsSystem = physicsSystem;
+            _dynamicBodies = world.GetEntities().With<DynamicBody>().AsSet();
         }
 
-        protected override void MessageReceived(in InputForceApplierMessage action, in Entity entity)
+        protected override void MessageReceived(in InputForceApplierMessage action)
         {
-            ref var body = ref entity.Get<DynamicBody>();
-            if (body.Body.Exists)
+            foreach(var entity in _dynamicBodies.GetEntities())
             {
-                ref var transform = ref entity.Get<Transform>();
-                var intendedDirection = action.IntendedDirection;
-                var intendedRotation = action.IntendedRotation;
-
-                intendedDirection = intendedDirection == Vector3.Zero ? intendedDirection : Vector3.Normalize(intendedDirection);
-
-                var worldIntendedDirection = Vector3.Transform(intendedDirection, transform.WorldOrientation);
-
-                var currentVelocity = body.Body.Velocity.Linear;
-                var actualDirection = currentVelocity == Vector3.Zero ? currentVelocity : Vector3.Normalize(currentVelocity);
-
-                var compensationDirection = worldIntendedDirection - actualDirection;
-
-                body.Body.ApplyImpulse(compensationDirection * _inertialCompensationForce, Vector3.Zero);
-                body.Body.ApplyImpulse(worldIntendedDirection * _inputForce, Vector3.Zero);
-
-                intendedRotation = intendedRotation == Vector3.Zero ? intendedRotation : Vector3.Normalize(intendedRotation);
-
-                var currentRotation = body.Body.Velocity.Angular;
-                var actualRotataionDirection = currentRotation == Vector3.Zero ? currentRotation : Vector3.Normalize(currentRotation);
-
-                var compensationRotation = intendedRotation - actualRotataionDirection;
-
-                body.Body.ApplyAngularImpulse(compensationRotation * _inertialCompensationForce);
-                body.Body.ApplyAngularImpulse(intendedRotation * _inputForce);
-
-                if (!body.Body.Awake && body.Body.Velocity.Linear != Vector3.Zero)
+                ref var body = ref entity.Get<DynamicBody>();
+                if (body.Body.Exists)
                 {
-                    _physicsSystem.Simulation.Awakener.AwakenBody(body.Body.Handle);
+                    ref var transform = ref entity.Get<Transform>();
+                    var intendedDirection = action.IntendedDirection;
+                    var intendedRotation = action.IntendedRotation;
+
+                    intendedDirection = intendedDirection == Vector3.Zero ? intendedDirection : Vector3.Normalize(intendedDirection);
+
+                    var worldIntendedDirection = Vector3.Transform(intendedDirection, transform.WorldOrientation);
+
+                    var currentVelocity = body.Body.Velocity.Linear;
+                    var actualDirection = currentVelocity == Vector3.Zero ? currentVelocity : Vector3.Normalize(currentVelocity);
+
+                    var compensationDirection = worldIntendedDirection - actualDirection;
+
+                    body.Body.ApplyImpulse(compensationDirection * _inertialCompensationForce, Vector3.Zero);
+                    body.Body.ApplyImpulse(worldIntendedDirection * _inputForce, Vector3.Zero);
+
+                    intendedRotation = intendedRotation == Vector3.Zero ? intendedRotation : Vector3.Normalize(intendedRotation);
+
+                    var currentRotation = body.Body.Velocity.Angular;
+                    var actualRotataionDirection = currentRotation == Vector3.Zero ? currentRotation : Vector3.Normalize(currentRotation);
+
+                    var compensationRotation = intendedRotation - actualRotataionDirection;
+
+                    body.Body.ApplyAngularImpulse(compensationRotation * _inertialCompensationForce);
+                    body.Body.ApplyAngularImpulse(intendedRotation * _inputForce);
+
+                    if (!body.Body.Awake && body.Body.Velocity.Linear != Vector3.Zero)
+                    {
+                        _physicsSystem.Simulation.Awakener.AwakenBody(body.Body.Handle);
+                    }
                 }
             }
         }

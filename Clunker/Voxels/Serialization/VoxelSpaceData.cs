@@ -7,7 +7,7 @@ using System.Text;
 namespace Clunker.Voxels.Serialization
 {
     [MessagePackObject]
-    public class VoxelSpaceData
+    public struct VoxelSpaceData
     {
         [Key(0)]
         public int GridSize { get; set; }

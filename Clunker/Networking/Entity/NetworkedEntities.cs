@@ -16,6 +16,8 @@ namespace Clunker.Networking
             _entities = world.GetEntities().With<NetworkedEntity>().AsMap<NetworkedEntity>();
         }
 
+        public Entity? GetEntity(Guid? id) => id.HasValue ? GetEntity(id.Value) : default(Entity?);
+
         public Entity GetEntity(Guid id)
         {
             if(_entities.ContainsKey(new NetworkedEntity() { Id = id }))

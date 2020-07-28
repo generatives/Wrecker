@@ -110,6 +110,7 @@ namespace Clunker
                 NetManager client = new NetManager(listener);
                 client.SimulatePacketLoss = true;
                 client.SimulationPacketLossChance = 5;
+                client.DisconnectTimeout = 60000;
 
                 client.Start();
                 client.Connect("localhost" /* host ip or name */, 9050 /* port */, "SomeConnectionKey" /* text key or NetDataWriter */);

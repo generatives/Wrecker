@@ -89,7 +89,7 @@ namespace Clunker.WorldSpace
                             {
                                 var chunk = _world.CreateEntity();
                                 chunk.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
-                                chunk.Set(new Transform()
+                                chunk.Set(new Transform(chunk)
                                 {
                                     Position = new Vector3(coordinates.X * _chunkLength * 1, coordinates.Y * _chunkLength * 1, coordinates.Z * _chunkLength * 1)
                                 });

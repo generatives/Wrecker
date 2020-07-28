@@ -116,7 +116,7 @@ namespace Clunker.Editor.VoxelEditor
 
         public void Run(Vector3 position, Quaternion orientation, Voxel voxel, bool remove)
         {
-            var transform = new Transform()
+            var transform = new Transform(default)
             {
                 WorldPosition = position,
                 WorldOrientation = orientation

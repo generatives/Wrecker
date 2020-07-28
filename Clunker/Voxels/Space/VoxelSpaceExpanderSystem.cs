@@ -50,7 +50,7 @@ namespace Clunker.Voxels.Space
                         {
                             var spaceTransform = space.Self.Get<Transform>();
                             var voxelGridObj = space.Self.World.CreateEntity();
-                            var transform = new Transform();
+                            var transform = new Transform(voxelGridObj);
                             transform.Position = new Vector3(index.X * space.GridSize * space.VoxelSize, index.Y * space.GridSize * space.VoxelSize, index.Z * space.GridSize * space.VoxelSize);
                             spaceTransform.AddChild(transform);
                             voxelGridObj.Set(transform);

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using Clunker.Editor;
 using Clunker.Networking;
+using Clunker.ECS;
 
 namespace Clunker.Core
 {
@@ -29,6 +30,7 @@ namespace Clunker.Core
             {
                 DequeueNextTarget(transform, ref lerp);
                 entity.Set(transform);
+                entity.Set(lerp);
             }
 
             if (lerp.CurrentTarget.HasValue)
@@ -52,9 +54,9 @@ namespace Clunker.Core
                 }
 
                 lerp.Progress += frameTime;
-            }
 
-            entity.Set(lerp);
+                entity.Set(lerp);
+            }
         }
 
         private void DequeueNextTarget(Transform transform, ref TransformLerp lerp)
@@ -62,7 +64,7 @@ namespace Clunker.Core
             if (lerp.Messages.Any())
             {
                 lerp.CurrentTarget = lerp.Messages.Dequeue();
-                transform.Parent = lerp.CurrentTarget.Value.ParentId.HasValue ? _entities.GetEntity(lerp.CurrentTarget.Value.ParentId.Value).Get<Transform>() : null;
+                transform.Parent = lerp.CurrentTarget.Value.ParentId.HasValue ? _entities.GetEntity(lerp.CurrentTarget.Value.ParentId.Value).GetOrCreate<Transform>((e) => new Transform(e)) : null;
             }
             else
             {

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using Clunker.Networking;
+using Clunker.ECS;
 
 namespace Clunker.Core
 {
@@ -62,12 +63,13 @@ namespace Clunker.Core
         {
             if (!entity.Has<Transform>())
             {
-                entity.Set(new Transform()
+                var parentEntity = message.ParentId.HasValue ? Entities.GetEntity(message.ParentId.Value) : default;
+                entity.Set(new Transform(entity)
                 {
                     Position = message.Position,
                     Orientation = message.Orientation,
                     Scale = message.Scale,
-                    Parent = message.ParentId.HasValue ? Entities.GetEntity(message.ParentId.Value).Get<Transform>() : null
+                    Parent = message.ParentId.HasValue ? Entities.GetEntity(message.ParentId.Value).GetOrCreate<Transform>((e) => new Transform(e)) : null
                 });
             }
             else

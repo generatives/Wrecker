@@ -3,6 +3,7 @@ using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Utilities;
 using Clunker.Geometry;
 using Clunker.Graphics;
+using Clunker.Networking;
 using Clunker.Physics;
 using Clunker.Physics.Voxels;
 using Clunker.Voxels;
@@ -12,6 +13,7 @@ using Clunker.Voxels.Serialization;
 using Clunker.Voxels.Space;
 using DefaultEcs;
 using ImGuiNET;
+using MessagePack;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,25 +23,33 @@ using System.Text;
 
 namespace Clunker.Editor.VoxelSpaceLoader
 {
+    [MessagePackObject]
+    public struct VoxelSpaceLoadMessage
+    {
+        [Key(0)]
+        public VoxelSpaceData VoxelSpaceData;
+        [Key(1)]
+        public Vector3 Position;
+    }
+
     public class VoxelSpaceLoader : Editor
     {
         public override string Name => "Voxel Space Loader";
         public override string Category => "Voxels";
         public override char? HotKey => 'L';
 
-        private World _world;
         private EntitySet _selectedEntities;
-        private Transform _transform;
-        private Action<Entity> _setVoxelRender;
+        private EntitySet _cameraEntities;
+        private Transform CameraTransform => _cameraEntities.GetEntities()[0].Get<Transform>();
+        private MessagingChannel _serverChannel;
 
         private string _fileLocation = "C:\\Clunker";
 
-        public VoxelSpaceLoader(World world, Transform transform, Action<Entity> setVoxelRender)
+        public VoxelSpaceLoader(MessagingChannel serverChannel, World world)
         {
-            _world = world;
-            _selectedEntities = _world.GetEntities().With<SelectedEntityFlag>().AsSet();
-            _transform = transform;
-            _setVoxelRender = setVoxelRender;
+            _serverChannel = serverChannel;
+            _selectedEntities = world.GetEntities().With<SelectedEntityFlag>().AsSet();
+            _cameraEntities = world.GetEntities().With<Camera>().AsSet();
         }
 
         public override void DrawEditor(double delta)
@@ -84,7 +94,11 @@ namespace Clunker.Editor.VoxelSpaceLoader
                 if(File.Exists(_fileLocation))
                 {
                     var voxelSpaceData = VoxelSpaceDataSerializer.Deserialize(File.OpenRead(_fileLocation));
-                    LoadAsDynamic(voxelSpaceData);
+                    _serverChannel.AddBuffered<VoxelSpaceLoadReciever, VoxelSpaceLoadMessage>(new VoxelSpaceLoadMessage()
+                    {
+                        VoxelSpaceData = voxelSpaceData,
+                        Position = CameraTransform.WorldPosition
+                    });
                 }
             }
 
@@ -92,7 +106,7 @@ namespace Clunker.Editor.VoxelSpaceLoader
             {
                 var voxels = new Voxel[8 * 8 * 8];
                 voxels[0] = new Voxel() { Exists = true };
-                LoadAsDynamic(new VoxelSpaceData()
+                var voxelSpaceData = new VoxelSpaceData()
                 {
                     VoxelSize = 1,
                     GridSize = 8,
@@ -100,28 +114,50 @@ namespace Clunker.Editor.VoxelSpaceLoader
                     {
                         (new Vector3i(0, 0, 0), voxels)
                     }
+                };
+                _serverChannel.AddBuffered<VoxelSpaceLoadReciever, VoxelSpaceLoadMessage>(new VoxelSpaceLoadMessage()
+                {
+                    VoxelSpaceData = voxelSpaceData,
+                    Position = CameraTransform.WorldPosition
                 });
             }
         }
+    }
 
-        private void LoadAsDynamic(VoxelSpaceData voxelSpaceData)
+    public class VoxelSpaceLoadReciever : MessagePackMessageReciever<VoxelSpaceLoadMessage>
+    {
+        private World _world;
+
+        public VoxelSpaceLoadReciever(World world)
+        {
+            _world = world;
+        }
+
+        protected override void MessageReceived(in VoxelSpaceLoadMessage message)
+        {
+            LoadAsDynamic(message.VoxelSpaceData, message.Position);
+        }
+
+        private void LoadAsDynamic(VoxelSpaceData voxelSpaceData, Vector3 position)
         {
             var spaceEntity = _world.CreateEntity();
+            spaceEntity.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
+
             var space = new VoxelSpace(voxelSpaceData.GridSize, voxelSpaceData.VoxelSize, spaceEntity);
-            var spaceTransform = new Transform()
+            var spaceTransform = new Transform(spaceEntity)
             {
-                WorldPosition = _transform.WorldPosition
+                WorldPosition = position
             };
 
-            foreach(var (index, voxels) in voxelSpaceData.Grids)
+            foreach (var (index, voxels) in voxelSpaceData.Grids)
             {
                 var gridEntity = _world.CreateEntity();
+                gridEntity.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
 
-                var gridTransform = new Transform();
+                var gridTransform = new Transform(gridEntity);
                 gridTransform.Position = Vector3.One * voxelSpaceData.GridSize * voxelSpaceData.VoxelSize * index;
                 spaceTransform.AddChild(gridTransform);
                 gridEntity.Set(gridTransform);
-                _setVoxelRender(gridEntity);
                 gridEntity.Set(new PhysicsBlocks());
                 gridEntity.Set(new VoxelSpaceExpander());
                 gridEntity.Set(new VoxelGrid(voxelSpaceData.VoxelSize, voxelSpaceData.GridSize, space, index, voxels));

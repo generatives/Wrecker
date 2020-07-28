@@ -27,8 +27,6 @@ namespace Clunker
         public Dictionary<Type, IMessageReceiver> MessageListeners { get; private set; }
 
         private List<NetPeer> _newPeers;
-        private List<NetPeer> _connections;
-        private ulong _messagesSent;
         private EntitySet _clientEntities;
 
         private float _timeSinceUpdate = 0f;
@@ -40,7 +38,6 @@ namespace Clunker
             MessageListeners = new Dictionary<Type, IMessageReceiver>();
 
             _newPeers = new List<NetPeer>();
-            _connections = new List<NetPeer>();
         }
 
         public void SetScene(Scene scene)
@@ -66,6 +63,7 @@ namespace Clunker
                 NetManager server = new NetManager(listener);
                 server.SimulatePacketLoss = true;
                 server.SimulationPacketLossChance = 5;
+                server.DisconnectTimeout = 60000;
                 server.Start(9050 /* port */);
 
                 listener.ConnectionRequestEvent += request =>
@@ -138,7 +136,7 @@ namespace Clunker
 
             var clientEntity = Scene.World.CreateEntity();
             clientEntity.Set(new ClientMessagingTarget() { Channel = channel });
-            clientEntity.Set(new Transform() { WorldPosition = new Vector3(0, 40, 0) });
+            clientEntity.Set(new Transform(clientEntity) { WorldPosition = new Vector3(0, 40, 0) });
             clientEntity.Set(new NetworkedEntity() { Id = clientId });
             clientEntity.Set(new Camera());
             Scene.World.Publish(new NewClientConnected(clientEntity));
