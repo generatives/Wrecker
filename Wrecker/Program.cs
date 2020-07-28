@@ -123,7 +123,7 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new Transform());
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
-            logicSystems.Add(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
+            logicSystems.Add(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 10, 3, 32));
             logicSystems.Add(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             logicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, world));

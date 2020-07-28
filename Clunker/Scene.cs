@@ -56,7 +56,10 @@ namespace Clunker
                     CommandRecorder.Execute(World);
                 }
                 stopwatch.Stop();
-                //Utilties.Logging.Metrics.LogMetric($"LogicSystems:{system.GetType().Name}:Time", stopwatch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+                if(stopwatch.Elapsed.TotalMilliseconds > 1)
+                {
+                    Utilties.Logging.Metrics.LogMetric($"LogicSystems:{system.GetType().Name}:Time", stopwatch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+                }
             }
         }
 

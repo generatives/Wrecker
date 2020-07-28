@@ -17,7 +17,6 @@ namespace Clunker.Voxels.Meshing
     {
         public static void FindExposedSides(ref VoxelGrid grid, VoxelTypes types, T sideProcessor)
         {
-            var space = grid.VoxelSpace;
             for (int x = 0; x < grid.GridSize; x++)
                 for (int y = 0; y < grid.GridSize; y++)
                     for (int z = 0; z < grid.GridSize; z++)
@@ -25,32 +24,32 @@ namespace Clunker.Voxels.Meshing
                         Voxel voxel = grid[x, y, z];
                         if (voxel.Exists)
                         {
-                            if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x, y - 1, z))
+                            if (ShouldRenderSide(grid, types, voxel.BlockType, x, y - 1, z))
                             {
                                 sideProcessor.Process(x, y, z, VoxelSide.BOTTOM);
                             }
 
-                            if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x + 1, y, z))
+                            if (ShouldRenderSide(grid, types, voxel.BlockType, x + 1, y, z))
                             {
                                 sideProcessor.Process(x, y, z, VoxelSide.EAST);
                             }
 
-                            if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x - 1, y, z))
+                            if (ShouldRenderSide(grid, types, voxel.BlockType, x - 1, y, z))
                             {
                                 sideProcessor.Process(x, y, z, VoxelSide.WEST);
                             }
 
-                            if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x, y + 1, z))
+                            if (ShouldRenderSide(grid, types, voxel.BlockType, x, y + 1, z))
                             {
                                 sideProcessor.Process(x, y, z, VoxelSide.TOP);
                             }
 
-                            if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x, y, z - 1))
+                            if (ShouldRenderSide(grid, types, voxel.BlockType, x, y, z - 1))
                             {
                                 sideProcessor.Process(x, y, z, VoxelSide.NORTH);
                             }
 
-                            if (ShouldRenderSide(ref grid, ref space, types, voxel.BlockType, x, y, z + 1))
+                            if (ShouldRenderSide(grid, types, voxel.BlockType, x, y, z + 1))
                             {
                                 sideProcessor.Process(x, y, z, VoxelSide.SOUTH);
                             }
@@ -59,7 +58,7 @@ namespace Clunker.Voxels.Meshing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool ShouldRenderSide(ref VoxelGrid grid, ref VoxelSpace space, VoxelTypes types, ushort otherType, int x, int y, int z)
+        private static bool ShouldRenderSide(VoxelGrid grid, VoxelTypes types, ushort otherType, int x, int y, int z)
         {
             var voxelIndex = new Vector3i(x, y, z);
             if(grid.ContainsIndex(voxelIndex))
@@ -70,8 +69,8 @@ namespace Clunker.Voxels.Meshing
             }
             else
             {
-                var spaceIndex = space.GetSpaceIndexFromVoxelIndex(grid.MemberIndex, voxelIndex);
-                var voxel = space.GetVoxel(spaceIndex);
+                var spaceIndex = grid.VoxelSpace.GetSpaceIndexFromVoxelIndex(grid.MemberIndex, voxelIndex);
+                var voxel = grid.VoxelSpace.GetVoxel(spaceIndex);
 
                 return !voxel.HasValue || !voxel.Value.Exists || (types[voxel.Value.BlockType].Transparent && voxel.Value.BlockType != otherType);
             }

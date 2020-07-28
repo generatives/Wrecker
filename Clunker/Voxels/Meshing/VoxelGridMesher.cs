@@ -35,15 +35,26 @@ namespace Clunker.Voxels.Meshing
         private VoxelTypes _types;
         private GraphicsDevice _device;
 
+        private ThreadLocal<PooledList<VertexPositionTextureNormal>> _vertices;
+        private ThreadLocal<PooledList<ushort>> _indices;
+        private ThreadLocal<PooledList<ushort>> _transIndices;
+        private ThreadLocal<PooledList<float>> _lights;
+
         public VoxelGridMesher(EntityCommandRecorder commandRecorder, World world, VoxelTypes types, GraphicsDevice device, IParallelRunner runner) : base(world, runner)
         {
             _commandRecorder = commandRecorder;
             _types = types;
             _device = device;
+
+            _vertices = new ThreadLocal<PooledList<VertexPositionTextureNormal>>(() => new PooledList<VertexPositionTextureNormal>());
+            _indices = new ThreadLocal<PooledList<ushort>>(() => new PooledList<ushort>());
+            _transIndices = new ThreadLocal<PooledList<ushort>>(() => new PooledList<ushort>());
+            _lights = new ThreadLocal<PooledList<float>>(() => new PooledList<float>());
         }
 
         protected override void Update(double state, in Entity entity)
         {
+            var watch = Stopwatch.StartNew();
             var data = entity.Get<VoxelGrid>();
 
             ref var materialTexture = ref entity.Get<MaterialTexture>();
@@ -72,28 +83,32 @@ namespace Clunker.Voxels.Meshing
                 lightVertexResources.LightLevels :
                 new ResizableBuffer<float>(_device, sizeof(float), BufferUsage.VertexBuffer);
 
-            using var vertices = new PooledList<VertexPositionTextureNormal>(data.GridSize * data.GridSize * data.GridSize);
-            using var indices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
-            using var transIndices = new PooledList<ushort>(data.GridSize * data.GridSize * data.GridSize);
-            using var lights = new PooledList<float>(data.GridSize * data.GridSize * data.GridSize);
             var imageSize = new Vector2(materialTexture.ImageWidth, materialTexture.ImageHeight);
+
+            watch.Stop();
+            Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Prep", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+            watch.Restart();
 
             var builder = new MeshBuilder()
             {
                 VoxelTypes = _types,
                 Voxels = data,
-                Vertices = vertices,
-                Indices = indices,
-                TransparentIndices = transIndices,
-                Lights = lights,
+                Vertices = _vertices.Value,
+                Indices = _indices.Value,
+                TransparentIndices = _transIndices.Value,
+                Lights = _lights.Value,
                 ImageSize = imageSize
             };
 
             MeshGenerator<MeshBuilder>.FindExposedSides(ref data, _types, builder);
 
-            vertexBuffer.Update(vertices.ToArray());
-            indexBuffer.Update(indices.ToArray());
-            transparentIndexBuffer.Update(transIndices.ToArray());
+            watch.Stop();
+            Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Algo", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+            watch.Restart();
+
+            vertexBuffer.Update(_vertices.Value.Span);
+            indexBuffer.Update(_indices.Value.Span);
+            transparentIndexBuffer.Update(_transIndices.Value.Span);
 
             var centerOffset = Vector3.One * (data.GridSize * data.VoxelSize / 2f);
 
@@ -108,9 +123,19 @@ namespace Clunker.Voxels.Meshing
             var entityRecord = _commandRecorder.Record(entity);
             entityRecord.Set(mesh);
 
-            lightBuffer.Update(lights.ToArray());
+            lightBuffer.Update(_lights.Value.Span);
             lightVertexResources.LightLevels = lightBuffer;
             entityRecord.Set(lightVertexResources);
+
+            _vertices.Value.Clear();
+            _indices.Value.Clear();
+            _transIndices.Value.Clear();
+            _lights.Value.Clear();
+
+
+            watch.Stop();
+            Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Finish", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+            watch.Restart();
         }
     }
 
@@ -133,7 +158,7 @@ namespace Clunker.Voxels.Meshing
             var quad = side.GetQuad().Translate(position).Scale(voxelSize);
             var voxel = Voxels[x, y, z];
             var type = VoxelTypes[voxel.BlockType];
-            var textureOffset = GetTexCoords(type, voxel.Orientation, side);
+            var textureOffset = type.TextureCoords[(int)side];
 
             if (type.Transparent)
             {
@@ -187,7 +212,7 @@ namespace Clunker.Voxels.Meshing
             };
         }
 
-        private Vector2 GetTexCoords(VoxelType type, VoxelSide orientation, VoxelSide side)
+        private Vector2 GetOrientedTexCoords(VoxelType type, VoxelSide orientation, VoxelSide side)
         {
             switch (orientation)
             {

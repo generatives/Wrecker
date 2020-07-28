@@ -50,6 +50,27 @@ namespace Clunker.Graphics
             Length = data.Length;
         }
 
+        public void Update(Span<T> data)
+        {
+            var factory = GraphicsDevice.ResourceFactory;
+            var vertexBufferSize = (uint)(ItemSizeInBytes * data.Length);
+            if (DeviceBuffer == null || DeviceBuffer.SizeInBytes < vertexBufferSize)
+            {
+                if (DeviceBuffer != null) GraphicsDevice.DisposeWhenIdle(DeviceBuffer);
+                DeviceBuffer = factory.CreateBuffer(new BufferDescription(vertexBufferSize, BufferUsage));
+            }
+
+            if(data.Length > 0)
+            {
+                GraphicsDevice.UpdateBuffer(DeviceBuffer, 0,ref data[0], vertexBufferSize);
+            }
+            else
+            {
+                GraphicsDevice.UpdateBuffer(DeviceBuffer, 0, data.ToArray());
+            }
+            Length = data.Length;
+        }
+
         public void Dispose()
         {
             DeviceBuffer?.Dispose();
