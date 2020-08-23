@@ -119,16 +119,18 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new Transform(worldVoxelSpace));
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
 
-            logicSystems.Add(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
+            logicSystems.Add(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace,
+                loadRadius: 10,
+                chunkLength: 32));
             logicSystems.Add(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             logicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, world));
 
-            logicSystems.Add(new PhysicsBlockFinder(world, parallelRunner));
+            //logicSystems.Add(new PhysicsBlockFinder(world, parallelRunner));
 
             logicSystems.Add(new VoxelSpaceChangePropogator(world));
-            logicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, world));
-            logicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, world));
+            //logicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, world));
+            //logicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, world));
             logicSystems.Add(physicsSystem);
             logicSystems.Add(new DynamicBodyPositionSync(world));
 
@@ -246,7 +248,7 @@ namespace ClunkerECSDemo
             logicSystems.Add(editorMenu);
             logicSystems.AddRange(editorMenu.Editors);
 
-            logicSystems.Add(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
+            //logicSystems.Add(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
 
             logicSystems.Add(new VoxelGridMesher(commandRecorder, world, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
 

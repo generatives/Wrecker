@@ -89,18 +89,33 @@ namespace Clunker.Voxels.Meshing
             Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Prep", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
             watch.Restart();
 
-            var builder = new MeshBuilder()
-            {
-                VoxelTypes = _types,
-                Voxels = data,
-                Vertices = _vertices.Value,
-                Indices = _indices.Value,
-                TransparentIndices = _transIndices.Value,
-                Lights = _lights.Value,
-                ImageSize = imageSize
-            };
+            var textureOffset = _types["sand"].TopTexCoords;
 
-            MeshGenerator<MeshBuilder>.FindExposedSides(ref data, _types, builder);
+            MarchingCubesGenerator.GenerateMesh(data, (Triangle tri) =>
+            {
+                _indices.Value.Add((ushort)(_vertices.Value.Count + 0));
+                _indices.Value.Add((ushort)(_vertices.Value.Count + 1));
+                _indices.Value.Add((ushort)(_vertices.Value.Count + 2));
+                _vertices.Value.Add(new VertexPositionTextureNormal(tri.A, (textureOffset + new Vector2(0f, 126f)) / imageSize, tri.Normal));
+                _vertices.Value.Add(new VertexPositionTextureNormal(tri.B, (textureOffset + new Vector2(0f, 0f)) / imageSize, tri.Normal));
+                _vertices.Value.Add(new VertexPositionTextureNormal(tri.C, (textureOffset + new Vector2(126f, 0f)) / imageSize, tri.Normal));
+                _lights.Value.Add(1.0f);
+                _lights.Value.Add(1.0f);
+                _lights.Value.Add(1.0f);
+            });
+
+            //var builder = new MeshBuilder()
+            //{
+            //    VoxelTypes = _types,
+            //    Voxels = data,
+            //    Vertices = _vertices.Value,
+            //    Indices = _indices.Value,
+            //    TransparentIndices = _transIndices.Value,
+            //    Lights = _lights.Value,
+            //    ImageSize = imageSize
+            //};
+
+            //MeshGenerator<MeshBuilder>.FindExposedSides(ref data, _types, builder);
 
             watch.Stop();
             Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Algo", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
@@ -201,14 +216,15 @@ namespace Clunker.Voxels.Meshing
         {
             if (voxels.ContainsIndex(lightIndex))
             {
-                return (float)voxels.GetLight(lightIndex);
+                var voxel = voxels[lightIndex];
+                return (voxel.Exists && !VoxelTypes[voxel.BlockType].Transparent) ? 0f : 15f;
             }
             else
             {
                 var spaceIndex = voxels.VoxelSpace.GetSpaceIndexFromVoxelIndex(voxels.MemberIndex, lightIndex);
 
-                var light = voxels.VoxelSpace.GetLight(spaceIndex);
-                return light.HasValue ? light.Value : 15;
+                var voxel = voxels.VoxelSpace.GetVoxel(spaceIndex);
+                return (voxel.HasValue && voxel.Value.Exists && !VoxelTypes[voxel.Value.BlockType].Transparent) ? 0f : 15f;
             };
         }
 

@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Compile Remove="Voxels\Meshing\GreedyMeshGenerator.cs" />
-    <Compile Remove="Voxels\Meshing\MarchingCubesGenerator.cs" />
     <Compile Remove="Voxels\Meshing\SurfaceNetGenerator.cs" />
   </ItemGroup>
 

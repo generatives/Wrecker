@@ -135,7 +135,7 @@ namespace Wrecker
                 camera.Yaw = message.Yaw;
                 entity.Set(camera);
 
-                playerTransform.WorldOrientation = Quaternion.CreateFromYawPitchRoll(camera.Yaw, camera.Pitch, camera.Roll);
+                playerTransform.WorldOrientation = Quaternion.CreateFromAxisAngle(playerTransform.WorldPosition, 0) * Quaternion.CreateFromYawPitchRoll(camera.Yaw, camera.Pitch, camera.Roll);
                 entity.Set(playerTransform);
             }
         }

@@ -17,11 +17,13 @@ namespace Clunker.Voxels
         [Key(0)]
         public int Data;
         [IgnoreMember]
-        public bool Exists { get => (1 & Data) == 1; set => Data = Data | (value ? 1 : 0); }
+        public bool Exists { get => Density > 0; set => Density = 255; }
         [IgnoreMember]
-        public ushort BlockType { get => (ushort)((Data >> 1) & 0xFFF); set => Data = Data | (value << 1); }
+        public ushort BlockType { get => (ushort)((Data) & 0xFFF); set => Data = Data | (value); }
         [IgnoreMember]
-        public VoxelSide Orientation { get => (VoxelSide)((Data >> 13) & 0x7); set => Data = Data | ((int)value << 13); }
+        public VoxelSide Orientation { get => (VoxelSide)((Data >> 12) & 0x7); set => Data = Data | ((int)value << 12); }
+        [IgnoreMember]
+        public byte Density { get => (byte)((Data >> 15) & 0xFF); set => Data = Data | ((byte)value << 15); }
 
         public static bool operator ==(Voxel v, Voxel v1)
         {

@@ -364,7 +364,7 @@ namespace Clunker.Voxels.Meshing
                             var iy = y + _vertexOffset[i, 1];
                             var iz = z + _vertexOffset[i, 2];
 
-                            cube[i] = voxels.ContainsIndex(ix, iy, iz) ? voxels[ix, iy, iz].Density / 255f : 0;
+                            cube[i] = GetDensity(voxels, new Vector3i(ix, iy, iz));
                         }
 
                         //Perform algorithm
@@ -372,6 +372,29 @@ namespace Clunker.Voxels.Meshing
                     }
                 }
             }
+        }
+
+        private static float GetDensity(VoxelGrid voxels, Vector3i index)
+        {
+            if (voxels.ContainsIndex(index))
+            {
+                var voxel = voxels[index];
+                return voxel.Density / 255f;
+            }
+            else
+            {
+                var spaceIndex = voxels.VoxelSpace.GetSpaceIndexFromVoxelIndex(voxels.MemberIndex, index);
+
+                var voxel = voxels.VoxelSpace.GetVoxel(spaceIndex);
+                if(voxel.HasValue)
+                {
+                    return voxel.Value.Density / 255f;
+                }
+                else
+                {
+                    return 0f;
+                }
+            };
         }
 
         /// <summary>
