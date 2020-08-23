@@ -94,10 +94,11 @@ namespace Clunker
 
                     server.PollEvents();
 
-                    Scene.Update(frameTime);
+                    var updateTime = frameTime <= 0.016f ? frameTime : 0.016f;
+                    Scene.Update(updateTime);
 
                     _timeSinceUpdate += (float)frameTime;
-                    if (_timeSinceUpdate > 0.03f)
+                    if (_timeSinceUpdate > 0.033f)
                     {
                         foreach(var entity in _clientEntities.GetEntities())
                         {

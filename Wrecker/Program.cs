@@ -129,7 +129,7 @@ namespace ClunkerECSDemo
             //logicSystems.Add(new PhysicsBlockFinder(world, parallelRunner));
 
             logicSystems.Add(new VoxelSpaceChangePropogator(world));
-            //logicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, world));
+            logicSystems.Add(new VoxelStaticSmoothBodyGenerator(physicsSystem, world));
             //logicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, world));
             logicSystems.Add(physicsSystem);
             logicSystems.Add(new DynamicBodyPositionSync(world));

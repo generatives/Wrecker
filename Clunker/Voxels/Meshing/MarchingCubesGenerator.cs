@@ -338,10 +338,10 @@ namespace Clunker.Voxels.Meshing
         /// of each of the 8 vertices of a cube.
         /// vertexOffset[8][3]
         /// </summary>
-        private static readonly int[,] _vertexOffset = new int[,]
+        private static readonly Vector3i[] _vertexOffset = new Vector3i[]
         {
-            {0, 0, 0},{1, 0, 0},{1, 1, 0},{0, 1, 0},
-            {0, 0, 1},{1, 0, 1},{1, 1, 1},{0, 1, 1}
+            new Vector3i(0, 0, 0),new Vector3i(1, 0, 0),new Vector3i(1, 1, 0),new Vector3i(0, 1, 0),
+            new Vector3i(0, 0, 1),new Vector3i(1, 0, 1),new Vector3i(1, 1, 1),new Vector3i(0, 1, 1)
         };
 
         private static byte Surface = 126;
@@ -349,6 +349,7 @@ namespace Clunker.Voxels.Meshing
 
         public static void GenerateMesh(VoxelGrid voxels, Action<Triangle> triangleProcessor)
         {
+            Span<Vector3> edgeVertexBuffer = stackalloc Vector3[12];
             var densityGridLength = voxels.GridSize + 3;
             var densities = ArrayPool<byte>.Shared.Rent(densityGridLength * densityGridLength * densityGridLength);
 
@@ -371,7 +372,7 @@ namespace Clunker.Voxels.Meshing
                     for (int z = -1; z < voxels.GridSize + 1; z++)
                     {
                         //Perform algorithm
-                        March(x, y, z, densities, densityGridLength, triangleProcessor);
+                        March(x, y, z, densities, densityGridLength, triangleProcessor, edgeVertexBuffer);
                     }
                 }
             }
@@ -405,15 +406,15 @@ namespace Clunker.Voxels.Meshing
         /// <summary>
         /// MarchCube performs the Marching Cubes algorithm on a single cube
         /// </summary>
-        private static void March(int x, int y, int z, byte[] densities, int densityGridLength, Action<Triangle> triangleProcessor)
+        private static void March(int x, int y, int z, byte[] densities, int densityGridLength, Action<Triangle> triangleProcessor, Span<Vector3> edgeVertexBuffer)
         {
-            Span<Vector3> edgeVertexBuffer = stackalloc Vector3[12];
             int flagIndex = 0;
 
             //Find which vertices are inside of the surface and which are outside
             for (var i = 0; i < 8; i++)
             {
-                var index = new Vector3i(x + _vertexOffset[i, 0], y + _vertexOffset[i, 1], z + _vertexOffset[i, 2]);
+                var vertexOffset = _vertexOffset[i];
+                var index = new Vector3i(x + vertexOffset.X, y + vertexOffset.Y, z + vertexOffset.Z);
                 var density = GetDensityFromArray(densities, index, densityGridLength);
 
                 if (density <= Surface)
@@ -434,16 +435,20 @@ namespace Clunker.Voxels.Meshing
                 if ((edgeFlags & (1 << i)) != 0)
                 {
                     var i1 = _edgeConnection[i, 0];
-                    var d1 = GetDensityFromArray(densities, new Vector3i(x + _vertexOffset[i1, 0], y + _vertexOffset[i1, 1], z + _vertexOffset[i1, 2]), densityGridLength) / 255f;
+                    var vo1 = _vertexOffset[i1];
+                    var d1 = GetDensityFromArray(densities, new Vector3i(x + vo1.X, y + vo1.Y, z + vo1.Z), densityGridLength) / 255f;
 
                     var i2 = _edgeConnection[i, 1];
-                    var d2 = GetDensityFromArray(densities, new Vector3i(x + _vertexOffset[i2, 0], y + _vertexOffset[i2, 1], z + _vertexOffset[i2, 2]), densityGridLength) / 255f;
+                    var vo2 = _vertexOffset[i2];
+                    var d2 = GetDensityFromArray(densities, new Vector3i(x + vo2.X, y + vo2.Y, z + vo2.Z), densityGridLength) / 255f;
 
                     var offset = GetOffset(d1, d2);
 
-                    edgeVertexBuffer[i].X = x + (_vertexOffset[_edgeConnection[i, 0], 0] + offset * _edgeDirection[i].X);
-                    edgeVertexBuffer[i].Y = y + (_vertexOffset[_edgeConnection[i, 0], 1] + offset * _edgeDirection[i].Y);
-                    edgeVertexBuffer[i].Z = z + (_vertexOffset[_edgeConnection[i, 0], 2] + offset * _edgeDirection[i].Z);
+                    var vertexOffset = _vertexOffset[_edgeConnection[i, 0]];
+                    var edgeDirection = _edgeDirection[i];
+                    edgeVertexBuffer[i].X = x + (vertexOffset.X + offset * edgeDirection.X);
+                    edgeVertexBuffer[i].Y = y + (vertexOffset.Y + offset * edgeDirection.Y);
+                    edgeVertexBuffer[i].Z = z + (vertexOffset.Z + offset * edgeDirection.Z);
                 }
             }
 
