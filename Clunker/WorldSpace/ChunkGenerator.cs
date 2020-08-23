@@ -16,7 +16,7 @@ namespace Clunker.WorldSpace
     public class ChunkGenerator
     {
         private FastNoise _noise;
-        private float _radius = 400;
+        private float _radius = 800;
 
         public ChunkGenerator()
         {
@@ -42,7 +42,7 @@ namespace Clunker.WorldSpace
                         var lat = ClunkerMath.ToDegrees((float)Math.Atan(voxelPosition.Y / xzDist));
                         var lng = ClunkerMath.ToDegrees((float)Math.Atan(voxelPosition.Z / voxelPosition.X));
 
-                        var terrainHeight = (_noise.GetPerlin(lat, lng)) * 0.1f * _radius;
+                        var terrainHeight = (_noise.GetPerlin(lat, lng)) * 0.05f * _radius;
                         terrainHeight = terrainHeight + _radius;
                         if (dist > terrainHeight)
                         {

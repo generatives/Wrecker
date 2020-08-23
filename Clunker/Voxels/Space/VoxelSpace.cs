@@ -106,14 +106,14 @@ namespace Clunker.Voxels.Space
                 (int)Math.Floor((float)index.Y / GridSize),
                 (int)Math.Floor((float)index.Z / GridSize));
 
-            var voxelIndex = new Vector3i(
-                index.X - memberIndex.X * GridSize,
-                index.Y - memberIndex.Y * GridSize,
-                index.Z - memberIndex.Z * GridSize);
-
             if(_members.ContainsKey(memberIndex))
             {
                 var grid = _members[memberIndex].Get<VoxelGrid>();
+
+                var voxelIndex = new Vector3i(
+                    index.X - memberIndex.X * GridSize,
+                    index.Y - memberIndex.Y * GridSize,
+                    index.Z - memberIndex.Z * GridSize);
 
                 return grid[voxelIndex];
             }
@@ -130,15 +130,15 @@ namespace Clunker.Voxels.Space
                 (int)Math.Floor((float)index.Y / GridSize),
                 (int)Math.Floor((float)index.Z / GridSize));
 
-            var voxelIndex = new Vector3i(
-                index.X - memberIndex.X * GridSize,
-                index.Y - memberIndex.Y * GridSize,
-                index.Z - memberIndex.Z * GridSize);
-
             if(_members.ContainsKey(memberIndex))
             {
                 var member = _members[memberIndex];
                 var grid = member.Get<VoxelGrid>();
+
+                var voxelIndex = new Vector3i(
+                    index.X - memberIndex.X * GridSize,
+                    index.Y - memberIndex.Y * GridSize,
+                    index.Z - memberIndex.Z * GridSize);
 
                 var previousVoxel = grid[voxelIndex];
 

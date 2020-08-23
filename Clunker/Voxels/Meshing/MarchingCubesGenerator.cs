@@ -1,5 +1,6 @@
 ﻿using Clunker.Geometry;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -26,11 +27,11 @@ namespace Clunker.Voxels.Meshing
         /// edgeDirection lists the direction vector (vertex1-vertex0) for each edge in the cube.
         /// edgeDirection[12][3]
         /// </summary>
-        private static readonly float[,] _edgeDirection = new float[,]
+        private static readonly Vector3[] _edgeDirection = new Vector3[]
         {
-            {1.0f, 0.0f, 0.0f},{0.0f, 1.0f, 0.0f},{-1.0f, 0.0f, 0.0f},{0.0f, -1.0f, 0.0f},
-            {1.0f, 0.0f, 0.0f},{0.0f, 1.0f, 0.0f},{-1.0f, 0.0f, 0.0f},{0.0f, -1.0f, 0.0f},
-            {0.0f, 0.0f, 1.0f},{0.0f, 0.0f, 1.0f},{ 0.0f, 0.0f, 1.0f},{0.0f,  0.0f, 1.0f}
+            new Vector3(1.0f, 0.0f, 0.0f),new Vector3(0.0f, 1.0f, 0.0f), new Vector3(-1.0f, 0.0f, 0.0f),new Vector3(0.0f, -1.0f, 0.0f),
+            new Vector3(1.0f, 0.0f, 0.0f),new Vector3(0.0f, 1.0f, 0.0f),new Vector3(-1.0f, 0.0f, 0.0f),new Vector3(0.0f, -1.0f, 0.0f),
+            new Vector3(0.0f, 0.0f, 1.0f),new Vector3(0.0f, 0.0f, 1.0f),new Vector3( 0.0f, 0.0f, 1.0f),new Vector3(0.0f,  0.0f, 1.0f)
         };
 
         /// <summary>
@@ -343,12 +344,25 @@ namespace Clunker.Voxels.Meshing
             {0, 0, 1},{1, 0, 1},{1, 1, 1},{0, 1, 1}
         };
 
-        private static float Surface = 0.5f;
+        private static byte Surface = 126;
+        private static float SurfaceFloat = Surface / 255f;
 
         public static void GenerateMesh(VoxelGrid voxels, Action<Triangle> triangleProcessor)
         {
-            var cube = new float[8];
-            var edgeVertexBuffer = new Vector3[12];
+            var densityGridLength = voxels.GridSize + 3;
+            var densities = ArrayPool<byte>.Shared.Rent(densityGridLength * densityGridLength * densityGridLength);
+
+            for (int x = -1; x < voxels.GridSize + 2; x++)
+            {
+                for (int y = -1; y < voxels.GridSize + 2; y++)
+                {
+                    for (int z = -1; z < voxels.GridSize + 2; z++)
+                    {
+                        var index = new Vector3i(x, y, z);
+                        SetDensityInArray(GetDensity(voxels, index), densities, index, densityGridLength);
+                    }
+                }
+            }
 
             for (int x = -1; x < voxels.GridSize + 1; x++)
             {
@@ -356,30 +370,21 @@ namespace Clunker.Voxels.Meshing
                 {
                     for (int z = -1; z < voxels.GridSize + 1; z++)
                     {
-
-                        // Get the values in the 8 neighbours which make up a cube
-                        for (var i = 0; i < 8; i++)
-                        {
-                            var ix = x + _vertexOffset[i, 0];
-                            var iy = y + _vertexOffset[i, 1];
-                            var iz = z + _vertexOffset[i, 2];
-
-                            cube[i] = GetDensity(voxels, new Vector3i(ix, iy, iz));
-                        }
-
                         //Perform algorithm
-                        March(x, y, z, cube, triangleProcessor, edgeVertexBuffer);
+                        March(x, y, z, densities, densityGridLength, triangleProcessor);
                     }
                 }
             }
+
+            ArrayPool<byte>.Shared.Return(densities);
         }
 
-        private static float GetDensity(VoxelGrid voxels, Vector3i index)
+        private static byte GetDensity(VoxelGrid voxels, Vector3i index)
         {
             if (voxels.ContainsIndex(index))
             {
                 var voxel = voxels[index];
-                return voxel.Density / 255f;
+                return voxel.Density;
             }
             else
             {
@@ -388,11 +393,11 @@ namespace Clunker.Voxels.Meshing
                 var voxel = voxels.VoxelSpace.GetVoxel(spaceIndex);
                 if(voxel.HasValue)
                 {
-                    return voxel.Value.Density / 255f;
+                    return voxel.Value.Density;
                 }
                 else
                 {
-                    return 0f;
+                    return 0;
                 }
             };
         }
@@ -400,14 +405,18 @@ namespace Clunker.Voxels.Meshing
         /// <summary>
         /// MarchCube performs the Marching Cubes algorithm on a single cube
         /// </summary>
-        private static void March(float x, float y, float z, float[] cube, Action<Triangle> triangleProcessor, Vector3[] edgeVertexBuffer)
+        private static void March(int x, int y, int z, byte[] densities, int densityGridLength, Action<Triangle> triangleProcessor)
         {
+            Span<Vector3> edgeVertexBuffer = stackalloc Vector3[12];
             int flagIndex = 0;
 
             //Find which vertices are inside of the surface and which are outside
             for (var i = 0; i < 8; i++)
             {
-                if (cube[i] <= Surface)
+                var index = new Vector3i(x + _vertexOffset[i, 0], y + _vertexOffset[i, 1], z + _vertexOffset[i, 2]);
+                var density = GetDensityFromArray(densities, index, densityGridLength);
+
+                if (density <= Surface)
                 {
                     flagIndex |= 1 << i;
                 }
@@ -419,17 +428,22 @@ namespace Clunker.Voxels.Meshing
             //If the cube is entirely inside or outside of the surface, then there will be no intersections
             if (edgeFlags == 0) return;
 
-            //Find the point of intersection of the surface with each edge
-            for (var i = 0; i < 12; i++)
+            for(int i = 0; i < 12; i++)
             {
                 //if there is an intersection on this edge
                 if ((edgeFlags & (1 << i)) != 0)
                 {
-                    var offset = GetOffset(cube[_edgeConnection[i, 0]], cube[_edgeConnection[i, 1]]);
+                    var i1 = _edgeConnection[i, 0];
+                    var d1 = GetDensityFromArray(densities, new Vector3i(x + _vertexOffset[i1, 0], y + _vertexOffset[i1, 1], z + _vertexOffset[i1, 2]), densityGridLength) / 255f;
 
-                    edgeVertexBuffer[i].X = x + (_vertexOffset[_edgeConnection[i, 0], 0] + offset * _edgeDirection[i, 0]);
-                    edgeVertexBuffer[i].Y = y + (_vertexOffset[_edgeConnection[i, 0], 1] + offset * _edgeDirection[i, 1]);
-                    edgeVertexBuffer[i].Z = z + (_vertexOffset[_edgeConnection[i, 0], 2] + offset * _edgeDirection[i, 2]);
+                    var i2 = _edgeConnection[i, 1];
+                    var d2 = GetDensityFromArray(densities, new Vector3i(x + _vertexOffset[i2, 0], y + _vertexOffset[i2, 1], z + _vertexOffset[i2, 2]), densityGridLength) / 255f;
+
+                    var offset = GetOffset(d1, d2);
+
+                    edgeVertexBuffer[i].X = x + (_vertexOffset[_edgeConnection[i, 0], 0] + offset * _edgeDirection[i].X);
+                    edgeVertexBuffer[i].Y = y + (_vertexOffset[_edgeConnection[i, 0], 1] + offset * _edgeDirection[i].Y);
+                    edgeVertexBuffer[i].Z = z + (_vertexOffset[_edgeConnection[i, 0], 2] + offset * _edgeDirection[i].Z);
                 }
             }
 
@@ -451,7 +465,17 @@ namespace Clunker.Voxels.Meshing
         private static float GetOffset(float v1, float v2)
         {
             float delta = v2 - v1;
-            return (delta == 0.0f) ? Surface : (Surface - v1) / delta;
+            return (delta == 0.0f) ? SurfaceFloat : (SurfaceFloat - v1) / delta;
+        }
+
+        private static void SetDensityInArray(byte density, byte[] densities, Vector3i index, int densityGridLength)
+        {
+            densities[((index.Z + 1) * densityGridLength * densityGridLength) + ((index.Y + 1) * densityGridLength) + (index.X + 1)] = density;
+        }
+
+        private static byte GetDensityFromArray(byte[] densities, Vector3i index, int densityGridLength)
+        {
+            return densities[((index.Z + 1) * densityGridLength * densityGridLength) + ((index.Y + 1) * densityGridLength) + (index.X + 1)];
         }
     }
 }
