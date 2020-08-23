@@ -17,7 +17,7 @@ namespace Clunker.Voxels
         [Key(0)]
         public int Data;
         [IgnoreMember]
-        public bool Exists { get => Density > 0; set => Density = 255; }
+        public bool Exists { get => Density > 0; set => Density = (byte)(value ? 255 : 0); }
         [IgnoreMember]
         public ushort BlockType { get => (ushort)((Data) & 0xFFF); set => Data = Data | (value); }
         [IgnoreMember]
