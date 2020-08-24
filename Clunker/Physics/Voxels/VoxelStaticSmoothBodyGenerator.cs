@@ -23,7 +23,7 @@ namespace Clunker.Physics.Voxels
 
         private List<double> _times = new List<double>();
 
-        public VoxelStaticSmoothBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(PhysicsBlocks), typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
+        public VoxelStaticSmoothBodyGenerator(PhysicsSystem physicsSystem, World world) : base(world, typeof(VoxelGrid), typeof(Transform), typeof(VoxelStaticBody))
         {
             _physicsSystem = physicsSystem;
         }

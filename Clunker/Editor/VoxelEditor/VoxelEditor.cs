@@ -132,7 +132,7 @@ namespace Clunker.Editor.VoxelEditor
                     ref var space = ref hitEntity.Get<VoxelSpace>();
                     var hitTransform = hitEntity.Get<Transform>();
 
-                    // Nudge forward a little so we are inside the block
+                    // Nudge forward a little so we are inside the surface
                     var insideHitLocation = hitTransform.GetLocal(transform.WorldPosition + forward * result.T + forward * 0.01f);
                     var index = new Vector3i(
                         (int)Math.Floor(insideHitLocation.X),
@@ -146,12 +146,13 @@ namespace Clunker.Editor.VoxelEditor
                     ref var voxels = ref hitEntity.Get<VoxelGrid>();
 
                     var hitTransform = voxels.VoxelSpace.Self.Get<Transform>();
-                    // Nudge forward a little so we are inside the block
+                    // Nudge forward a little so we are inside the surface
                     var insideHitLocation = hitTransform.GetLocal(transform.WorldPosition + forward * result.T + forward * 0.01f);
+                    
                     var index = new Vector3i(
-                        (int)Math.Floor(insideHitLocation.X),
-                        (int)Math.Floor(insideHitLocation.Y),
-                        (int)Math.Floor(insideHitLocation.Z));
+                        (int)Math.Round(insideHitLocation.X),
+                        (int)Math.Round(insideHitLocation.Y),
+                        (int)Math.Round(insideHitLocation.Z));
 
                     SetVoxel(voxels.VoxelSpace, hitTransform, hitLocation, index, voxel, remove);
                 }
