@@ -137,7 +137,7 @@ namespace Clunker
 
             var clientEntity = Scene.World.CreateEntity();
             clientEntity.Set(new ClientMessagingTarget() { Channel = channel });
-            clientEntity.Set(new Transform(clientEntity) { WorldPosition = new Vector3(0, 850, 0) });
+            clientEntity.Set(new Transform(clientEntity) { WorldPosition = new Vector3(0, 2050, 0) });
             clientEntity.Set(new NetworkedEntity() { Id = clientId });
             clientEntity.Set(new Camera());
             Scene.World.Publish(new NewClientConnected(clientEntity));

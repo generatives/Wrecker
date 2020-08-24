@@ -51,10 +51,12 @@ namespace Clunker.Physics.Voxels
 
             using var triangles = new PooledList<BepuPhysics.Collidables.Triangle>();
 
-            MarchingCubesGenerator.GenerateMesh(voxels, (tri) =>
+            var processor = new TriangleProcessor()
             {
-                triangles.Add(new BepuPhysics.Collidables.Triangle(tri.A, tri.B, tri.C));
-            });
+                Triangles = triangles
+            };
+
+            MarchingCubesGenerator<TriangleProcessor>.GenerateMesh(voxels, processor);
 
             if (triangles.Count > 0)
             {
@@ -70,6 +72,16 @@ namespace Clunker.Physics.Voxels
                 body.VoxelShape = _physicsSystem.AddShape(mesh, entity);
                 var transformedOffset = Vector3.Transform(Vector3.Zero, transform.WorldOrientation);
                 body.VoxelStatic = _physicsSystem.AddStatic(new StaticDescription(transform.WorldPosition + transformedOffset, new CollidableDescription(body.VoxelShape, 0.1f)), entity);
+            }
+        }
+
+        struct TriangleProcessor : ITriangleProcessor
+        {
+            public PooledList<BepuPhysics.Collidables.Triangle> Triangles;
+
+            public void Process(Geometry.Triangle triangle, ushort blockTypeA, ushort blockTypeB, ushort blockTypeC)
+            {
+                Triangles.Add(new BepuPhysics.Collidables.Triangle(triangle.A, triangle.B, triangle.C));
             }
         }
 

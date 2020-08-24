@@ -16,7 +16,7 @@ namespace Clunker.WorldSpace
     public class ChunkGenerator
     {
         private FastNoise _noise;
-        private float _radius = 800;
+        private float _radius = 2000;
 
         public ChunkGenerator()
         {
@@ -42,21 +42,27 @@ namespace Clunker.WorldSpace
                         var lat = ClunkerMath.ToDegrees((float)Math.Atan(voxelPosition.Y / xzDist));
                         var lng = ClunkerMath.ToDegrees((float)Math.Atan(voxelPosition.Z / voxelPosition.X));
 
-                        var terrainHeight = (_noise.GetPerlin(lat, lng)) * 0.05f * _radius;
-                        terrainHeight = terrainHeight + _radius;
+
+                        var terrainHeight = (_noise.GetPerlin(lat, lng)) * 40;
+                        var blockType =
+                            (ushort)(/*terrainHeight > -13 &&*/ terrainHeight <= 0 ? 7 :
+                            terrainHeight > 0 && terrainHeight <= 15 ? 5 :
+                            terrainHeight > 15/* && terrainHeight <= 25*/ ? 4 : 2);
+
+                        terrainHeight = /*terrainHeight +*/ _radius;
                         if (dist > terrainHeight)
                         {
                             continue;
                         }
                         else if (terrainHeight > dist + 1)
                         {
-                            voxelSpaceData[x, y, z] = new Voxel() { Density = 255 };
+                            voxelSpaceData[x, y, z] = new Voxel() { Density = 255, BlockType = blockType };
                         }
                         else
                         {
                             var aboveBase = terrainHeight - dist;
                             var density = (byte)(255 * aboveBase);
-                            voxelSpaceData[x, y, z] = new Voxel() { Density = density };
+                            voxelSpaceData[x, y, z] = new Voxel() { Density = density, BlockType = blockType };
                         }
                     }
 

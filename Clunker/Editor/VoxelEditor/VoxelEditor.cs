@@ -209,6 +209,6 @@ namespace Clunker.Editor.VoxelEditor
             }
         }
 
-        public static bool NearlyEqual(float f1, float f2) => System.Math.Abs(f1 - f2) < 0.01;
+        public static bool NearlyEqual(float f1, float f2) => Math.Abs(f1 - f2) < 0.01;
     }
 }

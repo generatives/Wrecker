@@ -91,18 +91,18 @@ namespace Clunker.Voxels.Meshing
 
             var textureOffset = _types["sand"].TopTexCoords;
 
-            MarchingCubesGenerator.GenerateMesh(data, (Triangle tri) =>
+            var builder = new TriangleMeshBuilder()
             {
-                _indices.Value.Add((ushort)(_vertices.Value.Count + 0));
-                _indices.Value.Add((ushort)(_vertices.Value.Count + 1));
-                _indices.Value.Add((ushort)(_vertices.Value.Count + 2));
-                _vertices.Value.Add(new VertexPositionTextureNormal(tri.A, (textureOffset + new Vector2(0f, 126f)) / imageSize, tri.Normal));
-                _vertices.Value.Add(new VertexPositionTextureNormal(tri.B, (textureOffset + new Vector2(0f, 0f)) / imageSize, tri.Normal));
-                _vertices.Value.Add(new VertexPositionTextureNormal(tri.C, (textureOffset + new Vector2(126f, 0f)) / imageSize, tri.Normal));
-                _lights.Value.Add(1.0f);
-                _lights.Value.Add(1.0f);
-                _lights.Value.Add(1.0f);
-            });
+                VoxelTypes = _types,
+                Voxels = data,
+                Vertices = _vertices.Value,
+                Indices = _indices.Value,
+                TransparentIndices = _transIndices.Value,
+                Lights = _lights.Value,
+                ImageSize = imageSize
+            };
+
+            MarchingCubesGenerator<TriangleMeshBuilder>.GenerateMesh(data, builder);
 
             //var builder = new MeshBuilder()
             //{
@@ -151,6 +151,31 @@ namespace Clunker.Voxels.Meshing
             watch.Stop();
             Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Finish", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
             watch.Restart();
+        }
+    }
+
+    struct TriangleMeshBuilder : ITriangleProcessor
+    {
+        public VoxelGrid Voxels;
+        public VoxelTypes VoxelTypes;
+        public PooledList<VertexPositionTextureNormal> Vertices;
+        public PooledList<float> Lights;
+        public PooledList<ushort> Indices;
+        public PooledList<ushort> TransparentIndices;
+        public Vector2 ImageSize;
+
+        public void Process(Triangle triangle, ushort blockTypeA, ushort blockTypeB, ushort blockTypeC)
+        {
+            var textureOffset = VoxelTypes[blockTypeA].TopTexCoords;
+            Indices.Add((ushort)(Vertices.Count + 0));
+            Indices.Add((ushort)(Vertices.Count + 1));
+            Indices.Add((ushort)(Vertices.Count + 2));
+            Vertices.Add(new VertexPositionTextureNormal(triangle.A, (textureOffset + new Vector2(0f, 126f)) / ImageSize, triangle.Normal));
+            Vertices.Add(new VertexPositionTextureNormal(triangle.B, (textureOffset + new Vector2(0f, 0f)) / ImageSize, triangle.Normal));
+            Vertices.Add(new VertexPositionTextureNormal(triangle.C, (textureOffset + new Vector2(126f, 0f)) / ImageSize, triangle.Normal));
+            Lights.Add(1.0f);
+            Lights.Add(1.0f);
+            Lights.Add(1.0f);
         }
     }
 
