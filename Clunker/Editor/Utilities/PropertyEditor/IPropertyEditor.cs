@@ -6,6 +6,6 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 {
     public interface IPropertyEditor
     {
-        (bool, object) DrawEditor(string label, object value);
+        (bool, object) DrawEditor(string label, object value, bool writable);
     }
 }

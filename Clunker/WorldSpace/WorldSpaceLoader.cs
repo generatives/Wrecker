@@ -18,6 +18,7 @@ using Clunker.Voxels.Meshing;
 using Clunker.Editor.Utilities;
 using Clunker.Graphics;
 using Clunker.Networking;
+using Clunker.ECS;
 
 namespace Clunker.WorldSpace
 {
@@ -98,6 +99,7 @@ namespace Clunker.WorldSpace
                                 chunk.Set(new VoxelStaticBody());
                                 chunk.Set(new PhysicsBlocks());
                                 chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpace, coordinates));
+                                chunk.Set(new EntityMetaData() { Name = $"Chunk {coordinates}" });
                                 _voxelSpace[coordinates] = chunk;
 
                                 chunksLoaded++;

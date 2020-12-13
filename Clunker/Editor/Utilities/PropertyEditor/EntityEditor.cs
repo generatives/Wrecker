@@ -16,7 +16,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
             _world = world;
         }
 
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var entity = (Entity)value;
             ImGui.Text(entity.ToString());

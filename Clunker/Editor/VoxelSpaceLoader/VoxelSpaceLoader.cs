@@ -1,4 +1,5 @@
 ﻿using Clunker.Core;
+using Clunker.ECS;
 using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Utilities;
 using Clunker.Geometry;
@@ -30,6 +31,8 @@ namespace Clunker.Editor.VoxelSpaceLoader
         public VoxelSpaceData VoxelSpaceData;
         [Key(1)]
         public Vector3 Position;
+        [Key(2)]
+        public string Name { get; set; }
     }
 
     public class VoxelSpaceLoader : Editor
@@ -93,11 +96,13 @@ namespace Clunker.Editor.VoxelSpaceLoader
             {
                 if(File.Exists(_fileLocation))
                 {
+                    var name = Path.GetFileNameWithoutExtension(_fileLocation);
                     var voxelSpaceData = VoxelSpaceDataSerializer.Deserialize(File.OpenRead(_fileLocation));
                     _serverChannel.AddBuffered<VoxelSpaceLoadReciever, VoxelSpaceLoadMessage>(new VoxelSpaceLoadMessage()
                     {
                         VoxelSpaceData = voxelSpaceData,
-                        Position = CameraTransform.WorldPosition
+                        Position = CameraTransform.WorldPosition,
+                        Name = name
                     });
                 }
             }
@@ -135,13 +140,14 @@ namespace Clunker.Editor.VoxelSpaceLoader
 
         protected override void MessageReceived(in VoxelSpaceLoadMessage message)
         {
-            LoadAsDynamic(message.VoxelSpaceData, message.Position);
+            LoadAsDynamic(message.VoxelSpaceData, message.Position, message.Name);
         }
 
-        private void LoadAsDynamic(VoxelSpaceData voxelSpaceData, Vector3 position)
+        private void LoadAsDynamic(VoxelSpaceData voxelSpaceData, Vector3 position, string name)
         {
             var spaceEntity = _world.CreateEntity();
             spaceEntity.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
+            spaceEntity.Set(new EntityMetaData() { Name = name });
 
             var space = new VoxelSpace(voxelSpaceData.GridSize, voxelSpaceData.VoxelSize, spaceEntity);
             var spaceTransform = new Transform(spaceEntity)

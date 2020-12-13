@@ -20,9 +20,9 @@ namespace Clunker.Editor.Scene
         public override string Category => "Scene";
         public override char? HotKey => 'S';
 
-        public SystemList(World world, Clunker.Scene scene)
+        public SystemList(Clunker.Scene scene)
         {
-            _propertyGrid = new PropertyGrid(world);
+            _propertyGrid = new PropertyGrid(scene.World);
             _scene = scene;
         }
 
@@ -31,15 +31,7 @@ namespace Clunker.Editor.Scene
             _selectedSystem = _selectedSystem ?? _scene.LogicSystems.First();
             if (ImGui.BeginCombo("System", _selectedSystem.ToString())) // The second parameter is the label previewed before opening the combo.
             {
-                foreach(var system in _scene.LogicSystems)
-                {
-                    bool is_selected = system == _selectedSystem;
-                    if (ImGui.Selectable(system.ToString(), is_selected))
-                        _selectedSystem = system;
-                    if (is_selected)
-                        ImGui.SetItemDefaultFocus();
-                }
-                foreach (var system in _scene.RendererSystems)
+                foreach(var system in _scene.AllSystems)
                 {
                     bool is_selected = system == _selectedSystem;
                     if (ImGui.Selectable(system.ToString(), is_selected))
@@ -50,7 +42,7 @@ namespace Clunker.Editor.Scene
                 ImGui.EndCombo();
             }
 
-            _propertyGrid.Draw(_selectedSystem);
+            _propertyGrid.Draw(ref _selectedSystem, false);
         }
     }
 }

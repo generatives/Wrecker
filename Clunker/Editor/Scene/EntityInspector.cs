@@ -58,15 +58,16 @@ namespace Clunker.Editor.Scene
             if(entity.Has<T>())
             {
                 var component = entity.Get<T>();
+                var compObj = (object)component;
 
                 ImGui.PushID(component.GetType().Name);
                 if(ImGui.CollapsingHeader(component.GetType().Name, ImGuiTreeNodeFlags.DefaultOpen))
                 {
-                    var propChanged = _propertyGrid.Draw(component);
+                    var propChanged = _propertyGrid.Draw(ref compObj, false);
 
                     if (propChanged)
                     {
-                        entity.Set(component);
+                        entity.Set((T)compObj);
                     }
                 }
                 ImGui.PopID();
