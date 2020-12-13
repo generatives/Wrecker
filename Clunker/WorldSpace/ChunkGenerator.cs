@@ -36,14 +36,14 @@ namespace Clunker.WorldSpace
                     {
                         var voxelPosition = new Vector3(coordinates.X * voxelSpaceData.GridSize + x, coordinates.Y * voxelSpaceData.GridSize + y, coordinates.Z * voxelSpaceData.GridSize + z);
 
-                        var islandValue = _noise.GetPerlin(voxelPosition.X / 8, voxelPosition.Z / 8) * voxelSpaceData.GridSize;
+                        var islandValue = _noise.GetPerlin(voxelPosition.X / 16, voxelPosition.Z / 16) * voxelSpaceData.GridSize;
 
                         if (islandValue > 0)
                         {
                             if(voxelPosition.Y > voxelSpaceData.GridSize)
                             {
-                                var heightValue = (_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f)) * 15;
-                                var exists = (islandValue + heightValue) > (voxelPosition.Y - voxelSpaceData.GridSize);
+                                var heightValue = (_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f) + 1) * 1;
+                                var exists = (islandValue * heightValue * heightValue) > (voxelPosition.Y - voxelSpaceData.GridSize);
                                 voxelSpaceData[x, y, z] = new Voxel() { Exists = exists, BlockType = (ushort)7 }; // cactus top
                             }
                             else
