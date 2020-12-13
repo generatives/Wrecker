@@ -1,6 +1,7 @@
 ﻿using Clunker.Geometry;
 using ImGuiNET;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -10,17 +11,17 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 {
     public class StringEditor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var str = value as string ?? "";
-            var changed = ImGui.InputText(label, ref str, 255);
+            var changed = ImGui.InputText(label, ref str, 255, writable ? ImGuiInputTextFlags.None  : ImGuiInputTextFlags.ReadOnly);
             return (changed, str);
         }
     }
 
     public class IntEditor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var num = (int)value;
             var changed = ImGui.DragInt(label, ref num);
@@ -30,7 +31,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 
     public class FloatEditor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var num = (float)value;
             var changed = ImGui.DragFloat(label, ref num);
@@ -40,7 +41,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 
     public class BooleanEditor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var boolean = (bool)value;
             var changed = ImGui.Checkbox(label, ref boolean);
@@ -50,7 +51,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 
     public class Vector2Editor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var vector = (Vector2)value;
             var changed = ImGui.DragFloat2(label, ref vector);
@@ -60,7 +61,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 
     public class Vector3Editor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var vector = (Vector3)value;
             var changed = ImGui.DragFloat3(label, ref vector);
@@ -70,7 +71,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 
     public class QuaternionEditor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var quaternion = (Quaternion)value;
             var asVec4 = new Vector4(quaternion.X, quaternion.Y, quaternion.Z, quaternion.W);
@@ -82,7 +83,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 
     public class Vector2iEditor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var vector = (Vector2i)value;
             var asVec = (Vector2)vector;
@@ -93,7 +94,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 
     public class Vector3iEditor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var vector = (Vector3i)value;
             var asVec = (Vector3)vector;
@@ -104,12 +105,38 @@ namespace Clunker.Editor.Utilities.PropertyEditor
 
     public class RgbaFloatEditor : IPropertyEditor
     {
-        public (bool, object) DrawEditor(string label, object value)
+        public (bool, object) DrawEditor(string label, object value, bool writable)
         {
             var rgbaFloat = (RgbaFloat)value;
             var asVector = new Vector4(rgbaFloat.R, rgbaFloat.G, rgbaFloat.B, rgbaFloat.A);
             var changed = ImGui.ColorEdit4(label, ref asVector);
             return (changed, new RgbaFloat(asVector.X, asVector.Y, asVector.Z, asVector.W));
+        }
+    }
+
+    public class ArrayEditor : IPropertyEditor
+    {
+        public (bool, object) DrawEditor(string label, object value, bool writable)
+        {
+            var array = (Array)value;
+            ImGui.Text(label);
+            ImGui.Indent();
+            ImGui.Text($"Length: {array.Length}");
+            ImGui.Unindent();
+            return (false, value);
+        }
+    }
+
+    public class DictionaryEditor : IPropertyEditor
+    {
+        public (bool, object) DrawEditor(string label, object value, bool writable)
+        {
+            var array = (IDictionary)value;
+            ImGui.Text(label);
+            ImGui.Indent();
+            ImGui.Text($"Count: {array.Count}");
+            ImGui.Unindent();
+            return (false, value);
         }
     }
 }

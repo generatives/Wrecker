@@ -1,4 +1,5 @@
 ﻿using Clunker.ECS;
+using Clunker.Editor.Utilities;
 using Clunker.Geometry;
 using Clunker.Voxels.Space;
 using DefaultEcs;
@@ -18,6 +19,7 @@ namespace Clunker.Voxels
     public class VoxelGrid : IEnumerable<(Vector3, Voxel)>
     {
         public bool Changed;
+        [GenericEditor]
         public VoxelSpace VoxelSpace { get; set; }
         public Vector3i MemberIndex { get; set; }
         public VoxelGrid[] NeighborGrids { get; private set; }

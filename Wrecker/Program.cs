@@ -12,6 +12,7 @@ using Clunker.Graphics;
 using Clunker.Graphics.Systems;
 using Clunker.Networking;
 using Clunker.Networking.EntityExistence;
+using Clunker.Networking.Sync;
 using Clunker.Physics;
 using Clunker.Physics.Character;
 using Clunker.Physics.Voxels;
@@ -44,10 +45,14 @@ namespace ClunkerECSDemo
         private static Dictionary<int, Type> _byNum = new Dictionary<int, Type>();
         private static Dictionary<Type, int> _byType = new Dictionary<Type, int>();
 
+        private static MessageTargetMap _messageTargetMap;
+
         private static MessagingChannel _clientMessagingChannel;
         private static ClunkerClientApp _client;
 
         private static ClunkerServerApp _server;
+
+        private static EditorMenu _editorMenu;
 
         static void Main(string[] args)
         {
@@ -70,6 +75,8 @@ namespace ClunkerECSDemo
             options.Debug = true;
 #endif
 
+            _editorMenu = new EditorMenu();
+
             Message<TransformMessageApplier>();
             Message<InputForceApplier>();
             Message<SimpleCameraMover>();
@@ -80,14 +87,15 @@ namespace ClunkerECSDemo
             Message<EntityRemover>();
             Message<VoxelEditReceiver>();
             Message<VoxelSpaceLoadReciever>();
+            Message<ComponentSyncMessageApplier<EntityMetaData>>();
 
-            var messageTargetMap = new MessageTargetMap(_byType, _byNum);
+            _messageTargetMap = new MessageTargetMap(_byType, _byNum);
 
-            _clientMessagingChannel = new MessagingChannel(messageTargetMap);
-            _client = new ClunkerClientApp(new ResourceLoader(), messageTargetMap, _clientMessagingChannel);
+            _clientMessagingChannel = new MessagingChannel(_messageTargetMap);
+            _client = new ClunkerClientApp(new ResourceLoader(), _messageTargetMap, _clientMessagingChannel);
             _client.Started += _client_Started;
 
-            _server = new ClunkerServerApp(messageTargetMap);
+            _server = new ClunkerServerApp();
             _server.Started += _server_Started;
 
             var serverTask = _server.Start();
@@ -97,20 +105,38 @@ namespace ClunkerECSDemo
         private static void _server_Started()
         {
             var world = new World();
-            var rendererSystems = new List<ISystem<RenderingContext>>();
-            var logicSystems = new List<ISystem<double>>();
             var commandRecorder = new EntityCommandRecorder();
+
+            var scene = new Scene("Server", world, commandRecorder);
 
             var networkedEntities = new NetworkedEntities(world);
             var physicsSystem = new PhysicsSystem();
 
+            var editors = new List<IEditor>()
+            {
+                //new EditorConsole(_client.Scene),
+                new SelectedEntitySystem(world),
+                new EntityInspector(world),
+                new EntityList(world),
+                new SystemList(scene),
+                new AverageMetricValue(),
+                new MetricGraph()
+            };
+
+            _editorMenu.AddEditorSet("Server", editors);
+            scene.AddSystems(editors);
+
             var parallelRunner = new DefaultParallelRunner(4);
 
-            _server.AddListener(new TransformMessageApplier(networkedEntities));
-            _server.AddListener(new InputForceApplier(physicsSystem, world));
-            _server.AddListener(new SimpleCameraMover(physicsSystem, networkedEntities));
-            _server.AddListener(new VoxelEditReceiver(physicsSystem));
-            _server.AddListener(new VoxelSpaceLoadReciever(world));
+            var serverSystem = new ServerSystem(world, _messageTargetMap);
+
+            serverSystem.AddListener(new TransformMessageApplier(networkedEntities));
+            serverSystem.AddListener(new InputForceApplier(physicsSystem, world));
+            serverSystem.AddListener(new SimpleCameraMover(physicsSystem, networkedEntities));
+            serverSystem.AddListener(new VoxelEditReceiver(physicsSystem));
+            serverSystem.AddListener(new VoxelSpaceLoadReciever(world));
+
+            scene.AddSystem(serverSystem);
 
             var voxelTypes = LoadVoxelTypes();
 
@@ -118,41 +144,42 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
             worldVoxelSpace.Set(new Transform(worldVoxelSpace));
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
+            worldVoxelSpace.Set(new EntityMetaData() { Name = "Voxel Space" });
 
-            logicSystems.Add(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
-            logicSystems.Add(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
+            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
+            scene.AddSystem(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
-            logicSystems.Add(new VoxelSpaceExpanderSystem((e) => { }, world));
+            scene.AddSystem(new VoxelSpaceExpanderSystem((e) => { }, world));
 
-            logicSystems.Add(new PhysicsBlockFinder(world, parallelRunner));
+            scene.AddSystem(new PhysicsBlockFinder(world, parallelRunner));
 
-            logicSystems.Add(new VoxelSpaceChangePropogator(world));
-            logicSystems.Add(new VoxelStaticBodyGenerator(physicsSystem, world));
-            logicSystems.Add(new VoxelSpaceDynamicBodyGenerator(physicsSystem, world));
-            logicSystems.Add(physicsSystem);
-            logicSystems.Add(new DynamicBodyPositionSync(world));
+            scene.AddSystem(new VoxelSpaceChangePropogator(world));
+            scene.AddSystem(new VoxelStaticBodyGenerator(physicsSystem, world));
+            scene.AddSystem(new VoxelSpaceDynamicBodyGenerator(physicsSystem, world));
+            scene.AddSystem(physicsSystem);
+            scene.AddSystem(new DynamicBodyPositionSync(world));
 
-            logicSystems.Add(new CharacterInputSystem(physicsSystem, world));
+            scene.AddSystem(new CharacterInputSystem(physicsSystem, world));
 
-            logicSystems.Add(new EntityRemovalSync(world));
-            logicSystems.Add(new ClientEntityAssignmentSystem());
-            logicSystems.Add(new TransformChangeServerSystem(world));
-            logicSystems.Add(new VoxelSpaceAddedServerSystem(world));
-            logicSystems.Add(new VoxelGridExistenceServerSystem(world));
-            logicSystems.Add(new VoxelGridChangeServerSystem(world));
+            scene.AddSystem(new EntityRemovalSync(world));
+            scene.AddSystem(new ClientEntityAssignmentSystem());
+            scene.AddSystem(new TransformChangeServerSystem(world));
+            scene.AddSystem(new VoxelSpaceAddedServerSystem(world));
+            scene.AddSystem(new VoxelGridExistenceServerSystem(world));
+            scene.AddSystem(new VoxelGridChangeServerSystem(world));
+            scene.AddSystem(new ComponentSyncServerSystem<EntityMetaData>(world));
 
-            logicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(world));
+            scene.AddSystem(new FlagClearingSystem<NeighbourMemberChanged>(world));
 
-            var scene = new Scene(world, rendererSystems, logicSystems, commandRecorder);
             _server.SetScene(scene);
         }
 
         private static void _client_Started()
         {
             var world = new World();
-            var rendererSystems = new List<ISystem<RenderingContext>>();
-            var logicSystems = new List<ISystem<double>>();
             var commandRecorder = new EntityCommandRecorder();
+
+            var scene = new Scene("Client", world, commandRecorder);
 
             var factory = _client.GraphicsDevice.ResourceFactory;
 
@@ -208,12 +235,17 @@ namespace ClunkerECSDemo
 
             var networkedEntities = new NetworkedEntities(world);
 
-            _client.AddListener(new TransformMessageApplier(networkedEntities));
-            _client.AddListener(new ClientEntityAssignmentApplier(networkedEntities));
-            _client.AddListener(new VoxelSpaceMessageApplier(networkedEntities));
-            _client.AddListener(new VoxelGridMessageApplier(setVoxelRender, networkedEntities));
-            _client.AddListener(new VoxelGridChangeMessageApplier(networkedEntities));
-            _client.AddListener(new EntityRemover(networkedEntities));
+            var clientSystem = new ClientSystem(world, _messageTargetMap, _clientMessagingChannel);
+
+            clientSystem.AddListener(new TransformMessageApplier(networkedEntities));
+            clientSystem.AddListener(new ClientEntityAssignmentApplier(networkedEntities));
+            clientSystem.AddListener(new VoxelSpaceMessageApplier(networkedEntities));
+            clientSystem.AddListener(new VoxelGridMessageApplier(setVoxelRender, networkedEntities));
+            clientSystem.AddListener(new VoxelGridChangeMessageApplier(networkedEntities));
+            clientSystem.AddListener(new EntityRemover(networkedEntities));
+            clientSystem.AddListener(new ComponentSyncMessageApplier<EntityMetaData>(networkedEntities));
+
+            scene.AddSystem(clientSystem);
 
             var parallelRunner = new DefaultParallelRunner(8);
 
@@ -223,42 +255,41 @@ namespace ClunkerECSDemo
             var ny = Image.Load("Assets\\Textures\\cloudtop_dn.png");
             var pz = Image.Load("Assets\\Textures\\cloudtop_bk.png");
             var nz = Image.Load("Assets\\Textures\\cloudtop_ft.png");
-            rendererSystems.Add(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
+            scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
-            rendererSystems.Add(new MeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
-            rendererSystems.Add(new LightMeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
+            scene.AddSystem(new MeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
+            scene.AddSystem(new LightMeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
 
             var voxelTypes = LoadVoxelTypes();
 
-            var editorMenu = new EditorMenu(new List<IEditor>()
+            var editors = new List<IEditor>()
             {
-                //new EditorConsole(_client.Scene),
                 new SelectedEntitySystem(world),
                 new EntityInspector(world),
                 new EntityList(world),
-                //new SystemList(world, _client.Scene),
-                new AverageMetricValue(),
-                new MetricGraph(),
+                new SystemList(scene),
                 new VoxelEditor(_clientMessagingChannel, world, voxelTypes.Select((t, i) => (t.Name, new Voxel() { Exists = true, BlockType = (ushort)i })).ToArray()),
                 new VoxelSpaceLoader(_clientMessagingChannel, world)
-            });
+            };
 
-            logicSystems.Add(editorMenu);
-            logicSystems.AddRange(editorMenu.Editors);
+            _editorMenu.AddEditorSet("Client", editors);
 
-            logicSystems.Add(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
+            scene.AddSystem(_editorMenu);
+            scene.AddSystems(editors);
 
-            logicSystems.Add(new VoxelGridMesher(commandRecorder, world, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
+            scene.AddSystem(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
 
-            logicSystems.Add(new MeshGeometryCleaner(world));
-            logicSystems.Add(new LightVertexCleaner(world));
+            scene.AddSystem(new VoxelGridMesher(commandRecorder, world, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
 
-            logicSystems.Add(new TransformLerper(networkedEntities, world));
+            scene.AddSystem(new MeshGeometryCleaner(world));
+            scene.AddSystem(new LightVertexCleaner(world));
 
-            logicSystems.Add(new FlagClearingSystem<NeighbourMemberChanged>(world));
+            scene.AddSystem(new TransformLerper(networkedEntities, world));
 
-            logicSystems.Add(new InputForceApplierInputSystem(_clientMessagingChannel, world));
-            logicSystems.Add(new SimpleCameraMoverInputSystem(_clientMessagingChannel, world));
+            scene.AddSystem(new FlagClearingSystem<NeighbourMemberChanged>(world));
+
+            scene.AddSystem(new InputForceApplierInputSystem(_clientMessagingChannel, world));
+            scene.AddSystem(new SimpleCameraMoverInputSystem(_clientMessagingChannel, world));
 
             world.SubscribeEntityDisposed((in Entity e) =>
             {
@@ -269,7 +300,6 @@ namespace ClunkerECSDemo
                 }
             });
 
-            var scene = new Scene(world, rendererSystems, logicSystems, commandRecorder);
             _client.SetScene(scene);
         }
 

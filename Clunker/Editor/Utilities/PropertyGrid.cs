@@ -1,8 +1,10 @@
 ﻿using Clunker.Editor.Utilities.PropertyEditor;
 using Clunker.Geometry;
+using Clunker.Voxels;
 using DefaultEcs;
 using ImGuiNET;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -30,16 +32,18 @@ namespace Clunker.Editor.Utilities
                 { typeof(Vector2i), new Vector2iEditor() },
                 { typeof(Vector3i), new Vector3iEditor() },
                 { typeof(RgbaFloat), new RgbaFloatEditor() },
+                { typeof(Array), new ArrayEditor() },
+                { typeof(IDictionary), new DictionaryEditor() },
                 { typeof(Entity), new EntityEditor(world) }
             };
         }
 
-        public bool Draw(object obj)
+        public bool Draw(ref object obj, bool isRecursing)
         {
             var properties = obj.GetType()
                 .GetProperties()
-                .Where(p => p.GetMethod != null && p.GetMethod.IsPublic && p.GetMethod.GetParameters().Length == 0 &&
-                    p.SetMethod != null && p.SetMethod.IsPublic && p.SetMethod.GetParameters().Length == 1);
+                .Where(p => p.GetCustomAttribute<EditorIgnore>() == null || (p.GetCustomAttribute<EditorIgnore>().IgnoreOnRecursion && isRecursing))
+                .Where(p => p.GetMethod != null && p.GetMethod.IsPublic && p.GetMethod.GetParameters().Length == 0);
 
             var anyChanged = false;
 
@@ -47,21 +51,29 @@ namespace Clunker.Editor.Utilities
             {
                 var value = prop.GetValue(obj);
                 ImGui.Indent();
-                if (_editors.ContainsKey(prop.PropertyType))
+                var foundEditor = false;
+                foreach(var kvp in _editors)
                 {
-                    var editor = _editors[prop.PropertyType];
-                    var (changed, newValue) = editor.DrawEditor($"{prop.Name} ({prop.PropertyType})", value);
-                    if(changed)
+                    if(kvp.Key.IsAssignableFrom(prop.PropertyType))
                     {
-                        prop.SetValue(obj, newValue);
-                        anyChanged = true;
+                        foundEditor = true;
+
+                        var writable = prop.SetMethod != null && prop.SetMethod.IsPublic && prop.SetMethod.GetParameters().Length == 1;
+                        var editor = kvp.Value;
+                        var (changed, newValue) = editor.DrawEditor($"{prop.Name} ({prop.PropertyType})", value, writable);
+                        if (changed && writable)
+                        {
+                            prop.SetValue(obj, newValue);
+                            anyChanged = true;
+                        }
                     }
                 }
-                else if(value != null)
+
+                if(!foundEditor && value != null && prop.GetCustomAttribute<GenericEditor>() != null)
                 {
                     if(ImGui.CollapsingHeader($"{prop.Name} ({prop.PropertyType})", ImGuiTreeNodeFlags.DefaultOpen))
                     {
-                        anyChanged = Draw(value) || anyChanged;
+                        anyChanged = Draw(ref value, true) || anyChanged;
                     }
                 }
                 ImGui.Unindent();
@@ -85,5 +97,21 @@ namespace Clunker.Editor.Utilities
 
             return anyChanged;
         }
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    public class EditorIgnore : Attribute
+    {
+        public bool IgnoreOnRecursion { get; set; }
+
+        public EditorIgnore()
+        {
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    public class GenericEditor : Attribute
+    {
+
     }
 }

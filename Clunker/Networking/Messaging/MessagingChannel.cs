@@ -49,7 +49,7 @@ namespace Clunker.Networking
 
         public void Send(Type target, Action<Stream> serializer)
         {
-             AddMessage(target, _immediateStream, serializer);
+            AddMessage(target, _immediateStream, serializer);
             SendToPeers(_immediateStream);
             _immediateStream.Position = 0;
         }
