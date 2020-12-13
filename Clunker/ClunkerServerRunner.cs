@@ -17,12 +17,12 @@ using System.Threading.Tasks;
 
 namespace Clunker
 {
-    public class ClunkerServerApp
+    public class ClunkerServerRunner
     {
         public event Action Started;
         public Scene Scene { get; private set; }
 
-        public ClunkerServerApp()
+        public ClunkerServerRunner()
         {
         }
 

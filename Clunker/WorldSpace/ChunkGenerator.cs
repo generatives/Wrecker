@@ -30,40 +30,31 @@ namespace Clunker.WorldSpace
             ref var voxelSpaceData = ref entity.Get<VoxelGrid>();
             bool anyExist = true;
 
-            if(voxelSpaceData.MemberIndex.Y >= 2 && voxelSpaceData.MemberIndex.Y <= 5)
-            {
-                if(random.Next(0, 29) == 0)
-                {
-                    GenerateSpheres(voxelSpaceData, random);
-                    SetTypes(voxelSpaceData);
-                }
-            }
-            else if (voxelSpaceData.MemberIndex.Y >= 0)
-            {
-                for (int x = 0; x < voxelSpaceData.GridSize; x++)
-                    for (int y = 0; y < voxelSpaceData.GridSize; y++)
-                        for (int z = 0; z < voxelSpaceData.GridSize; z++)
+            for (int x = 0; x < voxelSpaceData.GridSize; x++)
+                for (int y = 0; y < voxelSpaceData.GridSize; y++)
+                    for (int z = 0; z < voxelSpaceData.GridSize; z++)
+                    {
+                        var voxelPosition = new Vector3(coordinates.X * voxelSpaceData.GridSize + x, coordinates.Y * voxelSpaceData.GridSize + y, coordinates.Z * voxelSpaceData.GridSize + z);
+
+                        var islandValue = _noise.GetPerlin(voxelPosition.X / 8, voxelPosition.Z / 8) * voxelSpaceData.GridSize;
+
+                        if (islandValue > 0)
                         {
-                            var voxelPosition = new Vector3(coordinates.X * voxelSpaceData.GridSize + x, coordinates.Y * voxelSpaceData.GridSize + y, coordinates.Z * voxelSpaceData.GridSize + z);
-
-                            var biome = _noise.GetPerlin(voxelPosition.X / voxelSpaceData.GridSize, voxelPosition.Z / voxelSpaceData.GridSize);
-                            var biomeBlockType =
-                                biome > -1 && biome < -0.5 ? 3 :
-                                biome > -0.5 && biome < 0 ? 5 :
-                                biome > 0 && biome < 0.5 ? 6 :
-                                biome > 0.5 && biome < 1 ? 7 : 0;
-
-                            var biomeHeightModifier = (biome + 1) * 2;
-
-                            var exists = (_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f) + 1f) * 15 * biomeHeightModifier > voxelPosition.Y;
-                            anyExist = anyExist || exists;
-                            var water = voxelPosition.Y < 8 && !exists;
-                            var blockType = water ? 4 : biomeBlockType;
-                            exists = exists || water;
-                            voxelSpaceData[x, y, z] = new Voxel() { Exists = exists, BlockType = (ushort)blockType };
+                            if(voxelPosition.Y > voxelSpaceData.GridSize)
+                            {
+                                var heightValue = (_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f)) * 15;
+                                var exists = (islandValue + heightValue) > (voxelPosition.Y - voxelSpaceData.GridSize);
+                                voxelSpaceData[x, y, z] = new Voxel() { Exists = exists, BlockType = (ushort)7 }; // cactus top
+                            }
+                            else
+                            {
+                                if((voxelPosition.Y - voxelSpaceData.GridSize) > -islandValue)
+                                {
+                                    voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)5 }; // stone
+                                }
+                            }
                         }
-            }
-
+                    }
 
 
             if (anyExist)

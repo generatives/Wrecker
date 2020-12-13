@@ -25,7 +25,7 @@ using LiteNetLib;
 
 namespace Clunker
 {
-    public class ClunkerClientApp
+    public class ClunkerClientRunner
     {
         public event Action Started;
 
@@ -46,7 +46,7 @@ namespace Clunker
 
         public ResourceLoader Resources { get; private set; }
 
-        public ClunkerClientApp(ResourceLoader resourceLoader, MessageTargetMap messageTargetMap, MessagingChannel messagingChannel)
+        public ClunkerClientRunner(ResourceLoader resourceLoader, MessageTargetMap messageTargetMap, MessagingChannel messagingChannel)
         {
             Resources = resourceLoader;
         }

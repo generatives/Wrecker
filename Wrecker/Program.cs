@@ -48,9 +48,9 @@ namespace ClunkerECSDemo
         private static MessageTargetMap _messageTargetMap;
 
         private static MessagingChannel _clientMessagingChannel;
-        private static ClunkerClientApp _client;
+        private static ClunkerClientRunner _client;
 
-        private static ClunkerServerApp _server;
+        private static ClunkerServerRunner _server;
 
         private static EditorMenu _editorMenu;
 
@@ -92,10 +92,10 @@ namespace ClunkerECSDemo
             _messageTargetMap = new MessageTargetMap(_byType, _byNum);
 
             _clientMessagingChannel = new MessagingChannel(_messageTargetMap);
-            _client = new ClunkerClientApp(new ResourceLoader(), _messageTargetMap, _clientMessagingChannel);
+            _client = new ClunkerClientRunner(new ResourceLoader(), _messageTargetMap, _clientMessagingChannel);
             _client.Started += _client_Started;
 
-            _server = new ClunkerServerApp();
+            _server = new ClunkerServerRunner();
             _server.Started += _server_Started;
 
             var serverTask = _server.Start();
