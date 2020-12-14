@@ -12,6 +12,7 @@ namespace Clunker.Editor
         string Category { get; }
         char? HotKey { get; }
         bool IsActive { get; set; }
+        (string, Action)[] QuickMenu { get; }
         void DrawWindow(double delta);
     }
 
@@ -22,6 +23,7 @@ namespace Clunker.Editor
         public virtual char? HotKey { get; } = null;
         public bool IsEnabled { get; set; } = true;
         public bool IsActive { get; set; } = false;
+        public (string, Action)[] QuickMenu { get; set; }
 
         public void DrawWindow(double delta)
         {

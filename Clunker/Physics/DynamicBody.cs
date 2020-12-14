@@ -1,6 +1,7 @@
 ﻿using BepuPhysics;
 using Clunker.Core;
 using Clunker.ECS;
+using Clunker.Editor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -12,6 +13,7 @@ namespace Clunker.Physics
     public struct DynamicBody
     {
         public Vector3 BodyOffset { get; set; }
+        [GenericEditor]
         public BodyReference Body { get; set; }
         public (bool X, bool Y, bool Z)? LockedAxis { get; set; }
         public Vector3? Gravity { get; set; }
@@ -19,6 +21,11 @@ namespace Clunker.Physics
         public Vector3 GetWorldBodyOffset(Transform transform)
         {
             return Vector3.Transform(BodyOffset, transform.WorldOrientation);
+        }
+
+        public void StopMovement()
+        {
+            Body.Velocity = new BodyVelocity();
         }
     }
 }

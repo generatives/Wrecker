@@ -28,6 +28,7 @@ namespace Clunker.Editor
         public override void DrawEditor(double delta)
         {
             ImGui.InputText("Search", ref _search, 20);
+
             var entityNum = 0;
             foreach(var entity in _allEntities.GetEntities())
             {

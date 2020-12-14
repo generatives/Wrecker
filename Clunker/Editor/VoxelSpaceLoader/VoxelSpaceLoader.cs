@@ -53,6 +53,7 @@ namespace Clunker.Editor.VoxelSpaceLoader
             _serverChannel = serverChannel;
             _selectedEntities = world.GetEntities().With<SelectedEntityFlag>().AsSet();
             _cameraEntities = world.GetEntities().With<Camera>().AsSet();
+            PopulateQuickMenu();
         }
 
         public override void DrawEditor(double delta)
@@ -94,38 +95,61 @@ namespace Clunker.Editor.VoxelSpaceLoader
 
             if (FilePicker.Window("load-voxel-space", ref _fileLocation, new[] { ".cvx" }))
             {
-                if(File.Exists(_fileLocation))
-                {
-                    var name = Path.GetFileNameWithoutExtension(_fileLocation);
-                    var voxelSpaceData = VoxelSpaceDataSerializer.Deserialize(File.OpenRead(_fileLocation));
-                    _serverChannel.AddBuffered<VoxelSpaceLoadReciever, VoxelSpaceLoadMessage>(new VoxelSpaceLoadMessage()
-                    {
-                        VoxelSpaceData = voxelSpaceData,
-                        Position = CameraTransform.WorldPosition,
-                        Name = name
-                    });
-                }
+                LoadFile(_fileLocation);
+                PopulateQuickMenu();
             }
 
             if(ImGui.Button("Load Empty"))
             {
-                var voxels = new Voxel[8 * 8 * 8];
-                voxels[0] = new Voxel() { Exists = true };
-                var voxelSpaceData = new VoxelSpaceData()
-                {
-                    VoxelSize = 1,
-                    GridSize = 8,
-                    Grids = new[]
-                    {
-                        (new Vector3i(0, 0, 0), voxels)
-                    }
-                };
+            }
+        }
+
+        private void LoadFile(string fileLocation)
+        {
+            if (File.Exists(fileLocation))
+            {
+                var name = Path.GetFileNameWithoutExtension(fileLocation);
+                var voxelSpaceData = VoxelSpaceDataSerializer.Deserialize(File.OpenRead(fileLocation));
                 _serverChannel.AddBuffered<VoxelSpaceLoadReciever, VoxelSpaceLoadMessage>(new VoxelSpaceLoadMessage()
                 {
                     VoxelSpaceData = voxelSpaceData,
-                    Position = CameraTransform.WorldPosition
+                    Position = CameraTransform.WorldPosition,
+                    Name = name
                 });
             }
+        }
+
+        private void LoadEmpty()
+        {
+            var voxels = new Voxel[8 * 8 * 8];
+            voxels[0] = new Voxel() { Exists = true };
+            var voxelSpaceData = new VoxelSpaceData()
+            {
+                VoxelSize = 1,
+                GridSize = 8,
+                Grids = new[]
+                {
+                        (new Vector3i(0, 0, 0), voxels)
+                    }
+            };
+            _serverChannel.AddBuffered<VoxelSpaceLoadReciever, VoxelSpaceLoadMessage>(new VoxelSpaceLoadMessage()
+            {
+                VoxelSpaceData = voxelSpaceData,
+                Position = CameraTransform.WorldPosition,
+                Name = "Empty Voxel Space"
+            });
+        }
+
+        private void PopulateQuickMenu()
+        {
+            var menu = new List<(string, Action)>();
+            menu.Add(("Load Empty", LoadEmpty));
+
+            var currentDirectory = Directory.Exists(_fileLocation) ? _fileLocation : (new FileInfo(_fileLocation)).DirectoryName;
+            var files = Directory.EnumerateFiles(currentDirectory);
+            menu.AddRange(files.Select<string, (string, Action)>(f => (Path.GetFileName(f), () => LoadFile(f))));
+
+            QuickMenu = menu.ToArray();
         }
     }
 

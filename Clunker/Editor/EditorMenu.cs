@@ -64,10 +64,32 @@ namespace Clunker.Editor
                         {
                             foreach (var editor in group)
                             {
-                                bool active = editor.IsActive;
-                                var shortcutStr = editor.HotKey.HasValue ? "Ctrl+Shft+" + editor.HotKey.Value : "";
-                                ImGui.MenuItem(editor.Name, shortcutStr, ref active, true);
-                                editor.IsActive = active;
+                                Action drawMenuItem = () =>
+                                {
+                                    bool active = editor.IsActive;
+                                    var shortcutStr = editor.HotKey.HasValue ? "Ctrl+Shft+" + editor.HotKey.Value : "";
+                                    ImGui.MenuItem(editor.Name, shortcutStr, ref active, true);
+                                    editor.IsActive = active;
+                                };
+                                if(editor.QuickMenu != null && editor.QuickMenu.Any())
+                                {
+                                    if(ImGui.BeginMenu(editor.Name))
+                                    {
+                                        drawMenuItem();
+                                        foreach(var quickAction in editor.QuickMenu)
+                                        {
+                                            if(ImGui.MenuItem(quickAction.Item1))
+                                            {
+                                                quickAction.Item2();
+                                            }
+                                        }
+                                        ImGui.EndMenu();
+                                    }
+                                }
+                                else
+                                {
+                                    drawMenuItem();
+                                }
                             }
                             ImGui.EndMenu();
                         }

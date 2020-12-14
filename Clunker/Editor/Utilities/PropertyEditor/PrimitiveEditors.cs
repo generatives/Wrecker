@@ -121,7 +121,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
             var array = (Array)value;
             ImGui.Text(label);
             ImGui.Indent();
-            ImGui.Text($"Length: {array.Length}");
+            ImGui.Text($"Length: {array?.Length ?? 0}");
             ImGui.Unindent();
             return (false, value);
         }
@@ -134,7 +134,7 @@ namespace Clunker.Editor.Utilities.PropertyEditor
             var array = (IDictionary)value;
             ImGui.Text(label);
             ImGui.Indent();
-            ImGui.Text($"Count: {array.Count}");
+            ImGui.Text($"Count: {array?.Count ?? 0}");
             ImGui.Unindent();
             return (false, value);
         }

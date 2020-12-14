@@ -1,4 +1,5 @@
-﻿using Clunker.Editor.Utilities.PropertyEditor;
+﻿using BepuPhysics;
+using Clunker.Editor.Utilities.PropertyEditor;
 using Clunker.Geometry;
 using Clunker.Voxels;
 using DefaultEcs;
@@ -34,7 +35,8 @@ namespace Clunker.Editor.Utilities
                 { typeof(RgbaFloat), new RgbaFloatEditor() },
                 { typeof(Array), new ArrayEditor() },
                 { typeof(IDictionary), new DictionaryEditor() },
-                { typeof(Entity), new EntityEditor(world) }
+                { typeof(Entity), new EntityEditor(world) },
+                { typeof(BodyReference), new BodyReferenceEditor() }
             };
         }
 
@@ -54,7 +56,8 @@ namespace Clunker.Editor.Utilities
                 var foundEditor = false;
                 foreach(var kvp in _editors)
                 {
-                    if(kvp.Key.IsAssignableFrom(prop.PropertyType))
+                    var type = prop.PropertyType.IsByRef ? prop.PropertyType.GetElementType() : prop.PropertyType;
+                    if(kvp.Key.IsAssignableFrom(type))
                     {
                         foundEditor = true;
 

@@ -42,6 +42,8 @@ namespace Clunker
                 while(true)
                 {
                     var frameTime = frameWatch.Elapsed.TotalSeconds;
+                    Utilties.Logging.Metrics.LogMetric("Server:Frame:Time", frameTime, TimeSpan.FromSeconds(5));
+                    Utilties.Logging.Metrics.LogMetric("Server:Frame:Rate", 1f / frameTime, TimeSpan.FromSeconds(5));
                     frameWatch.Restart();
 
                     Scene.Update(frameTime);
