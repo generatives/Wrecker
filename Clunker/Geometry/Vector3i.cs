@@ -23,6 +23,16 @@ namespace Clunker.Geometry
             Z = z;
         }
 
+        public int LengthSquared()
+        {
+            return X * X + Y * Y + Z * Z;
+        }
+
+        public double Length()
+        {
+            return Math.Sqrt(LengthSquared());
+        }
+
         public static bool operator ==(Vector3i v, Vector3i v1)
         {
             return v.X == v1.X &&

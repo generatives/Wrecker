@@ -105,7 +105,7 @@ namespace Clunker
                             0.90f,
                             (float)_window.Width / _window.Height,
                             0.4f,
-                            512f);
+                            1024f);
                         if (GraphicsDevice.IsClipSpaceYInverted)
                         {
                             _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);

@@ -37,6 +37,8 @@ namespace Clunker.WorldSpace
 
         private Action<Entity> _setVoxelRendering;
 
+        private List<Vector3i> _chunkOffsets;
+
         public WorldSpaceLoader(Action<Entity> setVoxelRendering, World world, Entity voxelSpaceEntity, int loadRadius, int loadHeight, int chunkLength)
         {
             _setVoxelRendering = setVoxelRendering;
@@ -47,6 +49,28 @@ namespace Clunker.WorldSpace
             LoadRadius = loadRadius;
             LoadHeight = loadHeight;
             _chunkLength = chunkLength;
+
+            GenerateChunkOffsets();
+        }
+
+        private void GenerateChunkOffsets()
+        {
+            var xzList = new List<Vector2i>();
+            for (int xOffset = -LoadRadius; xOffset <= LoadRadius; xOffset++)
+                for (int zOffset = -LoadRadius; zOffset <= LoadRadius; zOffset++)
+                    if ((xOffset * xOffset + zOffset * zOffset) <= LoadRadius * LoadRadius)
+                    {
+                        xzList.Add(new Vector2i(xOffset, zOffset));
+                    }
+
+            _chunkOffsets = new List<Vector3i>();
+            foreach(var xz in xzList.OrderBy((o) => o.LengthSquared()))
+            {
+                for (int yLoad = 0; yLoad < LoadHeight; yLoad++)
+                {
+                    _chunkOffsets.Add(new Vector3i(xz.X, yLoad, xz.Y));
+                }
+            }
         }
 
         public void Clear()
@@ -77,36 +101,28 @@ namespace Clunker.WorldSpace
             }
 
             var chunksLoaded = 0;
-            for (int xOffset = -LoadRadius; xOffset <= LoadRadius; xOffset++)
+            for(int i = 0; i < _chunkOffsets.Count; i++)
             {
-                for (int zOffset = -LoadRadius; zOffset <= LoadRadius; zOffset++)
+                var offset = _chunkOffsets[i];
+                var coordinates = new Vector3i(x + offset.X, offset.Y, z + offset.Z);
+                if (!_voxelSpace.ContainsMember(coordinates))
                 {
-                    if ((xOffset * xOffset + zOffset * zOffset) <= LoadRadius * LoadRadius)
+                    var chunk = _world.CreateEntity();
+                    chunk.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
+                    chunk.Set(new Transform(chunk)
                     {
-                        for (int yLoad = 0; yLoad < LoadHeight; yLoad++)
-                        {
-                            var coordinates = new Vector3i(x + xOffset, yLoad, z + zOffset);
-                            if (!_voxelSpace.ContainsMember(coordinates))
-                            {
-                                var chunk = _world.CreateEntity();
-                                chunk.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
-                                chunk.Set(new Transform(chunk)
-                                {
-                                    Position = new Vector3(coordinates.X * _chunkLength * 1, coordinates.Y * _chunkLength * 1, coordinates.Z * _chunkLength * 1)
-                                });
-                                _setVoxelRendering(chunk);
-                                chunk.Set(new Chunk());
-                                chunk.Set(new VoxelStaticBody());
-                                chunk.Set(new PhysicsBlocks());
-                                chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpace, coordinates));
-                                chunk.Set(new EntityMetaData() { Name = $"Chunk {coordinates}" });
-                                _voxelSpace[coordinates] = chunk;
+                        Position = new Vector3(coordinates.X * _chunkLength * 1, coordinates.Y * _chunkLength * 1, coordinates.Z * _chunkLength * 1)
+                    });
+                    _setVoxelRendering(chunk);
+                    chunk.Set(new Chunk());
+                    chunk.Set(new VoxelStaticBody());
+                    chunk.Set(new PhysicsBlocks());
+                    chunk.Set(new VoxelGrid(_chunkLength, 1, _voxelSpace, coordinates));
+                    chunk.Set(new EntityMetaData() { Name = $"Chunk {coordinates}" });
+                    _voxelSpace[coordinates] = chunk;
 
-                                chunksLoaded++;
-                                if (chunksLoaded == LoadHeight) return;
-                            }
-                        }
-                    }
+                    chunksLoaded++;
+                    if (chunksLoaded == LoadHeight) return;
                 }
             }
         }

@@ -137,6 +137,8 @@ namespace Clunker.Voxels.Lighting
 
         public bool IsEnabled { get; set; } = true;
 
+        public int numProcessed = 0;
+
         public SunLightPropogationSystem(World world, VoxelTypes voxelTypes)
         {
             _voxelTypes = voxelTypes;
@@ -157,6 +159,7 @@ namespace Clunker.Voxels.Lighting
 
         public void Update(double state)
         {
+            numProcessed = 0;
             var watch = Stopwatch.StartNew();
 
             foreach (var entity in _addedGrids.GetEntities())
@@ -194,7 +197,8 @@ namespace Clunker.Voxels.Lighting
                 if(!voxel.Exists || _voxelTypes[voxel.BlockType].Transparent)
                 {
                     // We are propogating a new path for sunlight
-                    if (voxelIndex.Y == voxels.GridSize - 1)
+                    var voxelSpace = voxels.VoxelSpace;
+                    if (!voxelSpace.ContainsMember(voxels.MemberIndex + Vector3i.UnitY) && voxelIndex.Y == voxels.GridSize - 1)
                     {
                         // This is a source of sunlight so we can propogate straight from here
                         voxels.SetLight(voxelIndex, (byte)15);
@@ -244,6 +248,7 @@ namespace Clunker.Voxels.Lighting
                 watch.Stop();
                 Metrics.LogMetric("SunlightPropogation:Time", watch.Elapsed.TotalMilliseconds, 30);
                 Metrics.LogMetric("SunlightPropogation:InitialBlocks", initialProp, 30);
+                Metrics.LogMetric("SunlightPropogation:Total", numProcessed, 30);
             }
         }
 
@@ -257,6 +262,7 @@ namespace Clunker.Voxels.Lighting
 
             while (propogationQueue.Count > 0)
             {
+                numProcessed++;
                 var (flatIndex, voxels) = propogationQueue.Dequeue();
                 var lightLevel = voxels.Lights[flatIndex];
                 if(lightLevel > 0)

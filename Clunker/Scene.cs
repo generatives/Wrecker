@@ -84,7 +84,13 @@ namespace Clunker
             {
                 if (system.IsEnabled)
                 {
+                    var stopwatch = Stopwatch.StartNew();
                     system.Update(context);
+                    stopwatch.Stop();
+                    if (stopwatch.Elapsed.TotalMilliseconds > 1)
+                    {
+                        Utilties.Logging.Metrics.LogMetric($"RenderSystems:{system.GetType().Name}:Time", stopwatch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+                    }
                 }
             }
         }

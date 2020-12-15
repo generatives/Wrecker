@@ -16,6 +16,16 @@ namespace Clunker.Geometry
             Y = y;
         }
 
+        public int LengthSquared()
+        {
+            return X * X + Y * Y;
+        }
+
+        public double Length()
+        {
+            return Math.Sqrt(LengthSquared());
+        }
+
         public static implicit operator Vector2(Vector2i v)
         {
             return new Vector2(v.X, v.Y);
