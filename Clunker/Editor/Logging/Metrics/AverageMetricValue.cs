@@ -25,7 +25,7 @@ namespace Clunker.Editor.Logging.Metrics
                     lock (metrics)
                     {
                         var average = metrics.Select(t => t.Item2).Average();
-                        ImGui.Text($"{name}: {average}");
+                        ImGui.Text($"{name}: {average:0.####}");
                     }
                 }
             }

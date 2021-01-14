@@ -57,10 +57,17 @@ namespace Clunker.Core
 
     public class TransformMessageApplier : EntityMessageApplier<TransformMessage>
     {
+        DateTime _lastMessageTime;
+
         public TransformMessageApplier(NetworkedEntities entities) : base(entities) { }
 
         protected override void MessageReceived(in TransformMessage message, in Entity entity)
         {
+            var messageTime = DateTime.UtcNow;
+            var diff = (messageTime - _lastMessageTime).TotalMilliseconds;
+            Utilties.Logging.Metrics.LogMetric($"LogicSystems:TransformMessageApplier:MessageDiff", diff, TimeSpan.FromSeconds(5));
+            _lastMessageTime = messageTime;
+
             if (!entity.Has<Transform>())
             {
                 var parentEntity = message.ParentId.HasValue ? Entities.GetEntity(message.ParentId.Value) : default;

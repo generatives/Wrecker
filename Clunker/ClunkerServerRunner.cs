@@ -46,6 +46,8 @@ namespace Clunker
                     Utilties.Logging.Metrics.LogMetric("Server:Frame:Rate", 1f / frameTime, TimeSpan.FromSeconds(5));
                     frameWatch.Restart();
 
+                    frameTime = Math.Min(frameTime, 0.033f);
+
                     Scene.Update(frameTime);
 
                     while (frameWatch.Elapsed.TotalSeconds < 0.016)

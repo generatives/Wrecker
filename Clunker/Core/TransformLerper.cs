@@ -14,6 +14,9 @@ namespace Clunker.Core
     [With(typeof(TransformLerp))]
     public class TransformLerper : AEntitySystem<double>
     {
+        public float SpareTimeScaler { get; set; } = 0.2f;
+        public float SpareTimeTarget { get; set; } = 0.065f;
+
         private NetworkedEntities _entities;
 
         public TransformLerper(NetworkedEntities networkedEntities, World world) : base(world)
@@ -35,8 +38,11 @@ namespace Clunker.Core
 
             if (lerp.CurrentTarget.HasValue)
             {
+                Utilties.Logging.Metrics.LogMetric($"LogicSystems:TransformLerper:MessageCount", lerp.Messages.Count, TimeSpan.FromSeconds(5));
                 var serverFrameTime = lerp.CurrentTarget.Value.DeltaTime;
-                var frameTime = (float)deltaSeconds + (lerp.Messages.Count - 2) * 0.002f;
+                // The multiplier scales the affect of the message count on the frame time
+                var timeRemaining = lerp.CurrentTarget.Value.DeltaTime + lerp.Messages.Sum(m => m.DeltaTime);
+                var frameTime = Math.Max((float)deltaSeconds + (timeRemaining - SpareTimeTarget) * SpareTimeScaler, 0.001f);
                 if (lerp.Progress > serverFrameTime)
                 {
                     var remainingOnTarget = serverFrameTime - lerp.Progress;

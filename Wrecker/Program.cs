@@ -147,7 +147,7 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
             worldVoxelSpace.Set(new EntityMetaData() { Name = "Voxel Space" });
 
-            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 8, 3, 32));
+            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
             scene.AddSystem(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             scene.AddSystem(new VoxelSpaceExpanderSystem((e) => { }, world));
@@ -271,7 +271,9 @@ namespace ClunkerECSDemo
                 new EntityList(world),
                 new SystemList(scene),
                 new VoxelEditor(_clientMessagingChannel, world, voxelTypes.Select((t, i) => (t.Name, new Voxel() { Exists = true, BlockType = (ushort)i })).ToArray()),
-                new VoxelSpaceLoader(_clientMessagingChannel, world)
+                new VoxelSpaceLoader(_clientMessagingChannel, world),
+                new AverageMetricValue(),
+                new MetricGraph()
             };
 
             _editorMenu.AddEditorSet("Client", editors);

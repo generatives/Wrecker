@@ -80,7 +80,19 @@ namespace Clunker.Physics.Character
                 characterInput.SupportLastOrientation = null;
             }
 
-            character.TryJump = characterInput.Jump;
+            if(!characterInput.CanTryJump && character.Supported && characterInput.Jump == false)
+            {
+                characterInput.CanTryJump = true;
+            }
+            else if(!character.Supported)
+            {
+                characterInput.CanTryJump = false;
+            }
+
+            if(characterInput.CanTryJump && characterInput.Jump)
+            {
+                character.TryJump = true;
+            }
             var effectiveSpeed = characterInput.Sprint ? characterInput.Speed * 1.75f : characterInput.Speed;
             var newTargetVelocity = movementDirection * effectiveSpeed;
             var viewDirection = transform.WorldOrientation.GetForwardVector();
@@ -111,15 +123,21 @@ namespace Clunker.Physics.Character
                 var rightLengthSquared = characterRight.LengthSquared();
                 if (rightLengthSquared > 1e-10f)
                 {
+                    // Changing to a diagonal direction in the air from a forward direction is awkward because you are already going fast.
+                    // The system doesn't want to add more velocity to change direction
+
+                    // We'll arbitrarily set air control to be a fraction of supported movement's speed/force.
+                    const float airControlForceScale = 0.1f;
+                    const float airControlSpeedScale = 1.0f;
+
                     characterRight /= (float)Math.Sqrt(rightLengthSquared);
                     var characterForward = Vector3.Cross(characterUp, characterRight);
                     var worldMovementDirection = characterRight * movementDirection.X + characterForward * movementDirection.Y;
+
                     var currentVelocity = Vector3.Dot(characterBody.Velocity.Linear, worldMovementDirection);
-                    //We'll arbitrarily set air control to be a fraction of supported movement's speed/force.
-                    const float airControlForceScale = .6f;
-                    const float airControlSpeedScale = .8f;
                     var airAccelerationDt = characterBody.LocalInertia.InverseMass * character.MaximumHorizontalForce * airControlForceScale * delta;
                     var maximumAirSpeed = effectiveSpeed * airControlSpeedScale;
+
                     var targetVelocity = (float)Math.Min(currentVelocity + airAccelerationDt, maximumAirSpeed);
                     //While we shouldn't allow the character to continue accelerating in the air indefinitely, trying to move in a given direction should never slow us down in that direction.
                     var velocityChangeAlongMovementDirection = (float)Math.Max(0, targetVelocity - currentVelocity);

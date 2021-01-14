@@ -22,6 +22,7 @@ namespace Clunker.Physics.Character
         public bool MoveLeft;
         public bool Sprint;
         public bool Jump;
+        public bool CanTryJump;
 
         public Quaternion? SupportLastOrientation;
     }

@@ -30,9 +30,9 @@ namespace Wrecker
         [Key(3)]
         public bool Right;
         [Key(4)]
-        public bool Shift;
+        public bool Sprint;
         [Key(5)]
-        public bool Space;
+        public bool Jump;
         [Key(6)]
         public bool C;
         [Key(7)]
@@ -74,8 +74,8 @@ namespace Wrecker
                 Backward = GameInputTracker.IsKeyPressed(Key.S),
                 Left = GameInputTracker.IsKeyPressed(Key.A),
                 Right = GameInputTracker.IsKeyPressed(Key.D),
-                Space = GameInputTracker.IsKeyPressed(Key.Space),
-                Shift = GameInputTracker.IsKeyPressed(Key.ShiftLeft),
+                Jump = GameInputTracker.IsKeyPressed(Key.Space),
+                Sprint = GameInputTracker.IsKeyPressed(Key.ShiftLeft),
                 C = GameInputTracker.WasKeyDowned(Key.C),
                 Pitch = camera.Pitch,
                 Yaw = camera.Yaw
@@ -114,7 +114,7 @@ namespace Wrecker
                 }
                 else
                 {
-                    var input = _physicsSystem.BuildCharacterInput(playerTransform.WorldPosition, new Capsule(0.5f, 1), 0.1f, 1.25f, 100, 100, 6, 4, MathF.PI * 0.4f);
+                    var input = _physicsSystem.BuildCharacterInput(playerTransform.WorldPosition, new Capsule(0.5f, 1), 0.1f, 1.25f, 100, 100, 5, 4, MathF.PI * 0.4f);
                     entity.Set(input);
                 }
             }
@@ -146,8 +146,8 @@ namespace Wrecker
             character.MoveBackward = message.Backward;
             character.MoveLeft = message.Left;
             character.MoveRight = message.Right;
-            character.Jump = message.Space;
-            character.Sprint = message.Shift;
+            character.Jump = message.Jump;
+            character.Sprint = message.Sprint;
         }
 
         protected void UpdateFreeMovement(float time, in Entity entity, Transform transform, in SimpleCameraMoverMessage message)
@@ -183,13 +183,13 @@ namespace Wrecker
                 changed = true;
             }
 
-            if (message.Space)
+            if (message.Jump)
             {
                 transform.MoveBy(0, distance, 0);
                 changed = true;
             }
 
-            if (message.Shift)
+            if (message.Sprint)
             {
                 transform.MoveBy(0, -distance, 0);
                 changed = true;
