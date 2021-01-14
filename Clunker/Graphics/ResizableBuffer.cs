@@ -62,7 +62,7 @@ namespace Clunker.Graphics
 
             if(data.Length > 0)
             {
-                GraphicsDevice.UpdateBuffer(DeviceBuffer, 0,ref data[0], vertexBufferSize);
+                GraphicsDevice.UpdateBuffer(DeviceBuffer, 0, ref data[0], vertexBufferSize);
             }
             else
             {

@@ -27,6 +27,7 @@ using DefaultEcs.Command;
 using DefaultEcs.System;
 using DefaultEcs.Threading;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -146,7 +147,7 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
             worldVoxelSpace.Set(new EntityMetaData() { Name = "Voxel Space" });
 
-            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 16, 3, 32));
+            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 8, 3, 32));
             scene.AddSystem(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             scene.AddSystem(new VoxelSpaceExpanderSystem((e) => { }, world));
@@ -247,14 +248,14 @@ namespace ClunkerECSDemo
 
             scene.AddSystem(clientSystem);
 
-            var parallelRunner = new DefaultParallelRunner(8);
+            var parallelRunner = new DefaultParallelRunner(4);
 
-            var px = Image.Load("Assets\\Textures\\cloudtop_rt.png");
-            var nx = Image.Load("Assets\\Textures\\cloudtop_lf.png");
-            var py = Image.Load("Assets\\Textures\\cloudtop_up.png");
-            var ny = Image.Load("Assets\\Textures\\cloudtop_dn.png");
-            var pz = Image.Load("Assets\\Textures\\cloudtop_bk.png");
-            var nz = Image.Load("Assets\\Textures\\cloudtop_ft.png");
+            var px = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_rt.png");
+            var nx = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_lf.png");
+            var py = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_up.png");
+            var ny = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_dn.png");
+            var pz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_bk.png");
+            var nz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_ft.png");
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
             scene.AddSystem(new MeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));

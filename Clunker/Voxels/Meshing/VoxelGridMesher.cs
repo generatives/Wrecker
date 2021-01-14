@@ -40,6 +40,8 @@ namespace Clunker.Voxels.Meshing
         private ThreadLocal<PooledList<ushort>> _transIndices;
         private ThreadLocal<PooledList<float>> _lights;
 
+        private int _numRunning;
+
         public VoxelGridMesher(EntityCommandRecorder commandRecorder, World world, VoxelTypes types, GraphicsDevice device, IParallelRunner runner) : base(world, runner)
         {
             _commandRecorder = commandRecorder;
@@ -59,34 +61,10 @@ namespace Clunker.Voxels.Meshing
 
             ref var materialTexture = ref entity.Get<MaterialTexture>();
 
-            ResizableBuffer<VertexPositionTextureNormal> vertexBuffer;
-            ResizableBuffer<ushort> indexBuffer;
-            ResizableBuffer<ushort> transparentIndexBuffer;
-
-            if(entity.Has<RenderableMeshGeometry>())
-            {
-                ref var geometry = ref entity.Get<RenderableMeshGeometry>();
-                vertexBuffer = geometry.Vertices;
-                indexBuffer = geometry.Indices;
-                transparentIndexBuffer = geometry.TransparentIndices;
-            }
-            else
-            {
-                vertexBuffer = new ResizableBuffer<VertexPositionTextureNormal>(_device, VertexPositionTextureNormal.SizeInBytes, BufferUsage.VertexBuffer);
-                indexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
-                transparentIndexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
-            }
-
-            ref var lightVertexResources = ref entity.Get<LightVertexResources>();
-
-            var lightBuffer = lightVertexResources.LightLevels.Exists ?
-                lightVertexResources.LightLevels :
-                new ResizableBuffer<float>(_device, sizeof(float), BufferUsage.VertexBuffer);
-
             var imageSize = new Vector2(materialTexture.ImageWidth, materialTexture.ImageHeight);
 
             watch.Stop();
-            Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Prep", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+            if (watch.Elapsed.TotalMilliseconds > 1) Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Prep", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
             watch.Restart();
 
             var builder = new MeshBuilder()
@@ -103,29 +81,68 @@ namespace Clunker.Voxels.Meshing
             MeshGenerator<MeshBuilder>.FindExposedSides(ref data, _types, builder);
 
             watch.Stop();
-            Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Algo", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+            if (watch.Elapsed.TotalMilliseconds > 1) Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Algo", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
             watch.Restart();
 
-            vertexBuffer.Update(_vertices.Value.Span);
-            indexBuffer.Update(_indices.Value.Span);
-            transparentIndexBuffer.Update(_transIndices.Value.Span);
+            ResizableBuffer<VertexPositionTextureNormal> vertexBuffer;
+            ResizableBuffer<ushort> indexBuffer;
+            ResizableBuffer<ushort> transparentIndexBuffer;
 
-            var centerOffset = Vector3.One * (data.GridSize * data.VoxelSize / 2f);
-
-            var mesh = new RenderableMeshGeometry()
+            if(_vertices.Value.Count > 0)
             {
-                Vertices = vertexBuffer,
-                Indices = indexBuffer,
-                TransparentIndices = transparentIndexBuffer,
-                BoundingRadius = centerOffset.Length(),
-                BoundingRadiusOffset = centerOffset
-            };
-            var entityRecord = _commandRecorder.Record(entity);
-            entityRecord.Set(mesh);
+                if (entity.Has<RenderableMeshGeometry>())
+                {
+                    ref var geometry = ref entity.Get<RenderableMeshGeometry>();
+                    vertexBuffer = geometry.Vertices;
+                    indexBuffer = geometry.Indices;
+                    transparentIndexBuffer = geometry.TransparentIndices;
+                }
+                else
+                {
+                    vertexBuffer = new ResizableBuffer<VertexPositionTextureNormal>(_device, VertexPositionTextureNormal.SizeInBytes, BufferUsage.VertexBuffer);
+                    indexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
+                    transparentIndexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
+                }
 
-            lightBuffer.Update(_lights.Value.Span);
-            lightVertexResources.LightLevels = lightBuffer;
-            entityRecord.Set(lightVertexResources);
+                vertexBuffer.Update(_vertices.Value.Span);
+                indexBuffer.Update(_indices.Value.Span);
+                transparentIndexBuffer.Update(_transIndices.Value.Span);
+
+                var centerOffset = Vector3.One * (data.GridSize * data.VoxelSize / 2f);
+
+                var mesh = new RenderableMeshGeometry()
+                {
+                    Vertices = vertexBuffer,
+                    Indices = indexBuffer,
+                    TransparentIndices = transparentIndexBuffer,
+                    BoundingRadius = centerOffset.Length(),
+                    BoundingRadiusOffset = centerOffset
+                };
+                var entityRecord = _commandRecorder.Record(entity);
+                entityRecord.Set(mesh);
+
+                ref var lightVertexResources = ref entity.Get<LightVertexResources>();
+
+                var lightBuffer = lightVertexResources.LightLevels.Exists ?
+                    lightVertexResources.LightLevels :
+                    new ResizableBuffer<float>(_device, sizeof(float), BufferUsage.VertexBuffer);
+
+                lightBuffer.Update(_lights.Value.Span);
+                lightVertexResources.LightLevels = lightBuffer;
+                entityRecord.Set(lightVertexResources);
+            }
+            else
+            {
+                if(entity.Has<RenderableMeshGeometry>())
+                {
+                    entity.Remove<RenderableMeshGeometry>();
+                }
+
+                if(entity.Has<LightVertexResources>())
+                {
+                    entity.Remove<LightVertexResources>();
+                }
+            }
 
             _vertices.Value.Clear();
             _indices.Value.Clear();
@@ -134,7 +151,7 @@ namespace Clunker.Voxels.Meshing
 
 
             watch.Stop();
-            Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Finish", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
+            if(watch.Elapsed.TotalMilliseconds > 1) Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Finish", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
             watch.Restart();
         }
     }

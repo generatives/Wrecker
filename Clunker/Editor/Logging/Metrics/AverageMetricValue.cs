@@ -12,15 +12,21 @@ namespace Clunker.Editor.Logging.Metrics
 
         public override string Category => "Logging";
 
+        private string _search = "";
+
         public override void DrawEditor(double delta)
         {
+            ImGui.InputText("Search", ref _search, 255);
             foreach(var name in Utilties.Logging.Metrics.ListMetrics())
             {
-                var metrics = Utilties.Logging.Metrics.GetMetrics(name);
-                lock(metrics)
+                if(string.IsNullOrWhiteSpace(_search) || name.Contains(_search))
                 {
-                    var average = metrics.Select(t => t.Item2).Average();
-                    ImGui.Text($"{name}: {average}");
+                    var metrics = Utilties.Logging.Metrics.GetMetrics(name);
+                    lock (metrics)
+                    {
+                        var average = metrics.Select(t => t.Item2).Average();
+                        ImGui.Text($"{name}: {average}");
+                    }
                 }
             }
         }

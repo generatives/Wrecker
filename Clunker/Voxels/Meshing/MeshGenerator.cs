@@ -13,7 +13,7 @@ namespace Clunker.Voxels.Meshing
         void Process(int x, int y, int z, VoxelSide side);
     }
 
-    public class MeshGenerator<T> where T : IExposedSideProcessor
+    public class MeshGenerator<T> where T : struct, IExposedSideProcessor
     {
         public static void FindExposedSides(ref VoxelGrid grid, VoxelTypes types, T sideProcessor)
         {

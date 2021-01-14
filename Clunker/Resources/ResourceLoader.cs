@@ -47,7 +47,7 @@ namespace Clunker.Resources
                 {
                     if (_images.ContainsKey(path))
                     {
-                        var newImage = Image.Load(path);
+                        var newImage = Image.Load<Rgba32>(path);
                         _images[path].SetData(newImage);
                     }
 
@@ -69,7 +69,7 @@ namespace Clunker.Resources
             path = "Assets\\" + path;
             if (!_images.ContainsKey(path))
             {
-                var image = Image.Load(path);
+                var image = Image.Load<Rgba32>(path);
                 _images[path] = new Resource<Image<Rgba32>>()
                 {
                     Id = path,
