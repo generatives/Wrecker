@@ -27,6 +27,8 @@ namespace Clunker.Voxels.Meshing
     /// Creates a GeometryMesh of exposed sides
     /// </summary>
     [With(typeof(MaterialTexture))]
+    [With(typeof(RenderableMeshGeometry))]
+    [With(typeof(LightVertexResources))]
     [WhenAddedEither(typeof(VoxelGrid))]
     [WhenChangedEither(typeof(VoxelGrid))]
     public class VoxelGridMesher : AEntitySystem<double>
@@ -84,44 +86,34 @@ namespace Clunker.Voxels.Meshing
             if (watch.Elapsed.TotalMilliseconds > 1) Utilties.Logging.Metrics.LogMetric($"LogicSystems:VoxelGridMesher:Algo", watch.Elapsed.TotalMilliseconds, TimeSpan.FromSeconds(5));
             watch.Restart();
 
-            ResizableBuffer<VertexPositionTextureNormal> vertexBuffer;
-            ResizableBuffer<ushort> indexBuffer;
-            ResizableBuffer<ushort> transparentIndexBuffer;
+            ref var meshGeometry = ref entity.Get<RenderableMeshGeometry>();
+            ref var lightVertexResources = ref entity.Get<LightVertexResources>();
 
             if(_vertices.Value.Count > 0)
             {
-                if (entity.Has<RenderableMeshGeometry>())
-                {
-                    ref var geometry = ref entity.Get<RenderableMeshGeometry>();
-                    vertexBuffer = geometry.Vertices;
-                    indexBuffer = geometry.Indices;
-                    transparentIndexBuffer = geometry.TransparentIndices;
-                }
-                else
-                {
-                    vertexBuffer = new ResizableBuffer<VertexPositionTextureNormal>(_device, VertexPositionTextureNormal.SizeInBytes, BufferUsage.VertexBuffer);
-                    indexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
-                    transparentIndexBuffer = new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
-                }
+                meshGeometry.Vertices = meshGeometry.Vertices.Exists ?
+                    meshGeometry.Vertices :
+                    new ResizableBuffer<VertexPositionTextureNormal>(_device, VertexPositionTextureNormal.SizeInBytes, BufferUsage.VertexBuffer);
 
-                vertexBuffer.Update(_vertices.Value.Span);
-                indexBuffer.Update(_indices.Value.Span);
-                transparentIndexBuffer.Update(_transIndices.Value.Span);
+                meshGeometry.Indices = meshGeometry.Indices.Exists ?
+                    meshGeometry.Indices :
+                    new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
+
+                meshGeometry.TransparentIndices = meshGeometry.TransparentIndices.Exists ?
+                    meshGeometry.TransparentIndices :
+                    new ResizableBuffer<ushort>(_device, sizeof(ushort), BufferUsage.IndexBuffer);
+
+                meshGeometry.Vertices.Update(_vertices.Value.Span);
+                meshGeometry.Indices.Update(_indices.Value.Span);
+                meshGeometry.TransparentIndices.Update(_transIndices.Value.Span);
 
                 var centerOffset = Vector3.One * (data.GridSize * data.VoxelSize / 2f);
 
-                var mesh = new RenderableMeshGeometry()
-                {
-                    Vertices = vertexBuffer,
-                    Indices = indexBuffer,
-                    TransparentIndices = transparentIndexBuffer,
-                    BoundingRadius = centerOffset.Length(),
-                    BoundingRadiusOffset = centerOffset
-                };
-                var entityRecord = _commandRecorder.Record(entity);
-                entityRecord.Set(mesh);
+                meshGeometry.BoundingRadius = centerOffset.Length();
+                meshGeometry.BoundingRadiusOffset = centerOffset;
 
-                ref var lightVertexResources = ref entity.Get<LightVertexResources>();
+                var entityRecord = _commandRecorder.Record(entity);
+                entityRecord.Set(meshGeometry);
 
                 var lightBuffer = lightVertexResources.LightLevels.Exists ?
                     lightVertexResources.LightLevels :
@@ -129,18 +121,33 @@ namespace Clunker.Voxels.Meshing
 
                 lightBuffer.Update(_lights.Value.Span);
                 lightVertexResources.LightLevels = lightBuffer;
+
                 entityRecord.Set(lightVertexResources);
             }
             else
             {
-                if(entity.Has<RenderableMeshGeometry>())
+                if(meshGeometry.Vertices.Exists)
                 {
-                    entity.Remove<RenderableMeshGeometry>();
+                    meshGeometry.Vertices.Dispose();
+                    meshGeometry.Vertices = default;
                 }
 
-                if(entity.Has<LightVertexResources>())
+                if (meshGeometry.Indices.Exists)
                 {
-                    entity.Remove<LightVertexResources>();
+                    meshGeometry.Indices.Dispose();
+                    meshGeometry.Indices = default;
+                }
+
+                if (meshGeometry.TransparentIndices.Exists)
+                {
+                    meshGeometry.TransparentIndices.Dispose();
+                    meshGeometry.TransparentIndices = default;
+                }
+
+                if (lightVertexResources.LightLevels.Exists)
+                {
+                    lightVertexResources.LightLevels.Dispose();
+                    lightVertexResources.LightLevels = default;
                 }
             }
 

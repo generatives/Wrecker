@@ -9,5 +9,7 @@ namespace Clunker.Voxels.Meshing
     public struct LightVertexResources
     {
         public ResizableBuffer<float> LightLevels;
+
+        public bool CanBeRendered => LightLevels.Exists;
     }
 }

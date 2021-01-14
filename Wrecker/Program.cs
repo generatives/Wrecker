@@ -230,6 +230,7 @@ namespace ClunkerECSDemo
             Action<Entity> setVoxelRender = (Entity e) =>
             {
                 e.Set(new LightVertexResources());
+                e.Set(new RenderableMeshGeometry());
                 e.Set(lightMeshMaterial);
                 e.Set(voxelTexture);
             };

@@ -67,17 +67,20 @@ namespace Clunker.Graphics
                 ref var geometry = ref entity.Get<RenderableMeshGeometry>();
                 ref var transform = ref entity.Get<Transform>();
 
-                var shouldRender = geometry.BoundingRadius > 0 ?
-                    frustrum.Contains(new BoundingSphere(transform.GetWorld(geometry.BoundingRadiusOffset), geometry.BoundingRadius)) != ContainmentType.Disjoint :
-                    true;
-
-                if (shouldRender)
+                if(geometry.CanBeRendered)
                 {
-                    RenderObject(commandList, materialInputs, material, texture, geometry.Vertices, geometry.Indices, transform);
+                    var shouldRender = geometry.BoundingRadius > 0 ?
+                        frustrum.Contains(new BoundingSphere(transform.GetWorld(geometry.BoundingRadiusOffset), geometry.BoundingRadius)) != ContainmentType.Disjoint :
+                        true;
 
-                    if (geometry.TransparentIndices.Length > 0)
+                    if (shouldRender)
                     {
-                        transparents.Add((material, texture, geometry.Vertices, geometry.TransparentIndices, transform));
+                        RenderObject(commandList, materialInputs, material, texture, geometry.Vertices, geometry.Indices, transform);
+
+                        if (geometry.TransparentIndices.Length > 0)
+                        {
+                            transparents.Add((material, texture, geometry.Vertices, geometry.TransparentIndices, transform));
+                        }
                     }
                 }
             }

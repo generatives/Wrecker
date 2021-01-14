@@ -17,5 +17,7 @@ namespace Clunker.Graphics
         public ResizableBuffer<ushort> TransparentIndices;
         public float BoundingRadius;
         public Vector3 BoundingRadiusOffset;
+
+        public bool CanBeRendered => Vertices.Exists && Indices.Exists && TransparentIndices.Exists;
     }
 }

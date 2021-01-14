@@ -1,18 +1,11 @@
 ﻿using Clunker.Geometry;
 using Clunker.Utilties.Logging;
-using Clunker.Voxels.Space;
-using Collections.Pooled;
 using DefaultEcs;
-using DefaultEcs.Command;
 using DefaultEcs.System;
-using DefaultEcs.Threading;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace Clunker.Voxels.Lighting
 {
