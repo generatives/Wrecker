@@ -38,7 +38,7 @@ namespace Clunker.Graphics
         public Texture ShadowDepthTexture { get; set; }
         public ResourceSet LightingInputsResourceSet { get; set; }
         public Framebuffer ShadowFramebuffer { get; set; }
-        public Matrix4x4 LightSpaceMatrix;
+        public DeviceBuffer LightViewMatrixBuffer;
 
         public RgbaFloat AmbientLightColour { get; set; } = RgbaFloat.White;
         public float AmbientLightStrength { get; set; } = 0.8f;
@@ -57,8 +57,8 @@ namespace Clunker.Graphics
             uint height = 1024;
 
             ShadowDepthTexture = factory.CreateTexture(TextureDescription.Texture2D(
-                width,
-                height,
+                width * 2,
+                height * 2,
                 1,
                 1,
                 PixelFormat.R32_Float,
@@ -81,18 +81,14 @@ namespace Clunker.Graphics
             CameraInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["CameraInputs"], CameraInputsBuffer));
 
             var lightProjMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            var lightProj = Matrix4x4.CreateOrthographic(120, 120, 1.0f, 32f);
+            var lightProj = Matrix4x4.CreateOrthographic(120, 120, 1.0f, 128f);
             device.UpdateBuffer(lightProjMatrixBuffer, 0, ref lightProj);
 
-            var lightViewMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            var lightView = Matrix4x4.CreateLookAt(new Vector3(20, 60, 80),
-                new Vector3(30, 40, 90),
-                new Vector3(1.0f, 0.0f, 0.0f));
-            device.UpdateBuffer(lightViewMatrixBuffer, 0, ref lightView);
-
+            LightViewMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            
             var sampler = factory.CreateSampler(new SamplerDescription(SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerFilter.MinPoint_MagPoint_MipPoint, null, 0, 0, uint.MaxValue, 0, SamplerBorderColor.OpaqueWhite));
             var lightDepthTextureView = factory.CreateTextureView(new TextureViewDescription(ShadowDepthTexture));
-            LightingInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightingInputs"], lightProjMatrixBuffer, lightViewMatrixBuffer, lightDepthTextureView, sampler));
+            LightingInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightingInputs"], lightProjMatrixBuffer, LightViewMatrixBuffer, lightDepthTextureView, sampler));
             
             RenderableEntities = world.GetEntities()
                 .With<Material>()
@@ -113,6 +109,14 @@ namespace Clunker.Graphics
             ShadowDepthCommandList.Begin();
             ShadowDepthCommandList.SetFramebuffer(ShadowFramebuffer);
             ShadowDepthCommandList.ClearDepthStencil(1f);
+
+            var cameraTransform = context.CameraTransform;
+
+            var lightView = Matrix4x4.CreateLookAt(new Vector3(20, 100, 80),
+                cameraTransform.WorldPosition,
+                new Vector3(1.0f, 0.0f, 0.0f));
+            ShadowDepthCommandList.UpdateBuffer(LightViewMatrixBuffer, 0, ref lightView);
+
             var shadowMapMaterialInputs = new MaterialInputs();
             shadowMapMaterialInputs.ResouceSets["LightingInputs"] = LightingInputsResourceSet;
             foreach (var entity in ShadowCastingEntities.GetEntities())
@@ -137,7 +141,6 @@ namespace Clunker.Graphics
             context.GraphicsDevice.WaitForIdle();
 
             var commandList = context.CommandList;
-            var cameraTransform = context.CameraTransform;
 
             commandList.UpdateBuffer(ProjectionMatrixBuffer, 0, context.ProjectionMatrix);
 

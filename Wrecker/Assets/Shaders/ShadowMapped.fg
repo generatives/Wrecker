@@ -22,16 +22,20 @@ layout(set = 2, binding = 2) uniform TextureColour
 layout(set = 4, binding = 2) uniform texture2D LightDepthTexture;
 layout(set = 4, binding = 3) uniform sampler LightDepthSampler;
 
-float shadowTest(vec4 fragPosLightSpace)
+float shadowTest(vec4 fragPosLightSpace, float surfaceLightDiff)
 {
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+    if(projCoords.z > 1.0)
+        return 0.0;
+
     projCoords.x = projCoords.x * 0.5 + 0.5;
     projCoords.y = -projCoords.y * 0.5 + 0.5;
     float closestDepth = texture(sampler2D(LightDepthTexture, LightDepthSampler), projCoords.xy).r;
     float currentDepth = projCoords.z;
 
-    float bias = 0.005;
-    float shadow = currentDepth - 0.005 > closestDepth ? 1.0 : 0.0; 
+    float bias = max(0.05 * (1.0 - surfaceLightDiff), 0.005);
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0; 
     return shadow;
 }
 
@@ -44,7 +48,7 @@ void main()
     vec4 diffuse = diff * DiffuseLightColour;
 	
     vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * Colour;
-    float shadow = shadowTest(fsin_FragPosLightSpace);
+    float shadow = shadowTest(fsin_FragPosLightSpace, diff);
 	vec4 lighting = (ambient + (1.0 - shadow) * diffuse) * objectColour;
     fsout_color = vec4(lighting.xyz, objectColour.w * fsin_OpacityScale);
 }
