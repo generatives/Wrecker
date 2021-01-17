@@ -152,9 +152,9 @@ namespace Clunker
                     }
 
                     CommandList.End();
-                    GraphicsDevice.WaitForIdle();
                     GraphicsDevice.SubmitCommands(CommandList);
                     GraphicsDevice.SwapBuffers(GraphicsDevice.MainSwapchain);
+                    GraphicsDevice.WaitForIdle();
 
                     Resources.Update();
                 }

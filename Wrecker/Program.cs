@@ -9,6 +9,7 @@ using Clunker.Editor.VoxelEditor;
 using Clunker.Editor.VoxelSpaceLoader;
 using Clunker.Geometry;
 using Clunker.Graphics;
+using Clunker.Graphics.Components;
 using Clunker.Graphics.Systems;
 using Clunker.Networking;
 using Clunker.Networking.EntityExistence;
@@ -208,6 +209,13 @@ namespace ClunkerECSDemo
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("CameraInfo", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
 
+            materialInputLayouts.ResourceLayouts["LightingInputs"] = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("LightInputs", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                    new ResourceLayoutElementDescription("LightInputss", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                    new ResourceLayoutElementDescription("LightDepthTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("LightDepthSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
+
             materialInputLayouts.VertexLayouts["Model"] = new VertexLayoutDescription(
                     new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
                     new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
@@ -222,6 +230,9 @@ namespace ClunkerECSDemo
             var lightMeshMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\LightMesh.vs"), _client.Resources.LoadText("Shaders\\LightMesh.fg"),
                 new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs" }, materialInputLayouts);
 
+            var shadowMappedMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\ShadowMapped.vs"), _client.Resources.LoadText("Shaders\\ShadowMapped.fg"),
+                new string[] { "Model" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "LightingInputs" }, materialInputLayouts);
+
             var voxelTexturesResource = _client.Resources.LoadImage("Textures\\spritesheet_tiles.png");
             var voxelTexture = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.White);
             var redVoxelTexture = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.Red);
@@ -231,8 +242,9 @@ namespace ClunkerECSDemo
             {
                 e.Set(new LightVertexResources());
                 e.Set(new RenderableMeshGeometry());
-                e.Set(lightMeshMaterial);
+                e.Set(shadowMappedMaterial);
                 e.Set(voxelTexture);
+                e.Set<ShadowCaster>();
             };
 
             var networkedEntities = new NetworkedEntities(world);
@@ -259,8 +271,9 @@ namespace ClunkerECSDemo
             var nz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_ft.png");
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
-            scene.AddSystem(new MeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
-            scene.AddSystem(new LightMeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
+            //scene.AddSystem(new MeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
+            //scene.AddSystem(new LightMeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
+            scene.AddSystem(new ShadowMapGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, _client.Resources, world));
 
             var voxelTypes = LoadVoxelTypes();
 
@@ -303,6 +316,19 @@ namespace ClunkerECSDemo
                     voxelGrid.VoxelSpace.Remove(voxelGrid.MemberIndex);
                 }
             });
+
+            var entity1 = world.CreateEntity();
+            AddCylinder(entity1, _client.GraphicsDevice, shadowMappedMaterial, voxelTexture);
+            ref var transform1 = ref entity1.Get<Transform>();
+            transform1.WorldPosition = new Vector3(20, 60, 80);
+            entity1.Set(transform1);
+
+
+            var entity2 = world.CreateEntity();
+            AddCylinder(entity2, _client.GraphicsDevice, shadowMappedMaterial, voxelTexture);
+            ref var transform2 = ref entity2.Get<Transform>();
+            transform2.WorldPosition = new Vector3(20, 40, 80);
+            entity2.Set(transform2);
 
             _client.SetScene(scene);
         }

@@ -1,0 +1,50 @@
+﻿#version 450
+layout(location = 0) in vec2 fsin_texCoords;
+layout(location = 1) in vec3 fsin_normal;
+layout(location = 3) in float fsin_OpacityScale;
+layout(location = 4) in vec4 fsin_FragPosLightSpace;
+
+layout(location = 0) out vec4 fsout_color;
+layout(set = 0, binding = 2) uniform SceneLighting
+{
+    vec4 DiffuseLightColour;
+    vec3 DiffuseLightDirection;
+    vec4 AmbientLightColour;
+    float AmbientLightStrength;
+};
+layout(set = 2, binding = 0) uniform texture2D SurfaceTexture;
+layout(set = 2, binding = 1) uniform sampler SurfaceSampler;
+layout(set = 2, binding = 2) uniform TextureColour
+{
+    vec4 Colour;
+};
+
+layout(set = 4, binding = 2) uniform texture2D LightDepthTexture;
+layout(set = 4, binding = 3) uniform sampler LightDepthSampler;
+
+float shadowTest(vec4 fragPosLightSpace)
+{
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords.x = projCoords.x * 0.5 + 0.5;
+    projCoords.y = -projCoords.y * 0.5 + 0.5;
+    float closestDepth = texture(sampler2D(LightDepthTexture, LightDepthSampler), projCoords.xy).r;
+    float currentDepth = projCoords.z;
+
+    float bias = 0.005;
+    float shadow = currentDepth - 0.005 > closestDepth ? 1.0 : 0.0; 
+    return shadow;
+}
+
+void main()
+{
+    vec4 ambient = AmbientLightStrength * AmbientLightColour;
+	
+    vec3 norm = normalize(fsin_normal);
+    float diff = max(dot(norm, DiffuseLightDirection), 0);
+    vec4 diffuse = diff * DiffuseLightColour;
+	
+    vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * Colour;
+    float shadow = shadowTest(fsin_FragPosLightSpace);
+	vec4 lighting = (ambient + (1.0 - shadow) * diffuse) * objectColour;
+    fsout_color = vec4(lighting.xyz, objectColour.w * fsin_OpacityScale);
+}

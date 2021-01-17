@@ -36,7 +36,7 @@ namespace Clunker.WorldSpace
                     {
                         var voxelPosition = new Vector3(coordinates.X * voxelSpaceData.GridSize + x, coordinates.Y * voxelSpaceData.GridSize + y, coordinates.Z * voxelSpaceData.GridSize + z);
 
-                        var islandValue = _noise.GetPerlin(voxelPosition.X / 16, voxelPosition.Z / 16) * voxelSpaceData.GridSize;
+                        var islandValue = 1; // _noise.GetPerlin(voxelPosition.X / 16, voxelPosition.Z / 16) * voxelSpaceData.GridSize;
 
                         if (islandValue > 0)
                         {
