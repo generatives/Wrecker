@@ -36,35 +36,35 @@ namespace Clunker.WorldSpace
                     {
                         var voxelPosition = new Vector3(coordinates.X * voxelSpaceData.GridSize + x, coordinates.Y * voxelSpaceData.GridSize + y, coordinates.Z * voxelSpaceData.GridSize + z);
 
-                        if(voxelPosition.Y == 0)
-                        {
-                            voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)5 }; // stone
-                        }
-
-                        if((voxelPosition.Y == 1 || voxelPosition.Y == 2) &&
-                            (Math.Abs(voxelPosition.X) == 5 || Math.Abs(voxelPosition.Z) == 5))
-                        {
-                            voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)0 }; // stone
-                        }
-
-                        //var islandValue = _noise.GetPerlin(voxelPosition.X / 16, voxelPosition.Z / 16) * voxelSpaceData.GridSize;
-
-                        //if (islandValue > 0)
+                        //if(voxelPosition.Y == 0)
                         //{
-                        //    if(voxelPosition.Y > voxelSpaceData.GridSize)
-                        //    {
-                        //        var heightValue = (_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f) + 1) * 1;
-                        //        var exists = (islandValue * heightValue * heightValue) > (voxelPosition.Y - voxelSpaceData.GridSize);
-                        //        voxelSpaceData[x, y, z] = new Voxel() { Exists = exists, BlockType = (ushort)7 }; // cactus top
-                        //    }
-                        //    else
-                        //    {
-                        //        if((voxelPosition.Y - voxelSpaceData.GridSize) > -islandValue)
-                        //        {
-                        //            voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)5 }; // stone
-                        //        }
-                        //    }
+                        //    voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)5 }; // stone
                         //}
+
+                        //if((voxelPosition.Y == 1 || voxelPosition.Y == 2) &&
+                        //    (Math.Abs(voxelPosition.X) == 5 || Math.Abs(voxelPosition.Z) == 5))
+                        //{
+                        //    voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)0 }; // stone
+                        //}
+
+                        var islandValue = _noise.GetPerlin(voxelPosition.X / 16, voxelPosition.Z / 16) * voxelSpaceData.GridSize;
+
+                        if (islandValue > 0)
+                        {
+                            if (voxelPosition.Y > voxelSpaceData.GridSize)
+                            {
+                                var heightValue = (_noise.GetPerlin(voxelPosition.X / 5f, voxelPosition.Z / 5f) + 1) * 1;
+                                var exists = (islandValue * heightValue * heightValue) > (voxelPosition.Y - voxelSpaceData.GridSize);
+                                voxelSpaceData[x, y, z] = new Voxel() { Exists = exists, BlockType = (ushort)7 }; // cactus top
+                            }
+                            else
+                            {
+                                if ((voxelPosition.Y - voxelSpaceData.GridSize) > -islandValue)
+                                {
+                                    voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)5 }; // stone
+                                }
+                            }
+                        }
                     }
 
 

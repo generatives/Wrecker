@@ -43,7 +43,7 @@ namespace Clunker.Graphics
         public RgbaFloat AmbientLightColour { get; set; } = RgbaFloat.White;
         public float AmbientLightStrength { get; set; } = 0.8f;
         public RgbaFloat DiffuseLightColour { get; set; } = RgbaFloat.White;
-        public Vector3 DiffuseLightDirection { get; set; } = new Vector3(-1, 8, 4);
+        public Vector3 DiffuseLightDirection { get; set; } = new Vector3(-1, 0.9, 4);
         public float ViewDistance { get; set; } = 1024;
         public float BlurLength { get; set; } = 20f;
         public bool IsEnabled { get; set; } = true;
@@ -57,8 +57,8 @@ namespace Clunker.Graphics
             uint height = 1024;
 
             ShadowDepthTexture = factory.CreateTexture(TextureDescription.Texture2D(
-                width,
-                height,
+                width * 2,
+                height * 2,
                 1,
                 1,
                 PixelFormat.R32_Float,
@@ -82,7 +82,7 @@ namespace Clunker.Graphics
             CameraInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["CameraInputs"], CameraInputsBuffer));
 
             var lightProjMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            var lightProj = Matrix4x4.CreateOrthographic(32, 32, 1.0f, 32f);
+            var lightProj = Matrix4x4.CreateOrthographic(64, 64, 1.0f, 128F);
             device.UpdateBuffer(lightProjMatrixBuffer, 0, ref lightProj);
 
             LightViewMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
@@ -113,7 +113,7 @@ namespace Clunker.Graphics
 
             var cameraTransform = context.CameraTransform;
 
-            var lightPos = new Vector3(0, 5, 0);
+            var lightPos = cameraTransform.WorldPosition + DiffuseLightDirection * 10;
             var lightView = Matrix4x4.CreateLookAt(lightPos,
                 lightPos - DiffuseLightDirection,
                 new Vector3(0.0f, 1.0f, 0.0f));

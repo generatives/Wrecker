@@ -213,8 +213,8 @@ namespace ClunkerECSDemo
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("LightInputs", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                     new ResourceLayoutElementDescription("LightInputss", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                    new ResourceLayoutElementDescription("LightDepthTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment | ShaderStages.Vertex),
-                    new ResourceLayoutElementDescription("LightDepthSampler", ResourceKind.Sampler, ShaderStages.Fragment | ShaderStages.Vertex)));
+                    new ResourceLayoutElementDescription("LightDepthTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("LightDepthSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
             materialInputLayouts.VertexLayouts["Model"] = new VertexLayoutDescription(
                     new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
