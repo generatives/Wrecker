@@ -32,11 +32,13 @@ layout(set = 4, binding = 3) uniform sampler LightDepthSampler;
 layout(location = 0) in vec3 Position;
 layout(location = 1) in vec2 TexCoords;
 layout(location = 2) in vec3 Normal;
+layout(location = 3) in float Light;
 
 layout(location = 0) out vec2 fsin_texCoords;
 layout(location = 1) out vec3 fsin_normal;
 layout(location = 3) out float fsin_OpacityScale;
 layout(location = 4) out vec4 fsin_FragPosLightSpace;
+layout(location = 5) out float fsin_light;
 
 void main()
 {
@@ -47,6 +49,7 @@ void main()
 
     fsin_texCoords = TexCoords;
     fsin_normal = Normal;
+    fsin_light = Light;
 
     float cameraDistance = length(worldPosition.xyz - CameraPosition);
     float blurAmount = (ViewDistance - cameraDistance) / BlurLength;

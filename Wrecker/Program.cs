@@ -231,7 +231,7 @@ namespace ClunkerECSDemo
                 new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs" }, materialInputLayouts);
 
             var shadowMappedMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\ShadowMapped.vs"), _client.Resources.LoadText("Shaders\\ShadowMapped.fg"),
-                new string[] { "Model" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "LightingInputs" }, materialInputLayouts);
+                new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "LightingInputs" }, materialInputLayouts);
 
             var voxelTexturesResource = _client.Resources.LoadImage("Textures\\spritesheet_tiles.png");
             var voxelTexture = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.White);

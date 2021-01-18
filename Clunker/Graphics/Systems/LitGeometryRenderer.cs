@@ -1,5 +1,6 @@
 ﻿using Clunker.Core;
 using Clunker.Graphics.Systems;
+using Clunker.Voxels.Meshing;
 using DefaultEcs;
 using System;
 using System.Collections.Generic;
@@ -44,6 +45,7 @@ namespace Clunker.Graphics
                 .With<Material>()
                 .With<MaterialTexture>()
                 .With<RenderableMeshGeometry>()
+                .With<LightVertexResources>()
                 .With<Transform>()
                 .AsSet();
         }
@@ -95,7 +97,7 @@ namespace Clunker.Graphics
 
             var frustrum = new BoundingFrustum(viewMatrix * context.ProjectionMatrix);
 
-            var transparents = new List<(Material mat, MaterialTexture texture, ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<ushort> indices, Transform transform)>();
+            var transparents = new List<(Material mat, MaterialTexture texture, ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<float> lighting, ResizableBuffer<ushort> indices, Transform transform)>();
 
             var materialInputs = new MaterialInputs();
             materialInputs.ResouceSets["SceneInputs"] = _sceneInputsResourceSet;
@@ -107,9 +109,10 @@ namespace Clunker.Graphics
                 ref var material = ref entity.Get<Material>();
                 ref var texture = ref entity.Get<MaterialTexture>();
                 ref var geometry = ref entity.Get<RenderableMeshGeometry>();
+                ref var lighting = ref entity.Get<LightVertexResources>();
                 ref var transform = ref entity.Get<Transform>();
 
-                if (geometry.CanBeRendered)
+                if (geometry.CanBeRendered && lighting.CanBeRendered)
                 {
                     var shouldRender = geometry.BoundingRadius > 0 ?
                         frustrum.Contains(new BoundingSphere(transform.GetWorld(geometry.BoundingRadiusOffset), geometry.BoundingRadius)) != ContainmentType.Disjoint :
@@ -117,11 +120,11 @@ namespace Clunker.Graphics
 
                     if (shouldRender)
                     {
-                        RenderObject(commandList, materialInputs, material, texture, geometry.Vertices, geometry.Indices, transform);
+                        RenderObject(commandList, materialInputs, material, texture, geometry.Vertices, lighting.LightLevels, geometry.Indices, transform);
 
                         if (geometry.TransparentIndices.Length > 0)
                         {
-                            transparents.Add((material, texture, geometry.Vertices, geometry.TransparentIndices, transform));
+                            transparents.Add((material, texture, geometry.Vertices, lighting.LightLevels, geometry.TransparentIndices, transform));
                         }
                     }
                 }
@@ -129,14 +132,14 @@ namespace Clunker.Graphics
 
             var sorted = transparents.OrderByDescending(t => Vector3.Distance(cameraTransform.WorldPosition, t.transform.WorldPosition));
 
-            foreach (var (material, texture, vertices, indices, transform) in sorted)
+            foreach (var (material, texture, vertices, lighting, indices, transform) in sorted)
             {
-                RenderObject(commandList, materialInputs, material, texture, vertices, indices, transform);
+                RenderObject(commandList, materialInputs, material, texture, vertices, lighting, indices, transform);
             }
         }
 
         private void RenderObject(CommandList commandList, MaterialInputs inputs, Material material, MaterialTexture texture,
-            ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<ushort> indices, Transform transform)
+            ResizableBuffer<VertexPositionTextureNormal> vertices, ResizableBuffer<float> lighting, ResizableBuffer<ushort> indices, Transform transform)
         {
             commandList.UpdateBuffer(_sceneLightingBuffer, 0, new SceneLighting()
             {
@@ -152,6 +155,7 @@ namespace Clunker.Graphics
             inputs.ResouceSets["Texture"] = texture.ResourceSet;
 
             inputs.VertexBuffers["Model"] = vertices.DeviceBuffer;
+            inputs.VertexBuffers["Lighting"] = lighting.DeviceBuffer;
             inputs.IndexBuffer = indices.DeviceBuffer;
 
             material.RunPipeline(commandList, inputs, (uint)indices.Length);

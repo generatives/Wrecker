@@ -3,6 +3,7 @@ layout(location = 0) in vec2 fsin_texCoords;
 layout(location = 1) in vec3 fsin_normal;
 layout(location = 3) in float fsin_OpacityScale;
 layout(location = 4) in vec4 fsin_FragPosLightSpace;
+layout(location = 5) in float fsin_light;
 
 layout(location = 0) out vec4 fsout_color;
 layout(set = 0, binding = 2) uniform SceneLighting
@@ -52,11 +53,11 @@ float shadowTest(vec4 fragPosLightSpace, float surfaceLightDiff)
 
 void main()
 {
-    vec4 ambient = 0.6 * AmbientLightColour;
+    vec4 ambient = fsin_light * 0.3 * AmbientLightColour;
 	
     vec3 norm = normalize(fsin_normal);
     float diff = max(dot(norm, DiffuseLightDirection), 0);
-    vec4 diffuse = 0.2 * diff * DiffuseLightColour;
+    vec4 diffuse = 0.7 * diff * DiffuseLightColour;
 	
     vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * Colour;
     float shadow = shadowTest(fsin_FragPosLightSpace, diff);
