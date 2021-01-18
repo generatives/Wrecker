@@ -23,7 +23,10 @@ namespace Clunker.Graphics
         private string[] _resourceInputs;
         private Pipeline _pipeline;
 
-        public Material(GraphicsDevice device, Framebuffer target, Resource<string> vertexShader, Resource<string> fragShader, string[] vertexInputs, string[] resourceInputs, MaterialInputLayouts registry)
+        private RasterizerStateDescription _rasterizerStateDescription;
+
+        public Material(GraphicsDevice device, Framebuffer target, Resource<string> vertexShader, Resource<string> fragShader, string[] vertexInputs, string[] resourceInputs, MaterialInputLayouts registry,
+            RasterizerStateDescription? rasterizerStateDescription = null)
         {
             _device = device;
             _target = target;
@@ -37,6 +40,8 @@ namespace Clunker.Graphics
 
             _vertexInputs = vertexInputs;
             _resourceInputs = resourceInputs;
+
+            _rasterizerStateDescription = rasterizerStateDescription.HasValue ? rasterizerStateDescription.Value : RasterizerStateDescription.Default;
 
             Build();
         }
@@ -70,15 +75,20 @@ namespace Clunker.Graphics
                 _pipeline = resourceFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                     BlendStateDescription.SingleAlphaBlend,
                     DepthStencilStateDescription.DepthOnlyLessEqual,
-                    RasterizerStateDescription.Default,
+                    _rasterizerStateDescription,
                     PrimitiveTopology.TriangleList,
                     shaderSet,
                     _resourceInputs.Select(l => _registry.ResourceLayouts[l]).ToArray(),
                     _target.OutputDescription));
             }
-            catch
+            catch (Exception e)
             {
-                _pipeline = null;
+                Console.WriteLine(e.Message);
+                if (_pipeline != null)
+                {
+                    _pipeline.Dispose();
+                    _pipeline = null;
+                }
             }
         }
 

@@ -66,8 +66,9 @@ namespace Clunker.Graphics
 
             ShadowFramebuffer = factory.CreateFramebuffer(new FramebufferDescription(ShadowDepthTexture));
 
+            var shadowMapRasterizerState = new RasterizerStateDescription(FaceCullMode.Front, PolygonFillMode.Solid, FrontFace.Clockwise, true, false);
             ShadowMaterial = new Material(device, ShadowFramebuffer, resourceLoader.LoadText("Shaders\\ShadowMap.vs"), resourceLoader.LoadText("Shaders\\ShadowMap.fg"),
-                new string[] { "Model" }, new string[] { "WorldTransform", "LightingInputs" }, materialInputLayouts);
+                new string[] { "Model" }, new string[] { "WorldTransform", "LightingInputs" }, materialInputLayouts, shadowMapRasterizerState);
 
             WorldMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             WorldTransformResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["WorldTransform"], WorldMatrixBuffer));
@@ -81,7 +82,7 @@ namespace Clunker.Graphics
             CameraInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["CameraInputs"], CameraInputsBuffer));
 
             var lightProjMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            var lightProj = Matrix4x4.CreateOrthographic(120, 120, 1.0f, 128f);
+            var lightProj = Matrix4x4.CreateOrthographic(20, 20, 1.0f, 8f);
             device.UpdateBuffer(lightProjMatrixBuffer, 0, ref lightProj);
 
             LightViewMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
@@ -112,9 +113,10 @@ namespace Clunker.Graphics
 
             var cameraTransform = context.CameraTransform;
 
-            var lightView = Matrix4x4.CreateLookAt(new Vector3(20, 100, 80),
-                cameraTransform.WorldPosition,
-                new Vector3(1.0f, 0.0f, 0.0f));
+            var lightPos = new Vector3(0, 5, 0);
+            var lightView = Matrix4x4.CreateLookAt(lightPos,
+                lightPos - DiffuseLightDirection,
+                new Vector3(0.0f, 1.0f, 0.0f));
             ShadowDepthCommandList.UpdateBuffer(LightViewMatrixBuffer, 0, ref lightView);
 
             var shadowMapMaterialInputs = new MaterialInputs();

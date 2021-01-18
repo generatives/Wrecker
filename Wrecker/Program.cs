@@ -320,15 +320,8 @@ namespace ClunkerECSDemo
             var entity1 = world.CreateEntity();
             AddCylinder(entity1, _client.GraphicsDevice, shadowMappedMaterial, voxelTexture);
             ref var transform1 = ref entity1.Get<Transform>();
-            transform1.WorldPosition = new Vector3(20, 60, 80);
+            transform1.WorldPosition = new Vector3(0, 5, 0);
             entity1.Set(transform1);
-
-
-            var entity2 = world.CreateEntity();
-            AddCylinder(entity2, _client.GraphicsDevice, shadowMappedMaterial, voxelTexture);
-            ref var transform2 = ref entity2.Get<Transform>();
-            transform2.WorldPosition = new Vector3(20, 40, 80);
-            entity2.Set(transform2);
 
             _client.SetScene(scene);
         }

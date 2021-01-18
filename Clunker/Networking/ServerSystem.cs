@@ -101,7 +101,7 @@ namespace Clunker.Networking
 
             var clientEntity = _world.CreateEntity();
             clientEntity.Set(new ClientMessagingTarget() { Channel = channel });
-            clientEntity.Set(new Transform(clientEntity) { WorldPosition = new Vector3(20, 40, 80) });
+            clientEntity.Set(new Transform(clientEntity) { WorldPosition = new Vector3(0, 5, 0) });
             clientEntity.Set(new NetworkedEntity() { Id = clientId });
             clientEntity.Set(new Camera());
             clientEntity.Set(new EntityMetaData() { Name = "Player" });
