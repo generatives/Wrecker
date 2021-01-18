@@ -3,6 +3,7 @@ layout(location = 0) in vec2 fsin_texCoords;
 layout(location = 1) in vec3 fsin_normal;
 layout(location = 3) in float fsin_OpacityScale;
 layout(location = 4) in vec4 fsin_FragPosLightSpace;
+layout(location = 5) in float fsin_FragShadow;
 
 layout(location = 0) out vec4 fsout_color;
 layout(set = 0, binding = 2) uniform SceneLighting
@@ -35,7 +36,7 @@ float shadowTest(vec4 fragPosLightSpace, float surfaceLightDiff)
     float bias = max(0.001 * (1.0 - surfaceLightDiff), 0.0001);
 
 	float shadow = 0.0;
-	vec2 texelSize = 1.0 / vec2(2 * 1024, 2 * 1024);
+	vec2 texelSize = 1.0 / vec2(1 * 1024, 1 * 1024);
 	for(int x = -1; x <= 1; ++x)
 	{
 		for(int y = -1; y <= 1; ++y)
@@ -44,7 +45,8 @@ float shadowTest(vec4 fragPosLightSpace, float surfaceLightDiff)
 			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
 		}    
 	}
-	shadow /= 9.0;
+
+	shadow = shadow > 2 ? 1 : 0;
 
     return shadow;
 }
@@ -59,7 +61,7 @@ void main()
 	
     vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * Colour;
     float shadow = shadowTest(fsin_FragPosLightSpace, diff);
-	vec4 lighting = ((1 - shadow) * diffuse + ambient) * objectColour;
+	vec4 lighting = ((1 - fsin_FragShadow) * diffuse + ambient) * objectColour;
     fsout_color = vec4(lighting.xyz, objectColour.w * fsin_OpacityScale);
 	// fsout_color = vec4(shadow, shadow, shadow, 1);
 }

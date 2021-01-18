@@ -57,8 +57,8 @@ namespace Clunker.Graphics
             uint height = 1024;
 
             ShadowDepthTexture = factory.CreateTexture(TextureDescription.Texture2D(
-                width * 2,
-                height * 2,
+                width,
+                height,
                 1,
                 1,
                 PixelFormat.R32_Float,
@@ -82,7 +82,7 @@ namespace Clunker.Graphics
             CameraInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["CameraInputs"], CameraInputsBuffer));
 
             var lightProjMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            var lightProj = Matrix4x4.CreateOrthographic(20, 20, 1.0f, 8f);
+            var lightProj = Matrix4x4.CreateOrthographic(32, 32, 1.0f, 32f);
             device.UpdateBuffer(lightProjMatrixBuffer, 0, ref lightProj);
 
             LightViewMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
