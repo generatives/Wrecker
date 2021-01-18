@@ -31,10 +31,10 @@ namespace Clunker
 
         private Sdl2Window _window;
         private bool _windowResized;
+        public int WindowWidth => _window.Width;
+        public int WindowHeight => _window.Height;
         public GraphicsDevice GraphicsDevice { get; private set; }
         public CommandList CommandList { get; private set; }
-        private Texture _mainSceneColourTexture;
-        private Texture _mainSceneDepthTexture;
         public Framebuffer MainSceneFramebuffer { get; private set; }
 
         private EntitySet _cameras;
@@ -73,11 +73,9 @@ namespace Clunker
                 GraphicsDevice = VeldridStartup.CreateGraphicsDevice(_window, graphicsDeviceOptions, GraphicsBackend.Vulkan);
                 CommandList = GraphicsDevice.ResourceFactory.CreateCommandList();
 
-                CreateFramebuffer();
+                MainSceneFramebuffer = GraphicsDevice.SwapchainFramebuffer;
 
                 Initialize();
-
-                var imGuiRenderer = new ImGuiRenderer(GraphicsDevice, MainSceneFramebuffer.OutputDescription, _window.Width, _window.Height);
 
                 _windowResized = true;
 
@@ -111,7 +109,7 @@ namespace Clunker
                             _projectionMatrix *= Matrix4x4.CreateScale(1, -1, 1);
                         }
 
-                        imGuiRenderer.WindowResized(_window.Width, _window.Height);
+                        Scene.World.Publish(new WindowResized() { Width = _window.Width, Height = _window.Height });
                     }
 
                     var frameTime = frameWatch.Elapsed.TotalSeconds;
@@ -120,8 +118,6 @@ namespace Clunker
                     frameTime = Math.Min(frameTime, 0.033333);
                     frameWatch.Restart();
 
-                    imGuiRenderer.Update((float)frameTime, InputTracker.LockMouse ? new EmptyInputSnapshot() : InputTracker.FrameSnapshot );
-
                     Scene?.Update(frameTime);
 
                     CommandList.Begin();
@@ -129,7 +125,10 @@ namespace Clunker
                     CommandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
                     CommandList.ClearDepthStencil(1f);
 
-                    if(CameraEntity.IsAlive && CameraTransform != null)
+                    var displaySize = ImGui.GetIO().DisplaySize;
+                    ImGui.GetBackgroundDrawList().AddCircleFilled(displaySize / 2, 2, ImGui.GetColorU32(new Vector4(1, 1, 1, 1)));
+
+                    if (CameraEntity.IsAlive && CameraTransform != null)
                     {
                         var context = new RenderingContext()
                         {
@@ -141,16 +140,6 @@ namespace Clunker
                         Scene?.Render(context);
                     }
 
-                    var displaySize = ImGui.GetIO().DisplaySize;
-                    ImGui.GetBackgroundDrawList().AddCircleFilled(displaySize / 2, 2, ImGui.GetColorU32(new Vector4(1, 1, 1, 1)));
-
-                    imGuiRenderer.Render(GraphicsDevice, CommandList);
-
-                    if (_mainSceneColourTexture != null && _mainSceneColourTexture.SampleCount != TextureSampleCount.Count1)
-                    {
-                        CommandList.ResolveTexture(_mainSceneColourTexture, GraphicsDevice.MainSwapchain.Framebuffer.ColorTargets.First().Target);
-                    }
-
                     CommandList.End();
                     GraphicsDevice.SubmitCommands(CommandList);
                     GraphicsDevice.SwapBuffers(GraphicsDevice.MainSwapchain);
@@ -160,45 +149,6 @@ namespace Clunker
                 }
 
             }, TaskCreationOptions.LongRunning);
-        }
-
-        private void CreateFramebuffer()
-        {
-            var factory = GraphicsDevice.ResourceFactory;
-
-            //GraphicsDevice.GetPixelFormatSupport(
-            //    PixelFormat.R16_G16_B16_A16_Float,
-            //    TextureType.Texture2D,
-            //    TextureUsage.RenderTarget,
-            //    out PixelFormatProperties properties);
-
-            //TextureSampleCount sampleCount = TextureSampleCount.Count2;
-            //while (!properties.IsSampleCountSupported(sampleCount))
-            //{
-            //    sampleCount = sampleCount - 1;
-            //}
-
-            //TextureDescription mainColorDesc = TextureDescription.Texture2D(
-            //    GraphicsDevice.SwapchainFramebuffer.Width,
-            //    GraphicsDevice.SwapchainFramebuffer.Height,
-            //    1,
-            //    1,
-            //    PixelFormat.R16_G16_B16_A16_Float,
-            //    TextureUsage.RenderTarget | TextureUsage.Sampled,
-            //    sampleCount);
-
-            //_mainSceneColourTexture = factory.CreateTexture(ref mainColorDesc);
-            //_mainSceneDepthTexture = factory.CreateTexture(TextureDescription.Texture2D(
-            //    GraphicsDevice.SwapchainFramebuffer.Width,
-            //    GraphicsDevice.SwapchainFramebuffer.Height,
-            //    1,
-            //    1,
-            //    PixelFormat.R32_Float,
-            //    TextureUsage.DepthStencil,
-            //    sampleCount));
-            //MainSceneFramebuffer = factory.CreateFramebuffer(new FramebufferDescription(_mainSceneDepthTexture, _mainSceneColourTexture));
-
-            MainSceneFramebuffer = GraphicsDevice.SwapchainFramebuffer;
         }
     }
 }

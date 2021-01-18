@@ -1,5 +1,6 @@
 ﻿using Clunker.ECS;
 using Clunker.Graphics;
+using Clunker.Graphics.Systems;
 using Clunker.Voxels;
 using DefaultEcs;
 using DefaultEcs.Command;
@@ -17,7 +18,7 @@ namespace Clunker
         public string Name { get; private set; }
         public World World { get; private set; }
         public EntityCommandRecorder CommandRecorder { get; private set; } = new EntityCommandRecorder();
-        public List<ISystem<RenderingContext>> RendererSystems { get; private set; }
+        public List<IRendererSystem> RendererSystems { get; private set; }
         public List<IPreSystem<double>> PreLogicSystems  { get; private set; }
         public List<ISystem<double>> LogicSystems { get; private set; }
         public List<IPostSystem<double>> PostLogicSystems { get; private set; }
@@ -36,7 +37,7 @@ namespace Clunker
             Name = name;
             World = world;
 
-            RendererSystems = new List<ISystem<RenderingContext>>();
+            RendererSystems = new List<IRendererSystem>();
             PreLogicSystems = new List<IPreSystem<double>>();
             LogicSystems = new List<ISystem<double>>();
             PostLogicSystems = new List<IPostSystem<double>>();
@@ -56,7 +57,7 @@ namespace Clunker
 
         public void AddSystem(object system)
         {
-            if(system is ISystem<RenderingContext> rendererSystem)
+            if(system is IRendererSystem rendererSystem)
             {
                 RendererSystems.Add(rendererSystem);
             }
@@ -69,13 +70,14 @@ namespace Clunker
             if (system is ISystem<double> logicSystem)
             {
                 LogicSystems.Add(logicSystem);
-                _subscriptions.Add(World.Subscribe(logicSystem));
             }
 
             if (system is IPostSystem<double> postLogicSystem)
             {
                 PostLogicSystems.Add(postLogicSystem);
             }
+
+            _subscriptions.Add(World.Subscribe(system));
         }
 
         public void Render(RenderingContext context)

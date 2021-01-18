@@ -1,4 +1,5 @@
 ﻿using Clunker.Graphics.Materials;
+using Clunker.Graphics.Systems;
 using DefaultEcs.System;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -13,7 +14,7 @@ using Veldrid.Utilities;
 
 namespace Clunker.Graphics
 {
-    public class SkyboxRenderer : ISystem<RenderingContext>
+    public class SkyboxRenderer : IRendererSystem
     {
         public bool IsEnabled { get; set; } = true;
 
@@ -85,6 +86,14 @@ namespace Clunker.Graphics
                 ViewMatrixBuffer,
                 textureView,
                 device.Aniso4xSampler));
+        }
+
+        public void CreateSharedResources(ResourceCreationContext context)
+        {
+        }
+
+        public void CreateResources(ResourceCreationContext context)
+        {
         }
 
         public void Update(RenderingContext context)

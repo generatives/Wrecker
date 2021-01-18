@@ -271,9 +271,9 @@ namespace ClunkerECSDemo
             var nz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_ft.png");
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
-            //scene.AddSystem(new MeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
-            //scene.AddSystem(new LightMeshGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, world));
-            scene.AddSystem(new ShadowMapGeometryRenderer(_client.GraphicsDevice, materialInputLayouts, _client.Resources, world));
+            scene.AddSystem(new ShadowMapRenderer(world));
+            scene.AddSystem(new LitGeometryRenderer(world));
+            scene.AddSystem(new ImGuiSystem(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.WindowWidth, _client.WindowHeight));
 
             var voxelTypes = LoadVoxelTypes();
 
@@ -310,7 +310,7 @@ namespace ClunkerECSDemo
 
             world.SubscribeEntityDisposed((in Entity e) =>
             {
-                if(e.Has<VoxelGrid>())
+                if (e.Has<VoxelGrid>())
                 {
                     var voxelGrid = e.Get<VoxelGrid>();
                     voxelGrid.VoxelSpace.Remove(voxelGrid.MemberIndex);
@@ -322,6 +322,24 @@ namespace ClunkerECSDemo
             ref var transform1 = ref entity1.Get<Transform>();
             transform1.WorldPosition = new Vector3(0, 5, 0);
             entity1.Set(transform1);
+
+            var creationContext = new ResourceCreationContext()
+            {
+                Device = _client.GraphicsDevice,
+                MaterialInputLayouts = materialInputLayouts,
+                ResourceLoader = _client.Resources,
+                SharedResources = new Clunker.Graphics.Resources.SharedResources()
+            };
+
+            foreach(var renderer in scene.RendererSystems)
+            {
+                renderer.CreateSharedResources(creationContext);
+            }
+
+            foreach (var renderer in scene.RendererSystems)
+            {
+                renderer.CreateResources(creationContext);
+            }
 
             _client.SetScene(scene);
         }

@@ -10,7 +10,7 @@ using Veldrid.SPIRV;
 namespace Clunker.Graphics
 {
     [ClunkerComponent]
-    public class Material
+    public class Material : IDisposable
     {
         private GraphicsDevice _device;
         private Framebuffer _target;
@@ -111,6 +111,15 @@ namespace Clunker.Graphics
                 commandList.SetIndexBuffer(inputs.IndexBuffer, IndexFormat.UInt16);
 
                 commandList.DrawIndexed(numIndices, 1, 0, 0, 0);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_pipeline != null)
+            {
+                _pipeline.Dispose();
+                _pipeline = null;
             }
         }
     }
