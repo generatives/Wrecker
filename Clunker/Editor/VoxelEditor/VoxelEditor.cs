@@ -4,6 +4,7 @@ using Clunker.Graphics;
 using Clunker.Input;
 using Clunker.Networking;
 using Clunker.Physics;
+using Clunker.Utilties;
 using Clunker.Voxels;
 using Clunker.Voxels.Space;
 using DefaultEcs;
@@ -27,6 +28,8 @@ namespace Clunker.Editor.VoxelEditor
         public Voxel Voxel;
         [Key(3)]
         public bool Remove;
+        [Key(4)]
+        public int Size;
     }
 
     public class VoxelEditor : Editor
@@ -37,6 +40,7 @@ namespace Clunker.Editor.VoxelEditor
 
         private (string Name, Voxel Voxel)[] _voxels;
         private int _index;
+        private int _size;
 
         private MessagingChannel _serverChannel;
         private EntitySet _cameras;
@@ -66,23 +70,12 @@ namespace Clunker.Editor.VoxelEditor
                 ImGui.EndCombo();
             }
 
-            if (InputTracker.LockMouse && InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left))
-            {
-                foreach (var entity in _cameras.GetEntities())
-                {
-                    var transform = entity.Get<Transform>();
-                    var message = new VoxelEditMessage()
-                    {
-                        Position = transform.WorldPosition,
-                        Orientation = transform.WorldOrientation,
-                        Voxel = _voxels[_index].Voxel,
-                        Remove = false
-                    };
-                    _serverChannel.AddBuffered<VoxelEditReceiver, VoxelEditMessage>(message);
-                }
-            }
+            ImGui.DragInt("Size", ref _size, 0.25f, 0, 10);
 
-            if (InputTracker.LockMouse && InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Right))
+            var added = InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Left);
+            var removed = InputTracker.WasMouseButtonDowned(Veldrid.MouseButton.Right);
+
+            if (InputTracker.LockMouse && (added || removed))
             {
                 foreach (var entity in _cameras.GetEntities())
                 {
@@ -92,7 +85,8 @@ namespace Clunker.Editor.VoxelEditor
                         Position = transform.WorldPosition,
                         Orientation = transform.WorldOrientation,
                         Voxel = _voxels[_index].Voxel,
-                        Remove = true
+                        Remove = removed,
+                        Size = _size
                     };
                     _serverChannel.AddBuffered<VoxelEditReceiver, VoxelEditMessage>(message);
                 }
@@ -111,10 +105,10 @@ namespace Clunker.Editor.VoxelEditor
 
         protected override void MessageReceived(in VoxelEditMessage message)
         {
-            Run(message.Position, message.Orientation, message.Voxel, message.Remove);
+            Run(message.Position, message.Orientation, message.Voxel, message.Remove, message.Size);
         }
 
-        public void Run(Vector3 position, Quaternion orientation, Voxel voxel, bool remove)
+        public void Run(Vector3 position, Quaternion orientation, Voxel voxel, bool remove, int size)
         {
             var transform = new Transform(default)
             {
@@ -139,7 +133,7 @@ namespace Clunker.Editor.VoxelEditor
                         (int)Math.Floor(insideHitLocation.Y),
                         (int)Math.Floor(insideHitLocation.Z));
 
-                    SetVoxel(space, hitTransform, hitLocation, index, voxel, remove);
+                    SetVoxel(space, hitTransform, hitLocation, index, voxel, remove, size);
                 }
                 if (hitEntity.Has<VoxelGrid>())
                 {
@@ -153,23 +147,29 @@ namespace Clunker.Editor.VoxelEditor
                         (int)Math.Floor(insideHitLocation.Y),
                         (int)Math.Floor(insideHitLocation.Z));
 
-                    SetVoxel(voxels.VoxelSpace, hitTransform, hitLocation, index, voxel, remove);
+                    SetVoxel(voxels.VoxelSpace, hitTransform, hitLocation, index, voxel, remove, size);
                 }
             }
         }
 
-        private static void SetVoxel(VoxelSpace space, Transform hitTransform, Vector3 hitLocation, Vector3i index, Voxel voxel, bool remove)
+        private static void SetVoxel(VoxelSpace space, Transform hitTransform, Vector3 hitLocation, Vector3i index, Voxel voxel, bool remove, int size)
         {
             if (remove)
             {
-                space.SetVoxel(index, new Voxel() { Exists = false });
+                foreach(var i in GeometricIterators.Rectangle(index, size))
+                {
+                    space.SetVoxel(i, new Voxel() { Exists = false });
+                }
             }
             else
             {
                 var addIndex = CalculateAddIndex(space, hitTransform, hitLocation, index);
                 if (addIndex.HasValue)
                 {
-                    space.SetVoxel(addIndex.Value, voxel);
+                    foreach (var i in GeometricIterators.Rectangle(addIndex.Value, size))
+                    {
+                        space.SetVoxel(i, voxel);
+                    }
                 }
             }
         }

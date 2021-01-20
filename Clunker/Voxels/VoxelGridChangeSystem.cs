@@ -42,7 +42,7 @@ namespace Clunker.Voxels
                 foreach (var client in Clients.GetEntities())
                 {
                     var target = client.Get<ClientMessagingTarget>();
-                    target.Channel.Send<VoxelGridChangeMessageApplier, EntityMessage<VoxelGridChangedMessage>>(message);
+                    target.Channel.AddBuffered<VoxelGridChangeMessageApplier, EntityMessage<VoxelGridChangedMessage>>(message);
                 }
             }
         }
