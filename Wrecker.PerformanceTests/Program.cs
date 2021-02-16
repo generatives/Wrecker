@@ -7,7 +7,7 @@ namespace Wrecker.PerformanceTests
     {
         static void Main(string[] args)
         {
-            var summary = BenchmarkRunner.Run<VoxelMeshingTests>();
+            var summary = BenchmarkRunner.Run<GPUReVoxelize>();
         }
     }
 }

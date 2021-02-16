@@ -9,6 +9,7 @@ namespace Clunker.Geometry
     [MessagePackObject]
     public struct Vector3i
     {
+        public const int Size = sizeof(int) * 3;
         [Key(0)]
         public int X;
         [Key(1)]
@@ -23,14 +24,9 @@ namespace Clunker.Geometry
             Z = z;
         }
 
-        public int LengthSquared()
+        public int LengthCubed()
         {
             return X * X + Y * Y + Z * Z;
-        }
-
-        public double Length()
-        {
-            return Math.Sqrt(LengthSquared());
         }
 
         public static bool operator ==(Vector3i v, Vector3i v1)

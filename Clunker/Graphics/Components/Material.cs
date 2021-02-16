@@ -69,8 +69,8 @@ namespace Clunker.Graphics
                 ShaderSetDescription shaderSet = new ShaderSetDescription(
                     _vertexInputs.Select(i => _registry.VertexLayouts[i]).ToArray(),
                     resourceFactory.CreateFromSpirv(
-                        new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexShader), "main"),
-                        new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragShader), "main")));
+                        new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexShader), "main", true),
+                        new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragShader), "main", true)));
 
                 _pipeline = resourceFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                     BlendStateDescription.SingleAlphaBlend,

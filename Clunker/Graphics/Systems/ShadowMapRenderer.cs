@@ -14,7 +14,7 @@ namespace Clunker.Graphics.Systems
     public class ShadowMapRenderer : IRendererSystem
     {
         public bool IsEnabled { get; set; } = true;
-        public Vector3 DiffuseLightDirection { get; set; } = new Vector3(-1, 2f, 4);
+        public Vector3 DiffuseLightDirection { get; set; } = new Vector3(1f, 2f, 1f);
 
         private CommandList _commandList;
         private Material _shadowMaterial;
@@ -22,6 +22,8 @@ namespace Clunker.Graphics.Systems
         private ResourceSet _lightingInputsResourceSet;
         private Framebuffer _shadowFramebuffer;
         private DeviceBuffer _lightViewMatrixBuffer;
+
+        private ResourceSet _lightGridResourceSet;
 
         // World Transform
         private ResourceSet _worldTransformResourceSet;
@@ -81,12 +83,14 @@ namespace Clunker.Graphics.Systems
 
             var shadowMapRasterizerState = new RasterizerStateDescription(FaceCullMode.Front, PolygonFillMode.Solid, FrontFace.Clockwise, true, false);
             _shadowMaterial = new Material(device, _shadowFramebuffer, resourceLoader.LoadText("Shaders\\ShadowMap.vs"), resourceLoader.LoadText("Shaders\\ShadowMap.fg"),
-                new string[] { "Model" }, new string[] { "WorldTransform", "LightingInputs" }, materialInputLayouts, shadowMapRasterizerState);
+                new string[] { "Model" }, new string[] { "WorldTransform", "LightingInputs", "LightGrid" }, materialInputLayouts, shadowMapRasterizerState);
 
             _commandList = factory.CreateCommandList();
 
             _worldMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _worldTransformResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["WorldTransform"], _worldMatrixBuffer));
+
+            _lightGridResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightGrid"], context.SharedResources.Textures["LightGrid"]));
         }
 
         public void Update(RenderingContext context)
@@ -106,6 +110,7 @@ namespace Clunker.Graphics.Systems
 
             var shadowMapMaterialInputs = new MaterialInputs();
             shadowMapMaterialInputs.ResouceSets["LightingInputs"] = _lightingInputsResourceSet;
+            shadowMapMaterialInputs.ResouceSets["LightGrid"] = _lightGridResourceSet;
             foreach (var entity in _shadowCastingEntities.GetEntities())
             {
                 ref var geometry = ref entity.Get<RenderableMeshGeometry>();

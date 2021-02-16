@@ -11,6 +11,7 @@ using Clunker.Geometry;
 using Clunker.Graphics;
 using Clunker.Graphics.Components;
 using Clunker.Graphics.Systems;
+using Clunker.Graphics.Systems.Lighting;
 using Clunker.Networking;
 using Clunker.Networking.EntityExistence;
 using Clunker.Networking.Sync;
@@ -209,6 +210,10 @@ namespace ClunkerECSDemo
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("CameraInfo", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
 
+            materialInputLayouts.ResourceLayouts["LightGrid"] = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("LightGrid", ResourceKind.TextureReadWrite, ShaderStages.Vertex | ShaderStages.Fragment)));
+
             materialInputLayouts.ResourceLayouts["LightingInputs"] = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("LightInputs", ResourceKind.UniformBuffer, ShaderStages.Vertex),
@@ -231,7 +236,7 @@ namespace ClunkerECSDemo
                 new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs" }, materialInputLayouts);
 
             var shadowMappedMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\ShadowMapped.vs"), _client.Resources.LoadText("Shaders\\ShadowMapped.fg"),
-                new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "LightingInputs" }, materialInputLayouts);
+                new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "LightingInputs", "LightGrid" }, materialInputLayouts);
 
             var voxelTexturesResource = _client.Resources.LoadImage("Textures\\spritesheet_tiles.png");
             var voxelTexture = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.White);
@@ -245,6 +250,8 @@ namespace ClunkerECSDemo
                 e.Set(shadowMappedMaterial);
                 e.Set(voxelTexture);
                 e.Set<ShadowCaster>();
+                e.Set<PhysicsBlocks>();
+                e.Set<PhysicsBlockResources>();
             };
 
             var networkedEntities = new NetworkedEntities(world);
@@ -269,6 +276,11 @@ namespace ClunkerECSDemo
             var ny = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_dn.png");
             var pz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_bk.png");
             var nz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_ft.png");
+
+            scene.AddSystem(new PhysicsBlockUploader(world));
+            scene.AddSystem(new ReVoxelizer(world));
+            scene.AddSystem(new LightGridUpdater());
+
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
             scene.AddSystem(new ShadowMapRenderer(world));
@@ -293,6 +305,8 @@ namespace ClunkerECSDemo
 
             scene.AddSystem(_editorMenu);
             scene.AddSystems(editors);
+
+            scene.AddSystem(new PhysicsBlockFinder(world, parallelRunner));
 
             scene.AddSystem(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
 

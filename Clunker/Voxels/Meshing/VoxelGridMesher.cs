@@ -203,10 +203,15 @@ namespace Clunker.Voxels.Meshing
             indices.Add((ushort)(vertices.Count + 1));
             indices.Add((ushort)(vertices.Count + 2));
             indices.Add((ushort)(vertices.Count + 3));
-            vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0f, 126f)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0f, 0f)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(126f, 0f)) / imageSize, quad.Normal));
-            vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(126f, 126f)) / imageSize, quad.Normal));
+            //vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0f, 126f)) / imageSize, quad.Normal));
+            //vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0f, 0f)) / imageSize, quad.Normal));
+            //vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(126f, 0f)) / imageSize, quad.Normal));
+            //vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(126f, 126f)) / imageSize, quad.Normal));
+            var voxelCenter = voxelIndex + side.GetDirection() + new Vector3(0.5f);
+            vertices.Add(new VertexPositionTextureNormal(quad.A, (textureOffset + new Vector2(0f, 126f)) / imageSize, voxelCenter));
+            vertices.Add(new VertexPositionTextureNormal(quad.B, (textureOffset + new Vector2(0f, 0f)) / imageSize, voxelCenter));
+            vertices.Add(new VertexPositionTextureNormal(quad.C, (textureOffset + new Vector2(126f, 0f)) / imageSize, voxelCenter));
+            vertices.Add(new VertexPositionTextureNormal(quad.D, (textureOffset + new Vector2(126f, 126f)) / imageSize, voxelCenter));
 
             var occlusionSide = AmbientOcclusionTable[(int)side];
             for(int i = 0; i < occlusionSide.Length; i++)

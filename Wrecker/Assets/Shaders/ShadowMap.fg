@@ -1,6 +1,11 @@
 ﻿#version 450
 
+layout(set = 2, binding = 0, rgba32f) uniform image3D LightTexture;
+
+layout(location = 0) in vec3 fsin_worldPosition;
+
 void main()
 {
-	
+	ivec3 texIndex = ivec3(floor(fsin_worldPosition) + ivec3(64, 64, 64));
+	//imageStore(LightTexture, texIndex, vec4(1, 0, 0, 0));
 }

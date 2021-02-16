@@ -31,6 +31,8 @@ namespace Clunker.Graphics
         // Lighting inputs
         private ResourceSet _lightingInputsResourceSet;
 
+        private ResourceSet _lightGridResourceSet;
+
         public RgbaFloat AmbientLightColour { get; set; } = RgbaFloat.White;
         public float AmbientLightStrength { get; set; } = 0.8f;
         public RgbaFloat DiffuseLightColour { get; set; } = RgbaFloat.White;
@@ -75,6 +77,8 @@ namespace Clunker.Graphics
             _cameraInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["CameraInputs"], _cameraInputsBuffer));
 
             _lightingInputsResourceSet = context.SharedResources.ResourceSets["LightingInputs"];
+
+            _lightGridResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightGrid"], context.SharedResources.Textures["LightGrid"]));
         }
 
         public void Update(RenderingContext context)
@@ -103,6 +107,7 @@ namespace Clunker.Graphics
             materialInputs.ResouceSets["SceneInputs"] = _sceneInputsResourceSet;
             materialInputs.ResouceSets["CameraInputs"] = _cameraInputsResourceSet;
             materialInputs.ResouceSets["LightingInputs"] = _lightingInputsResourceSet;
+            materialInputs.ResouceSets["LightGrid"] = _lightGridResourceSet;
 
             foreach (var entity in _renderableEntities.GetEntities())
             {

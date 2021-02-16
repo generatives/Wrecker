@@ -55,6 +55,9 @@ namespace Clunker.WorldSpace
 
         private void GenerateChunkOffsets()
         {
+            _chunkOffsets = new List<Vector3i>() { Vector3i.Zero, Vector3i.UnitX, -Vector3i.UnitX, Vector3i.UnitZ, -Vector3i.UnitZ };
+            return;
+
             var xzList = new List<Vector2i>();
             for (int xOffset = -LoadRadius; xOffset <= LoadRadius; xOffset++)
                 for (int zOffset = -LoadRadius; zOffset <= LoadRadius; zOffset++)
@@ -64,7 +67,7 @@ namespace Clunker.WorldSpace
                     }
 
             _chunkOffsets = new List<Vector3i>();
-            foreach(var xz in xzList.OrderBy((o) => o.LengthSquared()))
+            foreach (var xz in xzList.OrderBy((o) => o.LengthSquared()))
             {
                 for (int yLoad = 0; yLoad < LoadHeight; yLoad++)
                 {
@@ -159,6 +162,8 @@ namespace Clunker.WorldSpace
 
         public Vector3i GetChunk(Entity entity)
         {
+            return Vector3i.Zero;
+
             var transform = entity.Get<Transform>();
             var position = transform.WorldPosition;
             return new Vector3i((int)Math.Floor(position.X / _chunkLength), (int)Math.Floor(position.Y / _chunkLength), (int)Math.Floor(position.Z / _chunkLength));

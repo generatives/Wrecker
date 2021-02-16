@@ -7,6 +7,7 @@ namespace Clunker.Geometry
 {
     public struct Vector2i
     {
+        public const int Size = sizeof(int) * 2;
         public int X;
         public int Y;
 

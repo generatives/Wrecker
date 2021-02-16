@@ -7,10 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using Veldrid;
+using Veldrid.StartupUtilities;
 
 namespace Wrecker.PerformanceTests
 {
-    public class VoxelMeshingTests
+    public class GPUReVoxelize
     {
         private VoxelGrid _data;
         private List<VertexPositionTextureNormal> _vertices;
@@ -20,16 +22,30 @@ namespace Wrecker.PerformanceTests
         [GlobalSetup]
         public void Setup()
         {
-            _data = new VoxelGrid(32, 1);
-
-            var chunkGenerator = new ChunkGenerator(null, 32, 1);
-            var random = new Random(0);
-            chunkGenerator.GenerateSpheres(_data, random);
-            chunkGenerator.SplatterHoles(_data, random);
-
-            _vertices = new List<VertexPositionTextureNormal>(_data.GridSize * _data.GridSize * _data.GridSize);
-            _indices = new List<ushort>(_data.GridSize * _data.GridSize * _data.GridSize);
-            _imageSize = new Vector2(32, 32);
+            WindowCreateInfo wci = new WindowCreateInfo
+            {
+                X = 100,
+                Y = 100,
+                WindowWidth = 1280,
+                WindowHeight = 720,
+                WindowTitle = "Tortuga Demo"
+            };
+            GraphicsDeviceOptions options = new GraphicsDeviceOptions(
+                debug: false,
+                swapchainDepthFormat: PixelFormat.R16_UNorm,
+                syncToVerticalBlank: true,
+                resourceBindingModel: ResourceBindingModel.Improved,
+                preferDepthRangeZeroToOne: true,
+                preferStandardClipSpaceYDirection: true);
+#if DEBUG
+            options.Debug = true;
+#endif
+            _window = VeldridStartup.CreateWindow(ref wci);
+            //Window.CursorVisible = false;
+            //Window.SetMousePosition(Window.Width / 2, Window.Height / 2);
+            _window.Resized += () => _windowResized = true;
+            GraphicsDevice = VeldridStartup.CreateGraphicsDevice(_window, graphicsDeviceOptions, GraphicsBackend.Vulkan);
+            CommandList = GraphicsDevice.ResourceFactory.CreateCommandList();
         }
 
         //[Benchmark]
