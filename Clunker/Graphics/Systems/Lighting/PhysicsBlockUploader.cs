@@ -66,11 +66,13 @@ namespace Clunker.Graphics.Systems.Lighting
                     var sizes = physicsBlocks.Blocks.Select(b => new Vector2i(b.Size.X, b.Size.Z)).ToArray();
                     resources.VoxelSizes.Update(sizes);
 
-                    if (resources.VoxelsResourceSet == null)
+                    if(resources.VoxelsResourceSet != null)
                     {
-                        var desc = new ResourceSetDescription(_voxelsLayout, resources.VoxelPositions.DeviceBuffer, resources.VoxelSizes.DeviceBuffer);
-                        resources.VoxelsResourceSet = state.GraphicsDevice.ResourceFactory.CreateResourceSet(desc);
+                        state.GraphicsDevice.DisposeWhenIdle(resources.VoxelsResourceSet);
                     }
+
+                    var desc = new ResourceSetDescription(_voxelsLayout, resources.VoxelPositions.DeviceBuffer, resources.VoxelSizes.DeviceBuffer);
+                    resources.VoxelsResourceSet = state.GraphicsDevice.ResourceFactory.CreateResourceSet(desc);
                 }
                 else
                 {

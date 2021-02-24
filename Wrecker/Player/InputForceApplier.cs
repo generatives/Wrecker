@@ -37,35 +37,35 @@ namespace Wrecker
             var intendedDirection = Vector3.Zero;
             var intendedRotation = Vector3.Zero;
 
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad4))
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Left))
             {
                 intendedDirection += -Vector3.UnitX;
             }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad6))
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Right))
             {
                 intendedDirection += Vector3.UnitX;
             }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad8))
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Up))
             {
                 intendedDirection += -Vector3.UnitZ;
             }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad2))
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Down))
             {
                 intendedDirection += Vector3.UnitZ;
             }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.KeypadPlus))
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.PageUp))
             {
                 intendedDirection += Vector3.UnitY;
             }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.KeypadMinus))
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.PageDown))
             {
                 intendedDirection += -Vector3.UnitY;
             }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad7))
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Delete))
             {
                 intendedRotation += Vector3.UnitY;
             }
-            if (GameInputTracker.IsKeyPressed(Veldrid.Key.Keypad9))
+            if (GameInputTracker.IsKeyPressed(Veldrid.Key.End))
             {
                 intendedRotation += -Vector3.UnitY;
             }

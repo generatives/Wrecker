@@ -41,8 +41,8 @@ namespace Clunker.WorldSpace
                             voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)5 }; // stone
                         }
 
-                        if ((voxelPosition.Y == 1 || voxelPosition.Y == 2) &&
-                            (Math.Abs(voxelPosition.X) == 5 || Math.Abs(voxelPosition.Z) == 5))
+                        if ((/*voxelPosition.Y == 1 ||*/ voxelPosition.Y == 2) &&
+                            (Math.Abs(voxelPosition.X) == 5 || Math.Abs(voxelPosition.Z) == 4 || Math.Abs(voxelPosition.Z) == 5 || Math.Abs(voxelPosition.Z) == 6))
                         {
                             voxelSpaceData[x, y, z] = new Voxel() { Exists = true, BlockType = (ushort)0 }; // stone
                         }

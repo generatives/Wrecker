@@ -83,6 +83,7 @@ namespace Clunker.Graphics.Systems.Lighting
             _commandList.SetComputeResourceSet(0, _lightGridResourceSet);
 
             _commandList.Dispatch(128, 128, 128);
+            _commandList.Dispatch(128, 128, 128);
 
             _commandList.End();
             state.GraphicsDevice.SubmitCommands(_commandList);

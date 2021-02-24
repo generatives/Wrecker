@@ -3,33 +3,13 @@
 layout(set = 0, binding = 0, rgba32f) uniform image3D LightTexture;
 layout(set = 0, binding = 1, rgba32f) uniform image3D SolidityTexture;
 
+const ivec3 LIGHT_TEX_MIN = ivec3(0, 0, 0);
+const ivec3 LIGHT_TEX_MAX = ivec3(128, 128, 128);
+
 float getLightValue(ivec3 texIndex)
 {
-    if(texIndex.x > 0 && texIndex.x < 128 && texIndex.y > 0 && texIndex.y < 128 && texIndex.z > 0 && texIndex.z < 128)
-    {
-        return imageLoad(LightTexture, texIndex).r;
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-float collectValue(float currentValue, float otherValue)
-{
-    if(otherValue > currentValue)
-    {
-        return otherValue - 0.25f;
-    }
-    else
-    {
-        return currentValue;
-    }
-}
-
-float collectIndexValue(float currentValue, ivec3 otherIndex)
-{
-    return collectValue(currentValue, getLightValue(otherIndex));
+    ivec3 clampedTexIndex = clamp(texIndex, LIGHT_TEX_MIN, LIGHT_TEX_MAX);
+    return imageLoad(LightTexture, clampedTexIndex).r;
 }
 
 void main()
@@ -57,13 +37,10 @@ void main()
         return;
     }
     
-    float lightValue = imageLoad(LightTexture, texIndex).r;
-    lightValue = collectIndexValue(lightValue, texIndex + ivec3(0, 1, 0));
-    lightValue = collectIndexValue(lightValue, texIndex + ivec3(0, -1, 0));
-    lightValue = collectIndexValue(lightValue, texIndex + ivec3(1, 0, 0));
-    lightValue = collectIndexValue(lightValue, texIndex + ivec3(-1, 0, 0));
-    lightValue = collectIndexValue(lightValue, texIndex + ivec3(0, 0, 1));
-    lightValue = collectIndexValue(lightValue, texIndex + ivec3(0, 0, -1));
-    imageStore(LightTexture, texIndex, vec4(lightValue, 0, 0, 0));
+    vec3 lights1 = vec3(getLightValue(texIndex + ivec3(0, 1, 0)), getLightValue(texIndex + ivec3(0, -1, 0)), getLightValue(texIndex + ivec3(1, 0, 0)));
+    vec3 lights2 = vec3(getLightValue(texIndex + ivec3(-1, 0, 0)), getLightValue(texIndex + ivec3(0, 0, 1)), getLightValue(texIndex + ivec3(0, 0, -1)));
+    vec3 maxLights = max(lights1, lights2);
+    float lightValue = max(maxLights.x, max(maxLights.y, maxLights.z));
+    imageStore(LightTexture, texIndex, vec4(lightValue - 0.0625f, 0, 0, 0));
     
 }
