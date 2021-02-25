@@ -6,6 +6,7 @@ using DefaultEcs.System;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using Veldrid;
 using Veldrid.SPIRV;
@@ -17,12 +18,15 @@ namespace Clunker.Graphics.Systems.Lighting
         public bool IsEnabled { get; set; } = true;
 
         private CommandList _commandList;
+        private CommandList _commandList2;
         private Texture _solidityTexture;
         private DeviceBuffer _solidityTextureTransformBuffer;
         private ResourceLayout _solidityResourceLayout;
         private ResourceSet _solidityResourceSet;
-        private Shader _computeShader;
-        private Pipeline _computePipeline;
+        private Shader _clearSolidityShader;
+        private Pipeline _clearSolidityPipeline;
+        private Shader _revoxelizeShader;
+        private Pipeline _revoxelizePipeline;
 
         private EntitySet _physicsBlocks;
 
@@ -57,6 +61,7 @@ namespace Clunker.Graphics.Systems.Lighting
             var factory = device.ResourceFactory;
 
             _commandList = factory.CreateCommandList();
+            _commandList2 = factory.CreateCommandList();
 
             _solidityTextureTransformBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 
@@ -67,14 +72,26 @@ namespace Clunker.Graphics.Systems.Lighting
 
             _solidityResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_solidityResourceLayout, _solidityTexture, _solidityTextureTransformBuffer));
 
-            var shaderTextRes = context.ResourceLoader.LoadText("Shaders\\ReVoxelize.glsl");
-            var shaderBytes = Encoding.Default.GetBytes(shaderTextRes.Data);
-            _computeShader = factory.CreateFromSpirv(new ShaderDescription(
+            var clearSolidityTextRes = context.ResourceLoader.LoadText("Shaders\\ClearSolidityTexture.glsl");
+            _clearSolidityShader = factory.CreateFromSpirv(new ShaderDescription(
                 ShaderStages.Compute,
-                shaderBytes,
+                Encoding.Default.GetBytes(clearSolidityTextRes.Data),
                 "main"));
 
-            _computePipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_computeShader,
+            _clearSolidityPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_clearSolidityShader,
+                new[]
+                {
+                    _solidityResourceLayout
+                },
+                1, 1, 1));
+
+            var revoxelizerTextRes = context.ResourceLoader.LoadText("Shaders\\ReVoxelize.glsl");
+            _revoxelizeShader = factory.CreateFromSpirv(new ShaderDescription(
+                ShaderStages.Compute,
+                Encoding.Default.GetBytes(revoxelizerTextRes.Data),
+                "main"));
+
+            _revoxelizePipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_revoxelizeShader,
                 new[]
                 {
                     context.SharedResources.ResourceLayouts["PhysicsBlocks"],
@@ -85,8 +102,19 @@ namespace Clunker.Graphics.Systems.Lighting
 
         public void Update(RenderingContext state)
         {
+            _commandList2.Begin();
+
+            _commandList2.SetPipeline(_clearSolidityPipeline);
+            _commandList2.SetComputeResourceSet(0, _solidityResourceSet);
+            _commandList2.Dispatch(32, 32, 32);
+
+            _commandList2.End();
+            state.GraphicsDevice.SubmitCommands(_commandList2);
+            state.GraphicsDevice.WaitForIdle();
+
             _commandList.Begin();
-            _commandList.SetPipeline(_computePipeline);
+
+            _commandList.SetPipeline(_revoxelizePipeline);
             _commandList.SetComputeResourceSet(1, _solidityResourceSet);
             foreach (var entity in _physicsBlocks.GetEntities())
             {

@@ -1,5 +1,7 @@
 ﻿#version 450
 
+layout (local_size_x = 4, local_size_y = 4, local_size_z = 4) in;
+
 layout(set = 0, binding = 0, rgba32f) uniform image3D LightTexture;
 layout(set = 0, binding = 1, rgba32f) uniform image3D SolidityTexture;
 
@@ -14,7 +16,7 @@ float getLightValue(ivec3 texIndex)
 
 void main()
 {
-    ivec3 texIndex = ivec3(gl_GlobalInvocationID.xyz);
+    ivec3 texIndex = ivec3(gl_GlobalInvocationID);
 
     float solidity = imageLoad(SolidityTexture, texIndex).r;
 

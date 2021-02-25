@@ -73,7 +73,7 @@ namespace Clunker.Graphics.Systems.Lighting
                 {
                     _lightGridResourceLayout
                 },
-                128, 128, 128));
+                1, 1, 1));
         }
 
         public void Update(RenderingContext state)
@@ -82,8 +82,11 @@ namespace Clunker.Graphics.Systems.Lighting
             _commandList.SetPipeline(_computePipeline);
             _commandList.SetComputeResourceSet(0, _lightGridResourceSet);
 
-            _commandList.Dispatch(128, 128, 128);
-            _commandList.Dispatch(128, 128, 128);
+            _commandList.Dispatch(32, 32, 32);
+            _commandList.Dispatch(32, 32, 32);
+            _commandList.Dispatch(32, 32, 32);
+            _commandList.Dispatch(32, 32, 32);
+            _commandList.Dispatch(32, 32, 32);
 
             _commandList.End();
             state.GraphicsDevice.SubmitCommands(_commandList);
