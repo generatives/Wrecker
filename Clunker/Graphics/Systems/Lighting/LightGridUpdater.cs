@@ -78,19 +78,19 @@ namespace Clunker.Graphics.Systems.Lighting
 
         public void Update(RenderingContext state)
         {
-            _commandList.Begin();
-            _commandList.SetPipeline(_computePipeline);
-            _commandList.SetComputeResourceSet(0, _lightGridResourceSet);
+            //_commandList.Begin();
+            //_commandList.SetPipeline(_computePipeline);
+            //_commandList.SetComputeResourceSet(0, _lightGridResourceSet);
 
-            _commandList.Dispatch(32, 32, 32);
-            _commandList.Dispatch(32, 32, 32);
-            _commandList.Dispatch(32, 32, 32);
-            _commandList.Dispatch(32, 32, 32);
-            _commandList.Dispatch(32, 32, 32);
+            //_commandList.Dispatch(32, 32, 32);
+            //_commandList.Dispatch(32, 32, 32);
+            //_commandList.Dispatch(32, 32, 32);
+            //_commandList.Dispatch(32, 32, 32);
+            //_commandList.Dispatch(32, 32, 32);
 
-            _commandList.End();
-            state.GraphicsDevice.SubmitCommands(_commandList);
-            state.GraphicsDevice.WaitForIdle();
+            //_commandList.End();
+            //state.GraphicsDevice.SubmitCommands(_commandList);
+            //state.GraphicsDevice.WaitForIdle();
         }
 
         public void Dispose()

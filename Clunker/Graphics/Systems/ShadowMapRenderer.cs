@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using Veldrid;
+using Veldrid.SPIRV;
 
 namespace Clunker.Graphics.Systems
 {
@@ -17,6 +18,7 @@ namespace Clunker.Graphics.Systems
         public Vector3 DiffuseLightDirection { get; set; } = new Vector3(1f, 2f, 1f);
 
         private CommandList _commandList;
+        private CommandList _commandList2;
         private Material _shadowMaterial;
         private Texture _shadowDepthTexture;
         private ResourceSet _lightingInputsResourceSet;
@@ -24,6 +26,14 @@ namespace Clunker.Graphics.Systems
         private DeviceBuffer _lightViewMatrixBuffer;
 
         private ResourceSet _lightGridResourceSet;
+
+        private ResourceLayout _justLightGridResourceLayout;
+        private ResourceSet _justLightGridResourceSet;
+        private Shader _clearImage3DShader;
+        private Pipeline _clearLightGridPipeline;
+
+        private Shader _injectLightShader;
+        private Pipeline _injectLightPipeline;
 
         // World Transform
         private ResourceSet _worldTransformResourceSet;
@@ -51,8 +61,8 @@ namespace Clunker.Graphics.Systems
             uint height = 1024;
 
             _shadowDepthTexture = factory.CreateTexture(TextureDescription.Texture2D(
-                width * 4,
-                height * 4,
+                width,
+                height,
                 1,
                 1,
                 PixelFormat.R32_Float,
@@ -79,13 +89,47 @@ namespace Clunker.Graphics.Systems
             var materialInputLayouts = context.MaterialInputLayouts;
             var factory = device.ResourceFactory;
 
+            _justLightGridResourceLayout = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("Image", ResourceKind.TextureReadWrite, ShaderStages.Compute)));
+
+            _justLightGridResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_justLightGridResourceLayout, context.SharedResources.Textures["LightGrid"]));
+
+            var clearImage3DTextRes = context.ResourceLoader.LoadText("Shaders\\ClearImage3D.glsl");
+            _clearImage3DShader = factory.CreateFromSpirv(new ShaderDescription(
+                ShaderStages.Compute,
+                Encoding.Default.GetBytes(clearImage3DTextRes.Data),
+                "main"));
+
+            _clearLightGridPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_clearImage3DShader,
+                new[]
+                {
+                    _justLightGridResourceLayout
+                },
+                1, 1, 1));
+
+            var injectLightTextRes = context.ResourceLoader.LoadText("Shaders\\LightInjector.glsl");
+            _injectLightShader = factory.CreateFromSpirv(new ShaderDescription(
+                ShaderStages.Compute,
+                Encoding.Default.GetBytes(injectLightTextRes.Data),
+                "main"));
+
+            _injectLightPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_injectLightShader,
+                new[]
+                {
+                    _justLightGridResourceLayout,
+                    materialInputLayouts.ResourceLayouts["LightingInputs"]
+                },
+                1, 1, 1));
+
             _shadowFramebuffer = factory.CreateFramebuffer(new FramebufferDescription(_shadowDepthTexture));
 
-            var shadowMapRasterizerState = new RasterizerStateDescription(FaceCullMode.Front, PolygonFillMode.Solid, FrontFace.Clockwise, true, false);
+            var shadowMapRasterizerState = new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false);
             _shadowMaterial = new Material(device, _shadowFramebuffer, resourceLoader.LoadText("Shaders\\ShadowMap.vs"), resourceLoader.LoadText("Shaders\\ShadowMap.fg"),
                 new string[] { "Model" }, new string[] { "WorldTransform", "LightingInputs", "LightGrid" }, materialInputLayouts, shadowMapRasterizerState);
 
             _commandList = factory.CreateCommandList();
+            _commandList2 = factory.CreateCommandList();
 
             _worldMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _worldTransformResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["WorldTransform"], _worldMatrixBuffer));
@@ -96,12 +140,24 @@ namespace Clunker.Graphics.Systems
         public void Update(RenderingContext context)
         {
             _commandList.Begin();
+
+            _commandList.SetPipeline(_clearLightGridPipeline);
+            _commandList.SetComputeResourceSet(0, _lightGridResourceSet);
+            _commandList.Dispatch(32, 32, 32);
+
+            _commandList.End();
+            context.GraphicsDevice.SubmitCommands(_commandList);
+            context.GraphicsDevice.WaitForIdle();
+
+
+            _commandList.Begin();
             _commandList.SetFramebuffer(_shadowFramebuffer);
             _commandList.ClearDepthStencil(1f);
 
             var cameraTransform = context.CameraTransform;
 
             var lightPos = cameraTransform.WorldPosition + Vector3.Normalize(DiffuseLightDirection) * ChunksToLight * 32f;
+            //var lightPos = Vector3.UnitY * 32;
             lightPos = new Vector3((float)Math.Floor(lightPos.X), (float)Math.Floor(lightPos.Y), (float)Math.Floor(lightPos.Z));
             var lightView = Matrix4x4.CreateLookAt(lightPos,
                 lightPos - DiffuseLightDirection,
@@ -131,11 +187,23 @@ namespace Clunker.Graphics.Systems
             _commandList.End();
             context.GraphicsDevice.SubmitCommands(_commandList);
             context.GraphicsDevice.WaitForIdle();
+
+            _commandList2.Begin();
+
+            _commandList2.SetPipeline(_injectLightPipeline);
+            _commandList2.SetComputeResourceSet(0, _justLightGridResourceSet);
+            _commandList2.SetComputeResourceSet(1, _lightingInputsResourceSet);
+            _commandList2.Dispatch(1024, 1024, 1);
+
+            _commandList2.End();
+            context.GraphicsDevice.SubmitCommands(_commandList2);
+            context.GraphicsDevice.WaitForIdle();
         }
 
         public void Dispose()
         {
             _commandList.Dispose();
+            _commandList2.Dispose();
             _shadowMaterial.Dispose();
             _shadowDepthTexture.Dispose();
             _lightingInputsResourceSet.Dispose();

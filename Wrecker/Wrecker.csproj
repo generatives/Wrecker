@@ -7,8 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Shaders\ClearSolidityTexture.glsl" />
+    <None Remove="Assets\Shaders\ClearImage3D.glsl" />
     <None Remove="Assets\Shaders\LightGridUpdater.glsl" />
+    <None Remove="Assets\Shaders\LightInjector.glsl" />
     <None Remove="Assets\Shaders\ReVoxelize.glsl" />
     <None Remove="Assets\Shaders\ShadowMap.fg" />
     <None Remove="Assets\Shaders\ShadowMap.vs" />
@@ -17,10 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Assets\Shaders\LightInjector.glsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\Shaders\LightGridUpdater.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\Shaders\ClearSolidityTexture.glsl">
+    <Content Include="Assets\Shaders\ClearImage3D.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Shaders\ReVoxelize.glsl">
