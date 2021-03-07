@@ -23,7 +23,8 @@ vec3 WorldPosFromDepth(float depth, vec2 texCoord) {
     //float z = depth * 2.0 - 1.0;
     float z = depth;
 
-    vec4 clipSpacePosition = vec4(texCoord * 2.0 - 1.0, z, 1.0);
+    vec2 texCoordNegOneToOne = texCoord * 2.0 - 1.0;
+    vec4 clipSpacePosition = vec4(texCoordNegOneToOne.x, -texCoordNegOneToOne.y, z, 1.0);
     vec4 viewSpacePosition = inverse(LightProjMatrix) * clipSpacePosition;
 
     // Perspective division

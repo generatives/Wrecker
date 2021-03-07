@@ -15,7 +15,7 @@ namespace Clunker.Graphics.Systems
     public class ShadowMapRenderer : IRendererSystem
     {
         public bool IsEnabled { get; set; } = true;
-        public Vector3 DiffuseLightDirection { get; set; } = new Vector3(1f, 2f, 1f);
+        public Vector3 DiffuseLightDirection { get; set; } = new Vector3(0f, 1f, 0f);
 
         private CommandList _commandList;
         private CommandList _commandList2;
@@ -40,7 +40,7 @@ namespace Clunker.Graphics.Systems
         private DeviceBuffer _worldMatrixBuffer;
 
         private EntitySet _shadowCastingEntities;
-        public int ChunksToLight { get; set; } = 4;
+        public int ChunksToLight { get; set; } = 2;
 
         public ShadowMapRenderer(World world)
         {
@@ -156,12 +156,12 @@ namespace Clunker.Graphics.Systems
 
             var cameraTransform = context.CameraTransform;
 
-            var lightPos = cameraTransform.WorldPosition + Vector3.Normalize(DiffuseLightDirection) * ChunksToLight * 32f;
-            //var lightPos = Vector3.UnitY * 32;
+            //var lightPos = cameraTransform.WorldPosition + Vector3.Normalize(DiffuseLightDirection) * ChunksToLight * 32f;
+            var lightPos = Vector3.Normalize(DiffuseLightDirection) * ChunksToLight * 32f;
             lightPos = new Vector3((float)Math.Floor(lightPos.X), (float)Math.Floor(lightPos.Y), (float)Math.Floor(lightPos.Z));
             var lightView = Matrix4x4.CreateLookAt(lightPos,
                 lightPos - DiffuseLightDirection,
-                new Vector3(0.0f, 1.0f, 0.0f));
+                new Vector3(0.0f, 0.0f, -1.0f));
             _commandList.UpdateBuffer(_lightViewMatrixBuffer, 0, ref lightView);
 
             var shadowMapMaterialInputs = new MaterialInputs();

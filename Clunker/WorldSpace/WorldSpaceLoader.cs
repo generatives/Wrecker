@@ -55,8 +55,8 @@ namespace Clunker.WorldSpace
 
         private void GenerateChunkOffsets()
         {
-            _chunkOffsets = new List<Vector3i>() { Vector3i.Zero, Vector3i.UnitX, -Vector3i.UnitX, Vector3i.UnitZ, -Vector3i.UnitZ };
-            return;
+            //_chunkOffsets = new List<Vector3i>() { Vector3i.Zero, Vector3i.UnitX, -Vector3i.UnitX, Vector3i.UnitZ, -Vector3i.UnitZ };
+            //return;
 
             var xzList = new List<Vector2i>();
             for (int xOffset = -LoadRadius; xOffset <= LoadRadius; xOffset++)
