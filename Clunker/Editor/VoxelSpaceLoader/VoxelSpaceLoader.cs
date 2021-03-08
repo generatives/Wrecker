@@ -4,6 +4,7 @@ using Clunker.Editor.SelectedEntity;
 using Clunker.Editor.Utilities;
 using Clunker.Geometry;
 using Clunker.Graphics;
+using Clunker.Graphics.Components;
 using Clunker.Networking;
 using Clunker.Physics;
 using Clunker.Physics.Voxels;

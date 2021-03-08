@@ -135,5 +135,7 @@ namespace Clunker.Geometry
         public static Vector3i UnitY => new Vector3i(0, 1, 0);
         public static Vector3i UnitZ => new Vector3i(0, 0, 1);
         public static Vector3i Zero => new Vector3i(0, 0, 0);
+        public static Vector3i MinValue => new Vector3i(int.MinValue, int.MinValue, int.MinValue);
+        public static Vector3i MaxValue => new Vector3i(int.MaxValue, int.MaxValue, int.MaxValue);
     }
 }

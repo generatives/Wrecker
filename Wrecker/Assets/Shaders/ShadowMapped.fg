@@ -61,8 +61,8 @@ void main()
     vec4 diffuse = vec4(1, 1, 1, 0);
 	
     vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * Colour;
-    float shadow = shadowTest(fsin_FragPosLightSpace, diff);
-	//vec4 lighting = ((1 - shadow) * diffuse + ambient) * objectColour;
+    // float shadow = shadowTest(fsin_FragPosLightSpace, diff);
+	// vec4 lighting = ((1 - shadow) * diffuse + ambient) * objectColour;
 	vec4 lighting = fsin_light * objectColour;
     fsout_color = vec4(lighting.xyz, objectColour.w * fsin_OpacityScale);
 }

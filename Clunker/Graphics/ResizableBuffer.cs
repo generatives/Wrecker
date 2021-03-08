@@ -53,13 +53,14 @@ namespace Clunker.Graphics
             Update(data);
         }
 
-        public void Update(T[] data)
+        public bool Update(T[] data)
         {
             if (data.Length == 0 && DeviceBuffer == null)
             {
-                return;
+                return false;
             }
 
+            var changedBuffer = false;
             var factory = GraphicsDevice.ResourceFactory;
             var vertexBufferSize = (uint)(ItemSizeInBytes * data.Length);
             if (DeviceBuffer == null || DeviceBuffer.SizeInBytes < vertexBufferSize)
@@ -70,20 +71,24 @@ namespace Clunker.Graphics
                     new BufferDescription(vertexBufferSize, BufferUsage);
                 DeviceBuffer = factory.CreateBuffer(desc);
                 DeviceBuffer.Name = Name ?? "";
+                changedBuffer = true;
             }
             
             GraphicsDevice.UpdateBuffer(DeviceBuffer, 0, data);
             Length = data.Length;
+            return changedBuffer;
         }
 
-        public void Update(Span<T> data)
+        public bool Update(Span<T> data)
         {
+            var changedBuffer = false;
             var factory = GraphicsDevice.ResourceFactory;
             var vertexBufferSize = (uint)(ItemSizeInBytes * data.Length);
             if (DeviceBuffer == null || DeviceBuffer.SizeInBytes < vertexBufferSize)
             {
                 if (DeviceBuffer != null) GraphicsDevice.DisposeWhenIdle(DeviceBuffer);
                 DeviceBuffer = factory.CreateBuffer(new BufferDescription(vertexBufferSize, BufferUsage));
+                changedBuffer = true;
             }
 
             if(data.Length > 0)
@@ -95,6 +100,7 @@ namespace Clunker.Graphics
                 GraphicsDevice.UpdateBuffer(DeviceBuffer, 0, data.ToArray());
             }
             Length = data.Length;
+            return changedBuffer;
         }
 
         public void Dispose()

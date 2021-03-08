@@ -60,10 +60,10 @@ namespace Clunker.Voxels.Space
 
     public class VoxelGridMessageApplier : IMessageReceiver
     {
-        private Action<Entity> _setVoxelRendering;
+        private Action<Entity, Entity> _setVoxelRendering;
         private NetworkedEntities _networkedEntities;
 
-        public VoxelGridMessageApplier(Action<Entity> setVoxelRendering, NetworkedEntities entities)
+        public VoxelGridMessageApplier(Action<Entity, Entity> setVoxelRendering, NetworkedEntities entities)
         {
             _setVoxelRendering = setVoxelRendering;
             _networkedEntities = entities;
@@ -77,12 +77,14 @@ namespace Clunker.Voxels.Space
 
             if (!entity.Has<VoxelGrid>())
             {
-                var voxelSpace = _networkedEntities.GetEntity(message.VoxelSpaceId).Get<VoxelSpace>();
+                var voxelSpaceEntity = _networkedEntities.GetEntity(message.VoxelSpaceId);
+                var voxelSpace = voxelSpaceEntity.Get<VoxelSpace>();
                 var length = message.GridSize * message.GridSize * message.GridSize;
                 var voxelGrid = new VoxelGrid(message.VoxelSize, message.GridSize, voxelSpace, message.MemberIndex, LengthEncodedVoxels.FromStream(length, stream));
-                _setVoxelRendering(entity);
+                _setVoxelRendering(entity, voxelSpaceEntity);
                 entity.Set(voxelGrid);
                 voxelSpace[message.MemberIndex] = entity;
+                voxelSpaceEntity.NotifyChanged<VoxelSpace>();
             }
         }
     }

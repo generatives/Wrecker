@@ -102,39 +102,39 @@ namespace Clunker.Graphics.Systems.Lighting
 
         public void Update(RenderingContext state)
         {
-            //_commandList2.Begin();
+            _commandList2.Begin();
 
-            //_commandList2.SetPipeline(_clearSolidityPipeline);
-            //_commandList2.SetComputeResourceSet(0, _solidityResourceSet);
-            //_commandList2.Dispatch(32, 32, 32);
+            _commandList2.SetPipeline(_clearSolidityPipeline);
+            _commandList2.SetComputeResourceSet(0, _solidityResourceSet);
+            _commandList2.Dispatch(32, 32, 32);
 
-            //_commandList2.End();
-            //state.GraphicsDevice.SubmitCommands(_commandList2);
-            //state.GraphicsDevice.WaitForIdle();
+            _commandList2.End();
+            state.GraphicsDevice.SubmitCommands(_commandList2);
+            state.GraphicsDevice.WaitForIdle();
 
-            //_commandList.Begin();
+            _commandList.Begin();
 
-            //_commandList.SetPipeline(_revoxelizePipeline);
-            //_commandList.SetComputeResourceSet(1, _solidityResourceSet);
-            //foreach (var entity in _physicsBlocks.GetEntities())
-            //{
-            //    var transform = entity.Get<Transform>();
-            //    var resources = entity.Get<PhysicsBlockResources>();
+            _commandList.SetPipeline(_revoxelizePipeline);
+            _commandList.SetComputeResourceSet(1, _solidityResourceSet);
+            foreach (var entity in _physicsBlocks.GetEntities())
+            {
+                var transform = entity.Get<Transform>();
+                var resources = entity.Get<PhysicsBlockResources>();
 
-            //    if(resources.VoxelPositions.Exists && resources.VoxelSizes.Exists)
-            //    {
-            //        var matrix = transform.WorldMatrix;
-            //        _commandList.UpdateBuffer(_solidityTextureTransformBuffer, 0, ref matrix);
+                if (resources.VoxelPositions.Exists && resources.VoxelSizes.Exists)
+                {
+                    var matrix = transform.WorldMatrix;
+                    _commandList.UpdateBuffer(_solidityTextureTransformBuffer, 0, ref matrix);
 
-            //        _commandList.SetComputeResourceSet(0, resources.VoxelsResourceSet);
+                    _commandList.SetComputeResourceSet(0, resources.VoxelsResourceSet);
 
-            //        _commandList.Dispatch((uint)resources.VoxelPositions.Length, 1, 1);
-            //    }
-            //}
+                    _commandList.Dispatch((uint)resources.VoxelPositions.Length, 1, 1);
+                }
+            }
 
-            //_commandList.End();
-            //state.GraphicsDevice.SubmitCommands(_commandList);
-            //state.GraphicsDevice.WaitForIdle();
+            _commandList.End();
+            state.GraphicsDevice.SubmitCommands(_commandList);
+            state.GraphicsDevice.WaitForIdle();
         }
 
         public void Dispose()

@@ -1,5 +1,6 @@
 ﻿using Clunker.Core;
 using Clunker.Geometry;
+using Clunker.Graphics.Components;
 using Clunker.Physics.Voxels;
 using DefaultEcs;
 using DefaultEcs.System;
@@ -17,34 +18,18 @@ namespace Clunker.Graphics.Systems.Lighting
         public bool IsEnabled { get; set; } = true;
 
         private CommandList _commandList;
-        private Texture _lightGridTexture;
-        private ResourceLayout _lightGridResourceLayout;
-        private ResourceSet _lightGridResourceSet;
-        private Shader _computeShader;
-        private Pipeline _computePipeline;
+        private Shader _lightGridUpdaterShader;
+        private Pipeline _lightGridUpdaterPipeline;
 
-        public LightGridUpdater()
+        private EntitySet _voxelSpaceGridEntities;
+
+        public LightGridUpdater(World world)
         {
+            _voxelSpaceGridEntities = world.GetEntities().With<VoxelSpaceLightGridResources>().With<VoxelSpaceOpacityGridResources>().AsSet();
         }
 
         public void CreateSharedResources(ResourceCreationContext context)
         {
-            var device = context.Device;
-            var factory = device.ResourceFactory;
-
-            uint xLen = 128;
-            uint yLen = 128;
-            uint zLen = 128;
-
-            _lightGridTexture = factory.CreateTexture(TextureDescription.Texture3D(
-                xLen,
-                yLen,
-                zLen,
-                1,
-                PixelFormat.R32_Float,
-                TextureUsage.Storage));
-
-            context.SharedResources.Textures["LightGrid"] = _lightGridTexture;
         }
 
         public void CreateResources(ResourceCreationContext context)
@@ -53,44 +38,49 @@ namespace Clunker.Graphics.Systems.Lighting
             var factory = device.ResourceFactory;
 
             _commandList = factory.CreateCommandList();
-
-            _lightGridResourceLayout = factory.CreateResourceLayout(
-                new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("LightGrid", ResourceKind.TextureReadWrite, ShaderStages.Compute),
-                    new ResourceLayoutElementDescription("SolidityTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute)));
-
-            _lightGridResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_lightGridResourceLayout, _lightGridTexture, context.SharedResources.Textures["SolidityTexture"]));
+            _commandList.Name = "LightGrid Updater CommandList";
 
             var shaderTextRes = context.ResourceLoader.LoadText("Shaders\\LightGridUpdater.glsl");
-            var shaderBytes = Encoding.Default.GetBytes(shaderTextRes.Data);
-            _computeShader = factory.CreateFromSpirv(new ShaderDescription(
+            _lightGridUpdaterShader = factory.CreateFromSpirv(new ShaderDescription(
                 ShaderStages.Compute,
-                shaderBytes,
+                Encoding.Default.GetBytes(shaderTextRes.Data),
                 "main"));
+            _lightGridUpdaterShader.Name = "LightGrid Updater Shader";
 
-            _computePipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_computeShader,
+            _lightGridUpdaterPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_lightGridUpdaterShader,
                 new[]
                 {
-                    _lightGridResourceLayout
+                    context.MaterialInputLayouts.ResourceLayouts["SingleTexture"],
+                    context.MaterialInputLayouts.ResourceLayouts["SingleTexture"]
                 },
                 1, 1, 1));
+            _lightGridUpdaterPipeline.Name = "LightGrid Updated Pipeline";
         }
 
         public void Update(RenderingContext state)
         {
-            //_commandList.Begin();
-            //_commandList.SetPipeline(_computePipeline);
-            //_commandList.SetComputeResourceSet(0, _lightGridResourceSet);
+            _commandList.Begin();
+            _commandList.SetPipeline(_lightGridUpdaterPipeline);
+            foreach(var voxelSpace in _voxelSpaceGridEntities.GetEntities())
+            {
+                var lightGrid = voxelSpace.Get<VoxelSpaceLightGridResources>();
+                var opacityGrid = voxelSpace.Get<VoxelSpaceOpacityGridResources>();
 
-            //_commandList.Dispatch(32, 32, 32);
-            //_commandList.Dispatch(32, 32, 32);
-            //_commandList.Dispatch(32, 32, 32);
-            //_commandList.Dispatch(32, 32, 32);
-            //_commandList.Dispatch(32, 32, 32);
+                _commandList.SetComputeResourceSet(0, lightGrid.LightGridResourceSet);
+                _commandList.SetComputeResourceSet(1, opacityGrid.OpacityGridResourceSet);
 
-            //_commandList.End();
-            //state.GraphicsDevice.SubmitCommands(_commandList);
-            //state.GraphicsDevice.WaitForIdle();
+                var dispatchSize = lightGrid.Size / 4;
+                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+            }
+
+            _commandList.End();
+            state.GraphicsDevice.SubmitCommands(_commandList);
+            state.GraphicsDevice.WaitForIdle();
         }
 
         public void Dispose()

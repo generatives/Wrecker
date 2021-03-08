@@ -149,7 +149,7 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
             worldVoxelSpace.Set(new EntityMetaData() { Name = "Voxel Space" });
 
-            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
+            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 6, 3, 32));
             scene.AddSystem(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             scene.AddSystem(new VoxelSpaceExpanderSystem((e) => { }, world));
@@ -198,7 +198,7 @@ namespace ClunkerECSDemo
 
             materialInputLayouts.ResourceLayouts["WorldTransform"] = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
+                    new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex | ShaderStages.Compute)));
 
             materialInputLayouts.ResourceLayouts["SceneInputs"] = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
@@ -221,6 +221,15 @@ namespace ClunkerECSDemo
                     new ResourceLayoutElementDescription("LightDepthTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment | ShaderStages.Compute),
                     new ResourceLayoutElementDescription("LightDepthSampler", ResourceKind.Sampler, ShaderStages.Fragment | ShaderStages.Compute)));
 
+            materialInputLayouts.ResourceLayouts["SingleTexture"] = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("Image", ResourceKind.TextureReadWrite, ShaderStages.Vertex | ShaderStages.Fragment | ShaderStages.Compute),
+                    new ResourceLayoutElementDescription("ImageData", ResourceKind.UniformBuffer, ShaderStages.Vertex | ShaderStages.Fragment | ShaderStages.Compute)));
+
+            materialInputLayouts.ResourceLayouts["ToVoxelSpaceTransformBinding"] = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("ToVoxelSpace", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
+
             materialInputLayouts.VertexLayouts["Model"] = new VertexLayoutDescription(
                     new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
                     new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
@@ -238,20 +247,23 @@ namespace ClunkerECSDemo
             var shadowMappedMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\ShadowMapped.vs"), _client.Resources.LoadText("Shaders\\ShadowMapped.fg"),
                 new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "LightingInputs", "LightGrid" }, materialInputLayouts);
 
+            var voxelSpaceLitMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\VoxelSpaceLit.vs"), _client.Resources.LoadText("Shaders\\VoxelSpaceLit.fg"),
+                new string[] { "Model" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "SingleTexture", "ToVoxelSpaceTransformBinding" }, materialInputLayouts);
+
             var voxelTexturesResource = _client.Resources.LoadImage("Textures\\spritesheet_tiles.png");
             var voxelTexture = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.White);
             var redVoxelTexture = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, RgbaFloat.Red);
             var semiTransVoxelColour = new MaterialTexture(_client.GraphicsDevice, textureLayout, voxelTexturesResource, new RgbaFloat(1.0f, 1.0f, 1.0f, 0.8f));
 
-            Action<Entity> setVoxelRender = (Entity e) =>
+            Action<Entity, Entity> setVoxelRender = (Entity e, Entity voxelSpace) =>
             {
                 e.Set(new LightVertexResources());
                 e.Set(new RenderableMeshGeometry());
-                e.Set(shadowMappedMaterial);
+                e.Set(voxelSpaceLitMaterial);
                 e.Set(voxelTexture);
                 e.Set<ShadowCaster>();
                 e.Set<PhysicsBlocks>();
-                e.Set<PhysicsBlockResources>();
+                e.Set(new VoxelSpaceLightSource() { VoxelSpaceEntity = voxelSpace });
             };
 
             var networkedEntities = new NetworkedEntities(world);
@@ -277,14 +289,18 @@ namespace ClunkerECSDemo
             var pz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_bk.png");
             var nz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_ft.png");
 
-            scene.AddSystem(new PhysicsBlockUploader(world));
-            scene.AddSystem(new ReVoxelizer(world));
-            scene.AddSystem(new LightGridUpdater());
+            //scene.AddSystem(new PhysicsBlockUploader(world));
+            //scene.AddSystem(new ReVoxelizer(world));
+
+            scene.AddSystem(new VoxelSpaceOpacityGridUpdater(world));
+            scene.AddSystem(new VoxelSpaceLightGridUpdater(world));
 
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
             scene.AddSystem(new ShadowMapRenderer(world));
-            scene.AddSystem(new LitGeometryRenderer(world));
+            scene.AddSystem(new LightGridUpdater(world));
+
+            scene.AddSystem(new VoxelSpaceLitGeometryRenderer(world));
             scene.AddSystem(new ImGuiSystem(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.WindowWidth, _client.WindowHeight));
 
             var voxelTypes = LoadVoxelTypes();

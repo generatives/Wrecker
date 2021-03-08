@@ -15,6 +15,9 @@
     <None Remove="Assets\Shaders\ShadowMap.vs" />
     <None Remove="Assets\Shaders\ShadowMapped.fg" />
     <None Remove="Assets\Shaders\ShadowMapped.vs" />
+    <None Remove="Assets\Shaders\UploadOpacity.glsl" />
+    <None Remove="Assets\Shaders\VoxelSpaceLit.fg" />
+    <None Remove="Assets\Shaders\VoxelSpaceLit.vs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +28,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Shaders\ClearImage3D.glsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Shaders\VoxelSpaceLit.fg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Shaders\VoxelSpaceLit.vs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Shaders\UploadOpacity.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Shaders\ReVoxelize.glsl">

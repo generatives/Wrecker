@@ -1,0 +1,29 @@
+﻿#version 450
+layout(location = 0) in vec2 fsin_texCoords;
+layout(location = 1) in vec3 fsin_normal;
+layout(location = 2) in float fsin_OpacityScale;
+layout(location = 3) in float fsin_light;
+
+layout(location = 0) out vec4 fsout_color;
+
+layout(set = 0, binding = 2) uniform SceneLighting
+{
+    vec4 DiffuseLightColour;
+    vec3 DiffuseLightDirection;
+    vec4 AmbientLightColour;
+    float AmbientLightStrength;
+};
+
+layout(set = 2, binding = 0) uniform texture2D SurfaceTexture;
+layout(set = 2, binding = 1) uniform sampler SurfaceSampler;
+layout(set = 2, binding = 2) uniform TextureColour
+{
+    vec4 Colour;
+};
+
+void main()
+{
+    vec4 objectColour = texture(sampler2D(SurfaceTexture, SurfaceSampler), fsin_texCoords) * Colour;
+	vec4 lighting = fsin_light * objectColour;
+    fsout_color = vec4(lighting.xyz, objectColour.w * fsin_OpacityScale);
+}

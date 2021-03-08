@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using Clunker.Networking;
+using Clunker.Graphics.Components;
 
 namespace Clunker.Voxels.Space
 {
@@ -53,6 +54,8 @@ namespace Clunker.Voxels.Space
         {
             if (!entity.Has<VoxelSpace>())
             {
+                entity.Set(new VoxelSpaceOpacityGridResources());
+                entity.Set(new VoxelSpaceLightGridResources());
                 entity.Set(new VoxelSpace(message.GridSize, message.VoxelSize, entity));
             }
         }
