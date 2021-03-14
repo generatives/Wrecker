@@ -52,7 +52,7 @@ namespace Clunker.Voxels.Space
                     _members[memberIndex] = value;
                     var voxelGrid = value.Get<VoxelGrid>();
 
-                    foreach (var (side, offset, inverseSide) in GeometricIterators.SixNeighbourSides)
+                    foreach (var (side, offset, inverseSide) in GeometricUtils.SixNeighbourSides)
                     {
                         var otherIndex = memberIndex + offset;
                         if (_members.ContainsKey(otherIndex))
@@ -77,7 +77,7 @@ namespace Clunker.Voxels.Space
         {
             if(_members.ContainsKey(memberIndex))
             {
-                foreach (var (side, offset, inverseSide) in GeometricIterators.SixNeighbourSides)
+                foreach (var (side, offset, inverseSide) in GeometricUtils.SixNeighbourSides)
                 {
                     var otherIndex = memberIndex + offset;
                     if (_members.ContainsKey(otherIndex))
@@ -92,7 +92,7 @@ namespace Clunker.Voxels.Space
                 _members.Remove(memberIndex);
             }
 
-            foreach (var offset in GeometricIterators.SixNeighbours)
+            foreach (var offset in GeometricUtils.SixNeighbours)
             {
                 var otherIndex = memberIndex + offset;
                 TryNotifyNeighbor(otherIndex);

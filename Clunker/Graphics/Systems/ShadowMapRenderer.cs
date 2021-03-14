@@ -43,7 +43,7 @@ namespace Clunker.Graphics.Systems
 
         private EntitySet _shadowCastingEntities;
         private EntitySet _voxelSpaceLightGridEntities;
-        public int ChunksToLight { get; set; } = 2;
+        public int ChunksToLight { get; set; } = 4;
 
         private uint _shadowMapWidth = 1024 * 2;
         private uint _shadowMapHeight = 1024 * 2;
@@ -88,7 +88,7 @@ namespace Clunker.Graphics.Systems
 
             var lightProjMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             lightProjMatrixBuffer.Name = "Light Projection Matrix Buffer";
-            _lightProjectionMatrix = Matrix4x4.CreateOrthographic(ChunksToLight * 2 * 32, 3 * 32, 1.0f, ChunksToLight * 2 * 32);
+            _lightProjectionMatrix = Matrix4x4.CreateOrthographic(ChunksToLight * 2 * 32, ChunksToLight * 2 * 32, 1.0f, ChunksToLight * 2 * 32);
             device.UpdateBuffer(lightProjMatrixBuffer, 0, ref _lightProjectionMatrix);
 
             _lightingInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightingInputs"], lightProjMatrixBuffer, _lightViewMatrixBuffer, lightDepthTextureView, sampler));

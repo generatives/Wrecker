@@ -106,6 +106,21 @@ namespace Clunker.Geometry
             return new Vector3i(v.X / v1.X, v.Y / v1.Y, v.Z / v1.Z);
         }
 
+        public static Vector3i operator %(Vector3i v, int n)
+        {
+            return new Vector3i(v.X % n, v.Y % n, v.Z % n);
+        }
+
+        public static Vector3 operator %(Vector3i v, float n)
+        {
+            return new Vector3(v.X % n, v.Y % n, v.Z % n);
+        }
+
+        public static Vector3i operator %(Vector3i v, Vector3i v1)
+        {
+            return new Vector3i(v.X % v1.X, v.Y % v1.Y, v.Z % v1.Z);
+        }
+
         public static implicit operator Vector3(Vector3i v)
         {
             return new Vector3(v.X, v.Y, v.Z);
@@ -114,6 +129,14 @@ namespace Clunker.Geometry
         public static implicit operator Vector3i((int, int, int) v)
         {
             return new Vector3i(v.Item1, v.Item2, v.Item3);
+        }
+
+        public static Vector3i Clamp(Vector3i value, Vector3i min, Vector3i max)
+        {
+            return new Vector3i(
+                ClunkerMath.Clamp(value.X, min.X, max.X),
+                ClunkerMath.Clamp(value.Y, min.Y, max.Y),
+                ClunkerMath.Clamp(value.Z, min.Z, max.Z));
         }
 
         public override string ToString()
