@@ -24,22 +24,18 @@ layout(set = 1, binding = 1) uniform ImageData
     ivec4 Offset;
 };
 
-const ivec3 SOLID_TEX_MIN = ivec3(0, 0, 0);
-
 void main()
 {
     ivec3 position = BlockPositions[gl_GlobalInvocationID.x].xyz;
     ivec2 size = BlockSizes[gl_GlobalInvocationID.x];
-    for(int x = position.x; x < position.x + size.x; x++)
+    ivec3 basePosition = position + BlockToLocalOffset.xyz + Offset.xyz;
+
+    for(int x = 0; x < size.x; x++)
     {
-        for(int z = position.z; z < position.z + size.y; z++)
+        for(int z = 0; z < size.y; z++)
         {
-            ivec3 localIndex = ivec3(x, position.y, z) + BlockToLocalOffset.xyz;
-            ivec3 textureIndex = localIndex + Offset.xyz;
-            if(all(greaterThanEqual(textureIndex, SOLID_TEX_MIN)) && all(lessThan(textureIndex, imageSize(Image))))
-            {
-                imageStore(Image, textureIndex, vec4(1.0, 0, 0, 0));
-            }
+            ivec3 textureIndex = ivec3(x, 0, z) + basePosition;
+            imageStore(Image, textureIndex, vec4(1.0, 0, 0, 0));
         }
     }
 }

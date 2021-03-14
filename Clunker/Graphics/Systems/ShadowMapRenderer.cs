@@ -32,6 +32,9 @@ namespace Clunker.Graphics.Systems
         private Shader _injectLightShader;
         private Pipeline _injectLightPipeline;
 
+        private Shader _grabLightShader;
+        private Pipeline _grabLightPipeline;
+
         // World Transform
         private ResourceSet _worldTransformResourceSet;
         private DeviceBuffer _worldMatrixBuffer;
@@ -132,6 +135,23 @@ namespace Clunker.Graphics.Systems
                 1, 1, 1));
             _injectLightPipeline.Name = "Inject Light Pipeline";
 
+            var grabLightTextRes = context.ResourceLoader.LoadText("Shaders\\LightGrabber.glsl");
+            _grabLightShader = factory.CreateFromSpirv(new ShaderDescription(
+                ShaderStages.Compute,
+                Encoding.Default.GetBytes(grabLightTextRes.Data),
+                "main"));
+            _grabLightShader.Name = "LightGrabber Shader";
+
+            _grabLightPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_grabLightShader,
+                new[]
+                {
+                    materialInputLayouts.ResourceLayouts["SingleTexture"],
+                    materialInputLayouts.ResourceLayouts["LightingInputs"],
+                    materialInputLayouts.ResourceLayouts["WorldTransform"]
+                },
+                1, 1, 1));
+            _grabLightPipeline.Name = "Grab Light Pipeline";
+
             _shadowFramebuffer = factory.CreateFramebuffer(new FramebufferDescription(_shadowDepthTexture));
             _shadowFramebuffer.Name = "Shadow Framebuffer";
 
@@ -209,10 +229,29 @@ namespace Clunker.Graphics.Systems
             context.GraphicsDevice.SubmitCommands(_commandList);
             context.GraphicsDevice.WaitForIdle();
 
+            //// Inject the shadow map into each VoxelSpaceLightGrid
+            //// Using second command list because it throws an exception when I use two different compute shaders
+            //_commandList2.Begin();
+            //_commandList2.SetPipeline(_injectLightPipeline);
+
+            //foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
+            //{
+            //    var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
+            //    var transform = lightGridEntity.Get<Transform>();
+
+            //    _commandList2.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
+
+            //    // TODO: Frustrum cull light injections
+            //    _commandList2.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
+            //    _commandList2.SetComputeResourceSet(1, _lightingInputsResourceSet);
+            //    _commandList2.SetComputeResourceSet(2, _worldTransformResourceSet);
+            //    _commandList2.Dispatch(_shadowMapWidth / 8, _shadowMapHeight / 8, 1);
+            //}
+
             // Inject the shadow map into each VoxelSpaceLightGrid
             // Using second command list because it throws an exception when I use two different compute shaders
             _commandList2.Begin();
-            _commandList2.SetPipeline(_injectLightPipeline);
+            _commandList2.SetPipeline(_grabLightPipeline);
 
             foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
             {
@@ -225,7 +264,8 @@ namespace Clunker.Graphics.Systems
                 _commandList2.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
                 _commandList2.SetComputeResourceSet(1, _lightingInputsResourceSet);
                 _commandList2.SetComputeResourceSet(2, _worldTransformResourceSet);
-                _commandList2.Dispatch(_shadowMapWidth / 8, _shadowMapHeight / 8, 1);
+                var dispatchSize = lightGridResources.Size / 4;
+                _commandList2.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
             }
 
 

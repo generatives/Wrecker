@@ -53,7 +53,7 @@ namespace Clunker.Graphics
             Update(data);
         }
 
-        public bool Update(T[] data)
+        public bool Update(T[] data, CommandList commandList = null)
         {
             if (data.Length == 0 && DeviceBuffer == null)
             {
@@ -74,7 +74,14 @@ namespace Clunker.Graphics
                 changedBuffer = true;
             }
             
-            GraphicsDevice.UpdateBuffer(DeviceBuffer, 0, data);
+            if(commandList != null)
+            {
+                commandList.UpdateBuffer(DeviceBuffer, 0, data);
+            }
+            else
+            {
+                GraphicsDevice.UpdateBuffer(DeviceBuffer, 0, data);
+            }
             Length = data.Length;
             return changedBuffer;
         }

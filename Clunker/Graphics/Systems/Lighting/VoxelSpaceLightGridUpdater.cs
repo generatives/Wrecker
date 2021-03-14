@@ -51,7 +51,7 @@ namespace Clunker.Graphics.Systems.Lighting
                     device.DisposeWhenIdleIfNotNull(lightGridResources.LightGridTexture);
                     device.DisposeWhenIdleIfNotNull(lightGridResources.LightGridResourceSet);
 
-                    var size = (max - min) * voxelSpace.GridSize;
+                    var size = (max - min + Vector3i.One) * voxelSpace.GridSize;
                     lightGridResources.LightGridTexture = factory.CreateTexture(TextureDescription.Texture3D(
                         (uint)size.X,
                         (uint)size.Y,

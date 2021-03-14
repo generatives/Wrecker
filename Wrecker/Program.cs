@@ -149,7 +149,7 @@ namespace ClunkerECSDemo
             worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
             worldVoxelSpace.Set(new EntityMetaData() { Name = "Voxel Space" });
 
-            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 6, 3, 32));
+            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 3, 3, 32));
             scene.AddSystem(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             scene.AddSystem(new VoxelSpaceExpanderSystem((e) => { }, world));
@@ -289,10 +289,12 @@ namespace ClunkerECSDemo
             var pz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_bk.png");
             var nz = Image.Load<Rgba32>("Assets\\Textures\\cloudtop_ft.png");
 
+            var voxelTypes = LoadVoxelTypes();
+
             //scene.AddSystem(new PhysicsBlockUploader(world));
             //scene.AddSystem(new ReVoxelizer(world));
 
-            scene.AddSystem(new VoxelSpaceOpacityGridUpdater(world));
+            scene.AddSystem(new VoxelSpaceOpacityGridUpdater(world, new VoxelTypes(voxelTypes)));
             scene.AddSystem(new VoxelSpaceLightGridUpdater(world));
 
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
@@ -302,8 +304,6 @@ namespace ClunkerECSDemo
 
             scene.AddSystem(new VoxelSpaceLitGeometryRenderer(world));
             scene.AddSystem(new ImGuiSystem(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.WindowWidth, _client.WindowHeight));
-
-            var voxelTypes = LoadVoxelTypes();
 
             var editors = new List<IEditor>()
             {

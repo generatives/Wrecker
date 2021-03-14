@@ -22,7 +22,8 @@
     <PackageReference Include="Veldrid" Version="4.8.0" />
     <PackageReference Include="Veldrid.ImageSharp" Version="4.8.0" />
     <PackageReference Include="Veldrid.ImGui" Version="5.72.0" />
-    <PackageReference Include="Veldrid.SPIRV" Version="1.0.13" />
+    <PackageReference Include="Veldrid.RenderDoc" Version="1.0.1" />
+    <PackageReference Include="Veldrid.SPIRV" Version="1.0.14" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="4.8.0" />
     <PackageReference Include="Veldrid.Utilities" Version="4.8.0" />
   </ItemGroup>

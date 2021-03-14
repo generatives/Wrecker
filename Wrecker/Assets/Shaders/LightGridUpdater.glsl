@@ -3,14 +3,16 @@
 layout (local_size_x = 4, local_size_y = 4, local_size_z = 4) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform image3D LightTexture;
-layout(set = 1, binding = 1, rgba32f) uniform image3D SolidityTexture;
+layout(set = 1, binding = 0, rgba32f) uniform image3D SolidityTexture;
 
 const ivec3 TEX_MIN = ivec3(0, 0, 0);
 
 float getLightValue(ivec3 texIndex)
 {
     ivec3 clampedTexIndex = clamp(texIndex, TEX_MIN, imageSize(LightTexture));
-    return imageLoad(LightTexture, clampedTexIndex).r;
+    float solid = imageLoad(SolidityTexture, clampedTexIndex).r;
+    float light = imageLoad(LightTexture, clampedTexIndex).r;
+    return (1 - solid) * light;
 }
 
 void main()

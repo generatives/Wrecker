@@ -61,7 +61,7 @@ namespace Clunker.Graphics.Systems.Lighting
         {
             _commandList.Begin();
             _commandList.SetPipeline(_lightGridUpdaterPipeline);
-            foreach(var voxelSpace in _voxelSpaceGridEntities.GetEntities())
+            foreach (var voxelSpace in _voxelSpaceGridEntities.GetEntities())
             {
                 var lightGrid = voxelSpace.Get<VoxelSpaceLightGridResources>();
                 var opacityGrid = voxelSpace.Get<VoxelSpaceOpacityGridResources>();

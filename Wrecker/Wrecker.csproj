@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <None Remove="Assets\Shaders\ClearImage3D.glsl" />
+    <None Remove="Assets\Shaders\LightGrabber.glsl" />
     <None Remove="Assets\Shaders\LightGridUpdater.glsl" />
     <None Remove="Assets\Shaders\LightInjector.glsl" />
     <None Remove="Assets\Shaders\ReVoxelize.glsl" />
@@ -21,6 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Assets\Shaders\LightGrabber.glsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\Shaders\LightInjector.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

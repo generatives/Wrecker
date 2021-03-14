@@ -3,6 +3,7 @@ using Clunker.Geometry;
 using Clunker.Graphics.Components;
 using Clunker.Physics.Voxels;
 using Clunker.Utilties;
+using Clunker.Voxels;
 using Clunker.Voxels.Space;
 using DefaultEcs;
 using DefaultEcs.System;
@@ -37,9 +38,12 @@ namespace Clunker.Graphics.Systems.Lighting
         private Shader _uploadOpacityShader;
         private Pipeline _uploadOpacityPipeline;
 
-        public VoxelSpaceOpacityGridUpdater(World world)
+        private VoxelTypes _voxelTypes;
+
+        public VoxelSpaceOpacityGridUpdater(World world, VoxelTypes voxelTypes)
         {
             _changedVoxelSpaceOpacityGrids = world.GetEntities().With<VoxelSpaceOpacityGridResources>().WhenAdded<VoxelSpace>().WhenChanged<VoxelSpace>().AsSet();
+            _voxelTypes = voxelTypes;
         }
 
         public void CreateSharedResources(ResourceCreationContext context)
@@ -123,7 +127,7 @@ namespace Clunker.Graphics.Systems.Lighting
                     device.DisposeWhenIdleIfNotNull(opacityGridResources.OpacityGridTexture);
                     device.DisposeWhenIdleIfNotNull(opacityGridResources.OpacityGridResourceSet);
 
-                    var size = (max - min) * voxelSpace.GridSize;
+                    var size = (max - min + Vector3i.One) * voxelSpace.GridSize;
                     opacityGridResources.OpacityGridTexture = factory.CreateTexture(TextureDescription.Texture3D(
                         (uint)size.X,
                         (uint)size.Y,
@@ -181,11 +185,12 @@ namespace Clunker.Graphics.Systems.Lighting
                     var physicsBlocks = voxelGridEntity.Get<PhysicsBlocks>();
                     if (physicsBlocks.Blocks.Count > 0)
                     {
-                        var positions = physicsBlocks.Blocks.Select(b => new Vector4i(b.Index.X, b.Index.Y, b.Index.Z, 0)).ToArray();
-                        var positionBufferChanged = _blockPositionBuffer.Update(positions);
+                        var opaqueBlocks = physicsBlocks.Blocks.Where(b => !_voxelTypes[(int)b.BlockType].Transparent);
+                        var positions = opaqueBlocks.Select(b => new Vector4i(b.Index.X, b.Index.Y, b.Index.Z, 0)).ToArray();
+                        var positionBufferChanged = _blockPositionBuffer.Update(positions, _uploadOpacityCommandList);
 
-                        var sizes = physicsBlocks.Blocks.Select(b => new Vector2i(b.Size.X, b.Size.Z)).ToArray();
-                        var sizeBufferChanged = _blockSizeBuffer.Update(sizes);
+                        var sizes = opaqueBlocks.Select(b => new Vector2i(b.Size.X, b.Size.Z)).ToArray();
+                        var sizeBufferChanged = _blockSizeBuffer.Update(sizes, _uploadOpacityCommandList);
 
                         if(positionBufferChanged || sizeBufferChanged || _blockOpacityResourceSet == null)
                         {
@@ -198,7 +203,7 @@ namespace Clunker.Graphics.Systems.Lighting
                         var blockToLocalOffset = memberIndex * voxelSpace.GridSize;
                         var blockToLocalImageData = new ImageData()
                         {
-                            Offset = new Vector4i(blockToLocalOffset.X, blockToLocalOffset.Y, blockToLocalOffset.Z, 0) * voxelSpace.GridSize
+                            Offset = new Vector4i(blockToLocalOffset.X, blockToLocalOffset.Y, blockToLocalOffset.Z, 0)
                         };
                         _uploadOpacityCommandList.UpdateBuffer(_blockToLocalOffsetBuffer, 0, blockToLocalImageData);
 
