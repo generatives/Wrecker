@@ -10,9 +10,8 @@ const ivec3 TEX_MIN = ivec3(0, 0, 0);
 float getLightValue(ivec3 texIndex)
 {
     ivec3 clampedTexIndex = clamp(texIndex, TEX_MIN, imageSize(LightTexture));
-    float solid = imageLoad(SolidityTexture, clampedTexIndex).r;
     float light = imageLoad(LightTexture, clampedTexIndex).r;
-    return (1 - solid) * light;
+    return light;
 }
 
 void main()
@@ -36,7 +35,7 @@ void main()
     vec3 lights1 = vec3(getLightValue(texIndex + ivec3(0, 1, 0)), getLightValue(texIndex + ivec3(0, -1, 0)), getLightValue(texIndex + ivec3(1, 0, 0)));
     vec3 lights2 = vec3(getLightValue(texIndex + ivec3(-1, 0, 0)), getLightValue(texIndex + ivec3(0, 0, 1)), getLightValue(texIndex + ivec3(0, 0, -1)));
     vec3 maxLights = max(lights1, lights2);
-    float externalLightValue = max(maxLights.x, max(maxLights.y, maxLights.z)) - (1.0f / 6.0f);
+    float externalLightValue = max(maxLights.x, max(maxLights.y, maxLights.z)) - (1.0f / 12.0f);
     float lightValueToSet = max(ownLightValue, externalLightValue);
     imageStore(LightTexture, texIndex, vec4(lightValueToSet, 0, 0, 0));
     

@@ -5,6 +5,7 @@ using Clunker.Physics.Voxels;
 using Clunker.Utilties;
 using Clunker.Voxels;
 using Clunker.Voxels.Space;
+using Collections.Pooled;
 using DefaultEcs;
 using DefaultEcs.System;
 using System;
@@ -20,7 +21,7 @@ namespace Clunker.Graphics.Systems.Lighting
     {
         public bool IsEnabled { get; set; } = true;
 
-        private EntitySet _changedVoxelSpaceOpacityGrids;
+        private EntitySet _changedPhysicsBlocks;
 
         private ResourceLayout _singleTextureResourceLayout;
 
@@ -42,7 +43,7 @@ namespace Clunker.Graphics.Systems.Lighting
 
         public VoxelSpaceOpacityGridUpdater(World world, VoxelTypes voxelTypes)
         {
-            _changedVoxelSpaceOpacityGrids = world.GetEntities().With<VoxelSpaceOpacityGridResources>().WhenAdded<VoxelSpace>().WhenChanged<VoxelSpace>().AsSet();
+            _changedPhysicsBlocks = world.GetEntities().With<VoxelGrid>().WhenAdded<PhysicsBlocks>().WhenChanged<PhysicsBlocks>().AsSet();
             _voxelTypes = voxelTypes;
         }
 
@@ -112,9 +113,20 @@ namespace Clunker.Graphics.Systems.Lighting
             var device = state.GraphicsDevice;
             var factory = device.ResourceFactory;
 
+            using var opacityGridVoxelSpaces = new PooledList<Entity>();
+            foreach(var entity in _changedPhysicsBlocks.GetEntities())
+            {
+                var voxelGrid = entity.Get<VoxelGrid>();
+                var parent = voxelGrid.VoxelSpace.Self;
+                if(parent.Has<VoxelSpaceOpacityGridResources>())
+                {
+                    opacityGridVoxelSpaces.Add(parent);
+                }
+            }
+
             // Recreate or clear each changed opacity grid
             _clearOpacityCommandList.Begin();
-            foreach (var changedVoxelSpace in _changedVoxelSpaceOpacityGrids.GetEntities())
+            foreach (var changedVoxelSpace in opacityGridVoxelSpaces)
             {
                 var opacityGridResources = changedVoxelSpace.Get<VoxelSpaceOpacityGridResources>();
                 var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
@@ -172,7 +184,7 @@ namespace Clunker.Graphics.Systems.Lighting
             // Upload opacity information
             _uploadOpacityCommandList.Begin();
             _uploadOpacityCommandList.SetPipeline(_uploadOpacityPipeline);
-            foreach (var changedVoxelSpace in _changedVoxelSpaceOpacityGrids.GetEntities())
+            foreach (var changedVoxelSpace in opacityGridVoxelSpaces)
             {
                 var opacityGridResources = changedVoxelSpace.Get<VoxelSpaceOpacityGridResources>();
                 var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
@@ -183,9 +195,9 @@ namespace Clunker.Graphics.Systems.Lighting
                     var voxelGridEntity = kvp.Value;
 
                     var physicsBlocks = voxelGridEntity.Get<PhysicsBlocks>();
-                    if (physicsBlocks.Blocks.Count > 0)
+                    var opaqueBlocks = physicsBlocks.Blocks.Where(b => !_voxelTypes[(int)b.BlockType].Transparent).ToArray();
+                    if (opaqueBlocks.Length > 0)
                     {
-                        var opaqueBlocks = physicsBlocks.Blocks.Where(b => !_voxelTypes[(int)b.BlockType].Transparent);
                         var positions = opaqueBlocks.Select(b => new Vector4i(b.Index.X, b.Index.Y, b.Index.Z, 0)).ToArray();
                         var positionBufferChanged = _blockPositionBuffer.Update(positions, _uploadOpacityCommandList);
 
@@ -220,7 +232,7 @@ namespace Clunker.Graphics.Systems.Lighting
             state.GraphicsDevice.SubmitCommands(_uploadOpacityCommandList);
             state.GraphicsDevice.WaitForIdle();
 
-            _changedVoxelSpaceOpacityGrids.Complete();
+            _changedPhysicsBlocks.Complete();
         }
 
         private (Vector3i Min, Vector3i Max) GetBoundingIndices(VoxelSpace voxelSpace)

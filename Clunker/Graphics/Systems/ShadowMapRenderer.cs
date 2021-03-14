@@ -58,6 +58,7 @@ namespace Clunker.Graphics.Systems
 
             _voxelSpaceLightGridEntities = world.GetEntities()
                 .With<VoxelSpaceLightGridResources>()
+                .With<VoxelSpaceOpacityGridResources>()
                 .With<Transform>()
                 .AsSet();
         }
@@ -147,7 +148,8 @@ namespace Clunker.Graphics.Systems
                 {
                     materialInputLayouts.ResourceLayouts["SingleTexture"],
                     materialInputLayouts.ResourceLayouts["LightingInputs"],
-                    materialInputLayouts.ResourceLayouts["WorldTransform"]
+                    materialInputLayouts.ResourceLayouts["WorldTransform"],
+                    materialInputLayouts.ResourceLayouts["SingleTexture"]
                 },
                 1, 1, 1));
             _grabLightPipeline.Name = "Grab Light Pipeline";
@@ -256,6 +258,7 @@ namespace Clunker.Graphics.Systems
             foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
             {
                 var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
+                var opoacityGridResources = lightGridEntity.Get<VoxelSpaceOpacityGridResources>();
                 var transform = lightGridEntity.Get<Transform>();
 
                 _commandList2.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
@@ -264,6 +267,7 @@ namespace Clunker.Graphics.Systems
                 _commandList2.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
                 _commandList2.SetComputeResourceSet(1, _lightingInputsResourceSet);
                 _commandList2.SetComputeResourceSet(2, _worldTransformResourceSet);
+                _commandList2.SetComputeResourceSet(3, opoacityGridResources.OpacityGridResourceSet);
                 var dispatchSize = lightGridResources.Size / 4;
                 _commandList2.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
             }

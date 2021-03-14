@@ -24,6 +24,10 @@ layout(set = 2, binding = 0) uniform WorldBuffer
     mat4 World;
 };
 
+layout(set = 3, binding = 0, rgba32f) uniform image3D OpacityImage;
+
+const ivec3 TEX_MIN = ivec3(0, 0, 0);
+
 float GetLightValue(vec4 worldPos) {
     vec4 lightSpacePos = LightProjMatrix * LightViewMatrix * worldPos;
     vec3 projSpacePosition = lightSpacePos.xyz / lightSpacePos.w;
@@ -40,12 +44,29 @@ float GetLightValue(vec4 worldPos) {
     return pcfDepth > currentDepth ? 1.0 : 0.0;
 }
 
+float GetOpacityValue(ivec3 texIndex) {
+    ivec3 clampedTexIndex = clamp(texIndex, TEX_MIN, imageSize(OpacityImage));
+    return imageLoad(OpacityImage, clampedTexIndex).r;
+}
+
 void main()
 {
-    vec3 localPosition = (ivec3(gl_GlobalInvocationID.xyz) - Offset.xyz) + vec3(0.5, 0.5, 0.5);
-    vec4 worldPosition = World * vec4(localPosition, 1.0);
+    ivec3 texIndex = ivec3(gl_GlobalInvocationID.xyz);
+    float ownOpacity = GetOpacityValue(texIndex);
 
-    float lightValue = GetLightValue(worldPosition);
+    if(ownOpacity != 0.0) {
+        return;
+    }
+
+    vec3 opacity1 = vec3(GetOpacityValue(texIndex + ivec3(0, 1, 0)), GetOpacityValue(texIndex + ivec3(0, -1, 0)), GetOpacityValue(texIndex + ivec3(1, 0, 0)));
+    vec3 opacity2 = vec3(GetOpacityValue(texIndex + ivec3(-1, 0, 0)), GetOpacityValue(texIndex + ivec3(0, 0, 1)), GetOpacityValue(texIndex + ivec3(0, 0, -1)));
+
+    if(any(greaterThan(opacity1, vec3(0, 0, 0))) || any(greaterThan(opacity2, vec3(0, 0, 0)))) {
+        vec3 localPosition = (texIndex - Offset.xyz) + vec3(0.5, 0.5, 0.5);
+        vec4 worldPosition = World * vec4(localPosition, 1.0);
+
+        float lightValue = GetLightValue(worldPosition);
     
-    imageStore(LightImage, ivec3(gl_GlobalInvocationID.xyz), vec4(lightValue, 0, 0, 0));
+        imageStore(LightImage, texIndex, vec4(lightValue, 0, 0, 0));
+    }
 }
