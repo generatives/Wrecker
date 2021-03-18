@@ -86,8 +86,8 @@ namespace Clunker.Graphics.Systems.Lighting
             {
                 var transform = entity.Get<Transform>();
                 var voxelSpace = entity.Get<VoxelSpace>();
-                var lightGrid = entity.Get<VoxelSpaceLightGridResources>();
-                var opacityGrid = entity.Get<VoxelSpaceOpacityGridResources>();
+                var lightGridResources = entity.Get<VoxelSpaceLightGridResources>();
+                var opacityGridResources = entity.Get<VoxelSpaceOpacityGridResources>();
 
                 var worldSpaceCorners = new[]
                 {
@@ -103,30 +103,22 @@ namespace Clunker.Graphics.Systems.Lighting
 
                 var localSpaceCorners = worldSpaceCorners.Select(c => transform.GetLocal(c)).ToArray();
                 var localSpaceBoundingBox = GeometricUtils.GetBoundingBox(localSpaceCorners);
-                var localToGridOffset = -lightGrid.MinIndex * voxelSpace.GridSize;
+                var localToGridOffset = -lightGridResources.MinIndex * voxelSpace.GridSize;
                 var minGridIndex = ClunkerMath.Floor(localSpaceBoundingBox.Min + localToGridOffset - new Vector3(12));
                 var maxGridIndex = ClunkerMath.Floor(localSpaceBoundingBox.Max + localToGridOffset + new Vector3(12));
 
-                var clampedMinGridIndex = Vector3i.Clamp(minGridIndex, Vector3i.Zero, lightGrid.Size);
-                var clampedMaxGridIndex = Vector3i.Clamp(maxGridIndex, Vector3i.Zero, lightGrid.Size);
+                var clampedMinGridIndex = Vector3i.Clamp(minGridIndex, Vector3i.Zero, lightGridResources.Size);
+                var clampedMaxGridIndex = Vector3i.Clamp(maxGridIndex, Vector3i.Zero, lightGridResources.Size);
 
                 var relevantSize = (clampedMaxGridIndex - clampedMinGridIndex + Vector3i.One);
                 var roundedRelevantSize = relevantSize + (relevantSize % 4);
 
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, clampedMinGridIndex);
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, Vector3i.Zero);
 
-                _commandList.SetComputeResourceSet(0, lightGrid.LightGridResourceSet);
-                _commandList.SetComputeResourceSet(1, opacityGrid.OpacityGridResourceSet);
+                _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
+                _commandList.SetComputeResourceSet(1, opacityGridResources.OpacityGridResourceSet);
 
-                var dispatchSize = roundedRelevantSize / 4;
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+                var dispatchSize = lightGridResources.Size / 4;
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);

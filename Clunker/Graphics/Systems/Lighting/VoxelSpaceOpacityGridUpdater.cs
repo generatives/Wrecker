@@ -145,7 +145,7 @@ namespace Clunker.Graphics.Systems.Lighting
                         (uint)size.Y,
                         (uint)size.Z,
                         1,
-                        PixelFormat.R32_Float,
+                        PixelFormat.R32_G32_B32_A32_Float,
                         TextureUsage.Storage));
 
                     if (opacityGridResources.OpacityGridImageData == null)

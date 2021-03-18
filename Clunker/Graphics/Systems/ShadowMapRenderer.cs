@@ -215,17 +215,17 @@ namespace Clunker.Graphics.Systems
             }
 
             // Clear out the VoxelSpaceLightGrids
-            _commandList.SetPipeline(_clearLightGridPipeline);
+            //_commandList.SetPipeline(_clearLightGridPipeline);
 
-            foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
-            {
-                var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
+            //foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
+            //{
+            //    var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
 
-                _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
+            //    _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
 
-                var dispathSize = lightGridResources.Size / 4;
-                _commandList.Dispatch((uint)dispathSize.X, (uint)dispathSize.Y, (uint)dispathSize.Z);
-            }
+            //    var dispathSize = lightGridResources.Size / 4;
+            //    _commandList.Dispatch((uint)dispathSize.X, (uint)dispathSize.Y, (uint)dispathSize.Z);
+            //}
 
             _commandList.End();
             context.GraphicsDevice.SubmitCommands(_commandList);

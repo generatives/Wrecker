@@ -55,18 +55,23 @@ void main()
     float ownOpacity = GetOpacityValue(texIndex);
 
     if(ownOpacity != 0.0) {
-        return;
+        imageStore(LightImage, texIndex, vec4(0.0f, 0, 0, 0));
     }
 
     vec3 opacity1 = vec3(GetOpacityValue(texIndex + ivec3(0, 1, 0)), GetOpacityValue(texIndex + ivec3(0, -1, 0)), GetOpacityValue(texIndex + ivec3(1, 0, 0)));
     vec3 opacity2 = vec3(GetOpacityValue(texIndex + ivec3(-1, 0, 0)), GetOpacityValue(texIndex + ivec3(0, 0, 1)), GetOpacityValue(texIndex + ivec3(0, 0, -1)));
 
-    if(any(greaterThan(opacity1, vec3(0, 0, 0))) || any(greaterThan(opacity2, vec3(0, 0, 0)))) {
-        vec3 localPosition = (texIndex - Offset.xyz) + vec3(0.5, 0.5, 0.5);
-        vec4 worldPosition = World * vec4(localPosition, 1.0);
+    bool hasOpaqueNeighbour = any(greaterThan(opacity1, vec3(0, 0, 0))) || any(greaterThan(opacity2, vec3(0, 0, 0)));
 
-        float lightValue = GetLightValue(worldPosition);
-    
-        imageStore(LightImage, texIndex, vec4(lightValue, 0, 0, 0));
+    vec3 localPosition = (texIndex - Offset.xyz) + vec3(0.5, 0.5, 0.5);
+    vec4 worldPosition = World * vec4(localPosition, 1.0);
+
+    float lightValue = GetLightValue(worldPosition);
+    float ownLightValue = imageLoad(LightImage, texIndex).r;
+
+    if(hasOpaqueNeighbour && lightValue >= ownLightValue) {
+        imageStore(LightImage, texIndex, vec4(lightValue, 1.0f, 0, 0));
+    } else {
+        imageStore(LightImage, texIndex, vec4(ownLightValue, 0.0f, 0, 0));
     }
 }
