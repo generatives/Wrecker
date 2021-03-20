@@ -19,14 +19,24 @@ float getLightValue(ivec3 texIndex)
 
 void main()
 {
-    ivec3 texIndex = ivec3(gl_GlobalInvocationID) + GridIndexOffset.xyz;
-    
+    ivec3 texIndex = ivec3(gl_GlobalInvocationID);
+
     float opacity = imageLoad(OpacityTexture, texIndex).r;
     
     if(opacity != 0.0) {
         imageStore(LightTexture, texIndex, vec4(0.0f, 0, 0, 0));
+        return;
     }
 
+    bool beat = GridIndexOffset.w == 0;
+    beat = beat ^^ (texIndex.x % 2 == 1);
+    beat = beat ^^ (texIndex.y % 2 == 1);
+    beat = beat ^^ (texIndex.z % 2 == 1);
+
+    if(beat) {
+        return;
+    }
+    
     vec3 lights1 = vec3(getLightValue(texIndex + ivec3(0, 1, 0)), getLightValue(texIndex + ivec3(0, -1, 0)), getLightValue(texIndex + ivec3(1, 0, 0)));
     vec3 lights2 = vec3(getLightValue(texIndex + ivec3(-1, 0, 0)), getLightValue(texIndex + ivec3(0, 0, 1)), getLightValue(texIndex + ivec3(0, 0, -1)));
     vec3 maxLights = max(lights1, lights2);

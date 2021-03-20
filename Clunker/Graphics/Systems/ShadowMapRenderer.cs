@@ -1,4 +1,5 @@
 ﻿using Clunker.Core;
+using Clunker.Geometry;
 using Clunker.Graphics.Components;
 using Clunker.Graphics.Resources;
 using Clunker.Resources;
@@ -43,10 +44,11 @@ namespace Clunker.Graphics.Systems
 
         private EntitySet _shadowCastingEntities;
         private EntitySet _voxelSpaceLightGridEntities;
-        public int ChunksToLight { get; set; } = 4;
 
-        private uint _shadowMapWidth = 1024 * 2;
-        private uint _shadowMapHeight = 1024 * 2;
+        private Vector3i _lightSize = new Vector3i(8 * 32, 8 * 32, 6 * 32);
+
+        private uint _shadowMapWidth = 768;
+        private uint _shadowMapHeight = 768;
 
         public ShadowMapRenderer(World world)
         {
@@ -88,7 +90,7 @@ namespace Clunker.Graphics.Systems
 
             var lightProjMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             lightProjMatrixBuffer.Name = "Light Projection Matrix Buffer";
-            _lightProjectionMatrix = Matrix4x4.CreateOrthographic(ChunksToLight * 2 * 32, ChunksToLight * 2 * 32, 1.0f, ChunksToLight * 2 * 32);
+            _lightProjectionMatrix = Matrix4x4.CreateOrthographic(_lightSize.X, _lightSize.Y, 1.0f, _lightSize.Z);
             device.UpdateBuffer(lightProjMatrixBuffer, 0, ref _lightProjectionMatrix);
 
             _lightingInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightingInputs"], lightProjMatrixBuffer, _lightViewMatrixBuffer, lightDepthTextureView, sampler));
@@ -178,7 +180,7 @@ namespace Clunker.Graphics.Systems
             var cameraTransform = context.CameraTransform;
 
             //var lightPos = cameraTransform.WorldPosition + Vector3.Normalize(DiffuseLightDirection) * ChunksToLight * 32f;
-            var lightPos = Vector3.Normalize(DiffuseLightDirection) * ChunksToLight * 32f;
+            var lightPos = Vector3.Normalize(DiffuseLightDirection) * _lightSize.Z / 2;
             lightPos = new Vector3((float)Math.Floor(lightPos.X), (float)Math.Floor(lightPos.Y), (float)Math.Floor(lightPos.Z));
             var lightView = Matrix4x4.CreateLookAt(lightPos,
                 lightPos - DiffuseLightDirection,
