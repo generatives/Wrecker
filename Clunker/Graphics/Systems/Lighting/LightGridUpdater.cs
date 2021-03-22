@@ -113,27 +113,27 @@ namespace Clunker.Graphics.Systems.Lighting
                 var relevantSize = (clampedMaxGridIndex - clampedMinGridIndex + Vector3i.One);
                 var roundedRelevantSize = relevantSize + (relevantSize % 4);
 
-                //_commandList.UpdateBuffer(_offsetDeviceBuffer, 0, clampedMinGridIndex);
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, clampedMinGridIndex);
 
                 _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
                 _commandList.SetComputeResourceSet(1, opacityGridResources.OpacityGridResourceSet);
 
-                var dispatchSize = lightGridResources.Size / 4;
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(0, 0, 0, 0));
+                var dispatchSize = roundedRelevantSize / 4;
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(clampedMinGridIndex, 0));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(0, 0, 0, 1));
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(clampedMinGridIndex, 1));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(0, 0, 0, 0));
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(clampedMinGridIndex, 0));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(0, 0, 0, 1));
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(clampedMinGridIndex, 1));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(0, 0, 0, 0));
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(clampedMinGridIndex, 0));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(0, 0, 0, 1));
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(clampedMinGridIndex, 1));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(0, 0, 0, 0));
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(clampedMinGridIndex, 0));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(0, 0, 0, 1));
+                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(clampedMinGridIndex, 1));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
             }
 

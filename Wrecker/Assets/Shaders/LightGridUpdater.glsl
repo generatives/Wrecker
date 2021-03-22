@@ -19,7 +19,7 @@ float getLightValue(ivec3 texIndex)
 
 void main()
 {
-    ivec3 texIndex = ivec3(gl_GlobalInvocationID);
+    ivec3 texIndex = ivec3(gl_GlobalInvocationID) + GridIndexOffset.xyz;
 
     float opacity = imageLoad(OpacityTexture, texIndex).r;
     
@@ -43,10 +43,11 @@ void main()
 
     float externalLightValue = (max(maxLights.x, max(maxLights.y, maxLights.z)) - (0.0625f));
 
-    float ownLightValue = imageLoad(LightTexture, texIndex).r;
-    float ownSourceValue = imageLoad(LightTexture, texIndex).g;
+    vec4 texValue = imageLoad(LightTexture, texIndex);
+    float ownLightValue = texValue.r;
+    float ownSourceValue = texValue.g;
 
     if((ownSourceValue != 1.0 && ownLightValue > externalLightValue) || (externalLightValue > ownLightValue)) {
-        imageStore(LightTexture, texIndex, vec4(externalLightValue, 0, 0, 0));
+        imageStore(LightTexture, texIndex, vec4(externalLightValue, 0, texValue.b, 0));
     }
 }

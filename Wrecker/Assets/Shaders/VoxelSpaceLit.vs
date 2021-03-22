@@ -41,11 +41,58 @@ layout(location = 3) out float fsin_light;
 
 const ivec3 LIGHT_TEX_MIN = ivec3(0, 0, 0);
 
-float lightFromGrid(ivec3 position)
+float lightFromGrid(ivec3 position, int smoothingOffsetStart)
 {
+    ivec3 smoothingOffsets[12] = ivec3[](
+        // XZ (0)
+        ivec3(0, 0, 0), ivec3(0, 0, -1), ivec3(1, 0, -1), ivec3(1, 0, 0),
+        // XY (4)
+        ivec3(0, 0, 0), ivec3(0, 1, 0), ivec3(1, 1, 0), ivec3(1, 0, 0),
+        // YZ (8)
+        ivec3(0, 0, 0), ivec3(0, 1, 0), ivec3(0, 1, -1), ivec3(0, 0, -1)
+    );
+    float directSum = 0.0;
+    float indirectSum = 0.0;
     ivec3 texIndex = position + Offset.xyz;
-    texIndex = clamp(texIndex, LIGHT_TEX_MIN, imageSize(LightTexture));
-    return imageLoad(LightTexture, texIndex).r;
+    for(int i = smoothingOffsetStart; i < smoothingOffsetStart + 4; i++) {
+        ivec3 smoothingTexIndex = clamp(texIndex + smoothingOffsets[i], LIGHT_TEX_MIN, imageSize(LightTexture));
+        vec4 value = imageLoad(LightTexture, smoothingTexIndex);
+        directSum = directSum + value.b;
+        indirectSum = indirectSum + value.r;
+    }
+    float direct = directSum / 4.0;
+    float indirect = indirectSum / 4.0;
+    return (indirect * 0.7) + (direct * 0.3);
+}
+
+vec3 getLightProbeOffset(vec3 normal) {
+    // XZ
+    if(normal.y > 0.5 || normal.y < -0.5) {
+        return vec3(-0.5, normal.y * 0.5, 0.5);
+    }
+    // XY
+    if(normal.z > 0.5 || normal.z < -0.5) {
+        return vec3(-0.5, -0.5, normal.z * 0.5);
+    }
+    // YZ
+    if(normal.x > 0.5 || normal.x < -0.5) {
+        return vec3(normal.x * 0.5, -0.5, 0.5);
+    }
+}
+
+int getSmoothingOffsetStart(vec3 normal) {
+    // XZ
+    if(normal.y > 0.5 || normal.y < -0.5) {
+        return 0;
+    }
+    // XY
+    if(normal.z > 0.5 || normal.z < -0.5) {
+        return 4;
+    }
+    // YZ
+    if(normal.x > 0.5 || normal.x < -0.5) {
+        return 8;
+    }
 }
 
 void main()
@@ -61,9 +108,9 @@ void main()
     fsin_normal = Normal;
     
     // Get light value from light grid
-    vec4 localLightProbePos = vec4(Normal, 1);
-    vec4 voxelSpaceLightProbPos = ToVoxelSpace * World *  localLightProbePos;
-    fsin_light = lightFromGrid(ivec3(floor(voxelSpaceLightProbPos.xyz)));
+    vec4 voxelSpacePos = ToVoxelSpace * World * vec4(Position, 1);
+    vec3 lightProbePos = voxelSpacePos.xyz + getLightProbeOffset(Normal);
+    fsin_light = lightFromGrid(ivec3(floor(lightProbePos)), getSmoothingOffsetStart(Normal));
 
     // Blur geometry near max view distance
     float cameraDistance = length(worldPosition.xyz - CameraPosition);

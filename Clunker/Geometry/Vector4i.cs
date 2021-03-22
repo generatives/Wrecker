@@ -27,6 +27,14 @@ namespace Clunker.Geometry
             W = w;
         }
 
+        public Vector4i(Vector3i v3, int w)
+        {
+            X = v3.X;
+            Y = v3.Y;
+            Z = v3.Z;
+            W = w;
+        }
+
         public int LengthPow4()
         {
             return X * X + Y * Y + Z * Z + W * W;

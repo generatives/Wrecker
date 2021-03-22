@@ -39,9 +39,17 @@ float GetLightValue(vec4 worldPos) {
     projSpacePosition.y = -projSpacePosition.y * 0.5 + 0.5;
     float currentDepth = projSpacePosition.z;
     
-	float pcfDepth = texture(sampler2D(LightDepthTexture, LightDepthSampler), projSpacePosition.xy).r;
+    vec2 texelSize = 1.0 / vec2(1280, 1280);
+    float sum = 0.0;
+    for(int x = -1; x <= 1; x++) {
+        for(int y = -1; y <= 1; y++) {
+            vec2 index = projSpacePosition.xy + vec2(x, y) * texelSize;
+	        float pcfDepth = texture(sampler2D(LightDepthTexture, LightDepthSampler), index).r;
+            sum = sum + (pcfDepth > currentDepth ? 1.0 : 0.0);
+        }
+    }
 
-    return pcfDepth > currentDepth ? 1.0 : 0.0;
+    return sum / 9.0;
 }
 
 float GetOpacityValue(ivec3 texIndex) {
@@ -70,8 +78,8 @@ void main()
     float ownLightValue = imageLoad(LightImage, texIndex).r;
 
     if(hasOpaqueNeighbour && lightValue >= ownLightValue) {
-        imageStore(LightImage, texIndex, vec4(lightValue, 1.0f, 0, 0));
+        imageStore(LightImage, texIndex, vec4(lightValue, 1.0f, lightValue, 0));
     } else {
-        imageStore(LightImage, texIndex, vec4(ownLightValue, 0.0f, 0, 0));
+        imageStore(LightImage, texIndex, vec4(ownLightValue, 0.0f, lightValue, 0));
     }
 }
