@@ -62,7 +62,7 @@ float lightFromGrid(ivec3 position, int smoothingOffsetStart)
     }
     float direct = float(directSum) / 16.0 / 4.0;
     float indirect = float(indirectSum) / 16.0 / 4.0;
-    return (indirect * 0.7) + (direct * 0.3);
+    return (indirect * 0.9) + (direct * 0.1);
 }
 
 vec3 getLightProbeOffset(vec3 normal) {
