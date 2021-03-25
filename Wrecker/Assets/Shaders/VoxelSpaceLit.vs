@@ -51,17 +51,17 @@ float lightFromGrid(ivec3 position, int smoothingOffsetStart)
         // YZ (8)
         ivec3(0, 0, 0), ivec3(0, 1, 0), ivec3(0, 1, -1), ivec3(0, 0, -1)
     );
-    float directSum = 0.0;
-    float indirectSum = 0.0;
+    float directSum = 0;
+    float indirectSum = 0;
     ivec3 texIndex = position + Offset.xyz;
     for(int i = smoothingOffsetStart; i < smoothingOffsetStart + 4; i++) {
         ivec3 smoothingTexIndex = clamp(texIndex + smoothingOffsets[i], LIGHT_TEX_MIN, imageSize(LightTexture));
         vec4 value = imageLoad(LightTexture, smoothingTexIndex);
-        directSum = directSum + value.b;
-        indirectSum = indirectSum + value.r;
+        directSum = directSum + value.r;
+        indirectSum = indirectSum + value.g;
     }
-    float direct = directSum / 4.0;
-    float indirect = indirectSum / 4.0;
+    float direct = float(directSum) / 16.0 / 4.0;
+    float indirect = float(indirectSum) / 16.0 / 4.0;
     return (indirect * 0.7) + (direct * 0.3);
 }
 
