@@ -17,7 +17,7 @@ layout(set = 0, binding = 2) uniform BlockToLocalOffsetBinding
     ivec4 BlockToLocalOffset;
 };
 
-layout(set = 1, binding = 0, rgba32f) uniform image3D Image;
+layout(set = 1, binding = 0, r8ui) uniform uimage3D Image;
 
 layout(set = 1, binding = 1) uniform ImageData
 {
@@ -35,7 +35,7 @@ void main()
         for(int z = 0; z < size.y; z++)
         {
             ivec3 textureIndex = ivec3(x, 0, z) + basePosition;
-            imageStore(Image, textureIndex, vec4(1.0, 0, 0, 0));
+            imageStore(Image, textureIndex, uvec4(1, 0, 0, 0));
         }
     }
 }

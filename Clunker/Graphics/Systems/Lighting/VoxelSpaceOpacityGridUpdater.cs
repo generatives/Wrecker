@@ -75,7 +75,7 @@ namespace Clunker.Graphics.Systems.Lighting
                     new ResourceLayoutElementDescription("BlockToLocalOffsetBinding", ResourceKind.UniformBuffer, ShaderStages.Compute)));
             _blockOpacityResouceLayout.Name = "Block Opacity ResourceLayout";
 
-            var clearSolidityTextRes = context.ResourceLoader.LoadText("Shaders\\ClearImage3D.glsl");
+            var clearSolidityTextRes = context.ResourceLoader.LoadText("Shaders\\ClearR8UIntImage3D.glsl");
             _clearOpacityShader = factory.CreateFromSpirv(new ShaderDescription(
                 ShaderStages.Compute,
                 Encoding.Default.GetBytes(clearSolidityTextRes.Data),
@@ -145,7 +145,7 @@ namespace Clunker.Graphics.Systems.Lighting
                         (uint)size.Y,
                         (uint)size.Z,
                         1,
-                        PixelFormat.R32_G32_B32_A32_Float,
+                        PixelFormat.R8_UInt,
                         TextureUsage.Storage));
 
                     if (opacityGridResources.OpacityGridImageData == null)

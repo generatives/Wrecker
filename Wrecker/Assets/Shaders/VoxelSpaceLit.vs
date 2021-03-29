@@ -19,7 +19,7 @@ layout(set = 3, binding = 0) uniform CameraInputs
     vec3 Spacing;
 };
 
-layout(set = 4, binding = 0, rgba32f) uniform image3D LightTexture;
+layout(set = 4, binding = 0, rgba8ui) uniform uimage3D LightTexture;
 layout(set = 4, binding = 1) uniform ImageData
 {
     ivec4 Offset;
@@ -51,12 +51,12 @@ float lightFromGrid(ivec3 position, int smoothingOffsetStart)
         // YZ (8)
         ivec3(0, 0, 0), ivec3(0, 1, 0), ivec3(0, 1, -1), ivec3(0, 0, -1)
     );
-    float directSum = 0;
-    float indirectSum = 0;
+    uint directSum = 0;
+    uint indirectSum = 0;
     ivec3 texIndex = position + Offset.xyz;
     for(int i = smoothingOffsetStart; i < smoothingOffsetStart + 4; i++) {
         ivec3 smoothingTexIndex = clamp(texIndex + smoothingOffsets[i], LIGHT_TEX_MIN, imageSize(LightTexture));
-        vec4 value = imageLoad(LightTexture, smoothingTexIndex);
+        uvec4 value = imageLoad(LightTexture, smoothingTexIndex);
         directSum = directSum + value.r;
         indirectSum = indirectSum + value.g;
     }
