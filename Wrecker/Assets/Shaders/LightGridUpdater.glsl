@@ -13,8 +13,8 @@ const ivec3 TEX_MIN = ivec3(0, 0, 0);
 
 uint getLightValue(ivec3 texIndex)
 {
-    uint light = imageLoad(LightTexture, texIndex).g;
-    return light;
+    uint light = imageLoad(LightTexture, texIndex).r;
+    return bitfieldExtract(light, 4, 4);
 }
 
 void main()
@@ -39,10 +39,13 @@ void main()
 
     uint maxExternalLightValue = max(maxLights.x, max(maxLights.y, maxLights.z));
     uint externalLightValue = maxExternalLightValue != 0 ? maxExternalLightValue - 1 : 0;
-
-    uint directLightValue = texValue.r;
+    
+    uint lightValue = texValue.r;
+    uint directLightValue = bitfieldExtract(lightValue, 0, 4);
 
     uint newIndirectLightValue = opacity != 1 ? max(max(externalLightValue, directLightValue), 0) : 0;
 
-    imageStore(LightTexture, texIndex, uvec4(texValue.r, newIndirectLightValue, texValue.b, texValue.b));
+    uint newLightValue = bitfieldInsert(lightValue, newIndirectLightValue, 4, 4);
+
+    imageStore(LightTexture, texIndex, uvec4(newLightValue, texValue.g, texValue.b, texValue.b));
 }

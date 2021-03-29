@@ -49,7 +49,7 @@ uint GetLightValue(vec4 worldPos) {
         }
     }
     
-    return uint((sum / 9.0) * 16);
+    return uint((sum / 9.0) * 15);
 }
 
 uint GetOpacityValue(ivec3 texIndex) {
@@ -73,7 +73,9 @@ void main()
 
     uint lightValue = ownOpacity != 1 ? GetLightValue(worldPosition) : 0;
 
-    uint newDirectLightValue = hasOpaqueNeighbour ? lightValue : 0;
-    // float newDirectLightValue = lightValue;
-    imageStore(LightImage, texIndex, uvec4(newDirectLightValue, ownTexValue.g, ownTexValue.b, ownTexValue.a));
+    uint newDirectLightValue = true ? lightValue : 0;
+    uint ownLightValue = ownTexValue.r;
+    uint newLightValue = bitfieldInsert(ownLightValue, newDirectLightValue, 0, 4);
+
+    imageStore(LightImage, texIndex, uvec4(newLightValue, ownTexValue.g, ownTexValue.b, ownTexValue.a));
 }
