@@ -17,21 +17,17 @@ namespace Clunker.Graphics.Systems
     public class ShadowMapRenderer : IRendererSystem
     {
         public bool IsEnabled { get; set; } = true;
-        public Vector3 DiffuseLightDirection { get; set; } = new Vector3(0f, 1f, 0f);
 
         private CommandList _commandList;
-        private CommandList _commandList2;
         private Material _shadowMaterial;
         private Texture _shadowDepthTexture;
         private ResourceSet _lightingInputsResourceSet;
         private Framebuffer _shadowFramebuffer;
         private DeviceBuffer _lightViewMatrixBuffer;
+        private DeviceBuffer _lightProjectionMatrixBuffer;
 
-        private Shader _clearImage3DShader;
-        private Pipeline _clearLightGridPipeline;
-
-        private Shader _injectLightShader;
-        private Pipeline _injectLightPipeline;
+        private Shader _clearDirectLightShader;
+        private Pipeline _clearDirectLightPipeline;
 
         private Shader _grabLightShader;
         private Pipeline _grabLightPipeline;
@@ -40,10 +36,9 @@ namespace Clunker.Graphics.Systems
         private ResourceSet _worldTransformResourceSet;
         private DeviceBuffer _worldMatrixBuffer;
 
-        private Matrix4x4 _lightProjectionMatrix;
-
         private EntitySet _shadowCastingEntities;
         private EntitySet _voxelSpaceLightGridEntities;
+        private EntitySet _directionalLightEntities;
 
         private Vector3i _lightSize = new Vector3i(8 * 32, 8 * 32, 6 * 32);
 
@@ -61,6 +56,11 @@ namespace Clunker.Graphics.Systems
             _voxelSpaceLightGridEntities = world.GetEntities()
                 .With<VoxelSpaceLightGridResources>()
                 .With<VoxelSpaceOpacityGridResources>()
+                .With<Transform>()
+                .AsSet();
+
+            _directionalLightEntities = world.GetEntities()
+                .With<DirectionalLight>()
                 .With<Transform>()
                 .AsSet();
         }
@@ -83,17 +83,15 @@ namespace Clunker.Graphics.Systems
             _lightViewMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _lightViewMatrixBuffer.Name = "Light View Matrix Buffer";
 
+            _lightProjectionMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            _lightProjectionMatrixBuffer.Name = "Light Projection Matrix Buffer";
+
             var sampler = factory.CreateSampler(new SamplerDescription(SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerFilter.MinPoint_MagPoint_MipPoint, null, 0, 0, uint.MaxValue, 0, SamplerBorderColor.OpaqueWhite));
             sampler.Name = "Shadow Depth Sampler";
             var lightDepthTextureView = factory.CreateTextureView(new TextureViewDescription(_shadowDepthTexture));
             lightDepthTextureView.Name = "Shadow Depth TextureView";
 
-            var lightProjMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            lightProjMatrixBuffer.Name = "Light Projection Matrix Buffer";
-            _lightProjectionMatrix = Matrix4x4.CreateOrthographic(_lightSize.X, _lightSize.Y, 1.0f, _lightSize.Z);
-            device.UpdateBuffer(lightProjMatrixBuffer, 0, ref _lightProjectionMatrix);
-
-            _lightingInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightingInputs"], lightProjMatrixBuffer, _lightViewMatrixBuffer, lightDepthTextureView, sampler));
+            _lightingInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightingInputs"], _lightProjectionMatrixBuffer, _lightViewMatrixBuffer, lightDepthTextureView, sampler));
             _lightingInputsResourceSet.Name = "Lighting Inputs Resource Set";
 
             context.SharedResources.ResourceSets["LightingInputs"] = _lightingInputsResourceSet;
@@ -106,37 +104,20 @@ namespace Clunker.Graphics.Systems
             var materialInputLayouts = context.MaterialInputLayouts;
             var factory = device.ResourceFactory;
 
-            var clearImage3DTextRes = context.ResourceLoader.LoadText("Shaders\\ClearImage3D.glsl");
-            _clearImage3DShader = factory.CreateFromSpirv(new ShaderDescription(
+            var clearDirectLightTextRes = context.ResourceLoader.LoadText("Shaders\\ClearDirectLightChannel.glsl");
+            _clearDirectLightShader = factory.CreateFromSpirv(new ShaderDescription(
                 ShaderStages.Compute,
-                Encoding.Default.GetBytes(clearImage3DTextRes.Data),
+                Encoding.Default.GetBytes(clearDirectLightTextRes.Data),
                 "main"));
-            _clearImage3DShader.Name = "ClearImage3D Shader";
+            _clearDirectLightShader.Name = "ClearDirectLightChannel Shader";
 
-            _clearLightGridPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_clearImage3DShader,
+            _clearDirectLightPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_clearDirectLightShader,
                 new[]
                 {
                     materialInputLayouts.ResourceLayouts["SingleTexture"]
                 },
                 1, 1, 1));
-            _clearLightGridPipeline.Name = "Clear LightGrid Pipeline";
-
-            var injectLightTextRes = context.ResourceLoader.LoadText("Shaders\\LightInjector.glsl");
-            _injectLightShader = factory.CreateFromSpirv(new ShaderDescription(
-                ShaderStages.Compute,
-                Encoding.Default.GetBytes(injectLightTextRes.Data),
-                "main"));
-            _injectLightShader.Name = "LightInjector Shader";
-
-            _injectLightPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_injectLightShader,
-                new[]
-                {
-                    materialInputLayouts.ResourceLayouts["SingleTexture"],
-                    materialInputLayouts.ResourceLayouts["LightingInputs"],
-                    materialInputLayouts.ResourceLayouts["WorldTransform"]
-                },
-                1, 1, 1));
-            _injectLightPipeline.Name = "Inject Light Pipeline";
+            _clearDirectLightPipeline.Name = "ClearDirectLightChannel Pipeline";
 
             var grabLightTextRes = context.ResourceLoader.LoadText("Shaders\\LightGrabber.glsl");
             _grabLightShader = factory.CreateFromSpirv(new ShaderDescription(
@@ -164,7 +145,6 @@ namespace Clunker.Graphics.Systems
                 new string[] { "Model" }, new string[] { "WorldTransform", "LightingInputs" }, materialInputLayouts, shadowMapRasterizerState);
 
             _commandList = factory.CreateCommandList();
-            _commandList2 = factory.CreateCommandList();
 
             _worldMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _worldTransformResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["WorldTransform"], _worldMatrixBuffer));
@@ -172,124 +152,112 @@ namespace Clunker.Graphics.Systems
 
         public void Update(RenderingContext context)
         {
-            // Render the shadow map for each light
+            // Clear the direct light channel so light can be summed again
+            //_commandList.Begin();
+
+            //_commandList.SetPipeline(_clearDirectLightPipeline);
+
+            //foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
+            //{
+            //    var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
+
+            //    // TODO: Frustrum cull light injections
+            //    _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
+            //    var dispatchSize = lightGridResources.Size / 4;
+            //    _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+            //}
+
+            //_commandList.End();
+            //context.GraphicsDevice.SubmitCommands(_commandList);
+            //context.GraphicsDevice.WaitForIdle();
+
             _commandList.Begin();
+
             _commandList.SetFramebuffer(_shadowFramebuffer);
-            _commandList.ClearDepthStencil(1f);
-
-            var cameraTransform = context.CameraTransform;
-
-            //var lightPos = cameraTransform.WorldPosition + Vector3.Normalize(DiffuseLightDirection) * ChunksToLight * 32f;
-            var lightPos = Vector3.Normalize(DiffuseLightDirection) * _lightSize.Z / 2;
-            lightPos = new Vector3((float)Math.Floor(lightPos.X), (float)Math.Floor(lightPos.Y), (float)Math.Floor(lightPos.Z));
-            var lightView = Matrix4x4.CreateLookAt(lightPos,
-                lightPos - DiffuseLightDirection,
-                new Vector3(0.0f, 0.0f, -1.0f));
-            _commandList.UpdateBuffer(_lightViewMatrixBuffer, 0, ref lightView);
-
-            var frustrum = new BoundingFrustum(lightView * _lightProjectionMatrix);
 
             var shadowMapMaterialInputs = new MaterialInputs();
             shadowMapMaterialInputs.ResouceSets["LightingInputs"] = _lightingInputsResourceSet;
-            foreach (var entity in _shadowCastingEntities.GetEntities())
+
+            foreach (var directionalLightEntity in _directionalLightEntities.GetEntities())
             {
-                ref var geometry = ref entity.Get<RenderableMeshGeometry>();
-                ref var transform = ref entity.Get<Transform>();
+                // Render the shadow map for each light
+                _commandList.ClearDepthStencil(1f);
 
-                if (geometry.CanBeRendered)
+                var lightTransform = directionalLightEntity.Get<Transform>();
+                ref var directionalLight = ref directionalLightEntity.Get<DirectionalLight>();
+
+                var lightView = lightTransform.GetViewMatrix();
+                _commandList.UpdateBuffer(_lightViewMatrixBuffer, 0, ref lightView);
+
+                var lightProj = directionalLight.ProjectionMatrix;
+                _commandList.UpdateBuffer(_lightProjectionMatrixBuffer, 0, ref lightProj);
+
+                var frustrum = new BoundingFrustum(lightView * lightProj);
+
+                foreach (var entity in _shadowCastingEntities.GetEntities())
                 {
-                    var shouldRender = geometry.BoundingRadius > 0 ?
-                        frustrum.Contains(new BoundingSphere(transform.GetWorld(geometry.BoundingRadiusOffset), geometry.BoundingRadius)) != ContainmentType.Disjoint :
-                        true;
+                    ref var geometry = ref entity.Get<RenderableMeshGeometry>();
+                    ref var transform = ref entity.Get<Transform>();
 
-                    if(true)
+                    if (geometry.CanBeRendered)
                     {
-                        _commandList.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
+                        var shouldRender = geometry.BoundingRadius > 0 ?
+                            frustrum.Contains(new BoundingSphere(transform.GetWorld(geometry.BoundingRadiusOffset), geometry.BoundingRadius)) != ContainmentType.Disjoint :
+                            true;
 
-                        shadowMapMaterialInputs.ResouceSets["WorldTransform"] = _worldTransformResourceSet;
+                        if (true)
+                        {
+                            _commandList.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
 
-                        shadowMapMaterialInputs.VertexBuffers["Model"] = geometry.Vertices.DeviceBuffer;
-                        shadowMapMaterialInputs.IndexBuffer = geometry.Indices.DeviceBuffer;
+                            shadowMapMaterialInputs.ResouceSets["WorldTransform"] = _worldTransformResourceSet;
 
-                        _shadowMaterial.RunPipeline(_commandList, shadowMapMaterialInputs, (uint)geometry.Indices.Length);
+                            shadowMapMaterialInputs.VertexBuffers["Model"] = geometry.Vertices.DeviceBuffer;
+                            shadowMapMaterialInputs.IndexBuffer = geometry.Indices.DeviceBuffer;
+
+                            _shadowMaterial.RunPipeline(_commandList, shadowMapMaterialInputs, (uint)geometry.Indices.Length);
+                        }
                     }
+                }
+
+                // Inject the shadow map into each VoxelSpaceLightGrid
+                _commandList.SetPipeline(_grabLightPipeline);
+
+                foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
+                {
+                    var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
+                    var opoacityGridResources = lightGridEntity.Get<VoxelSpaceOpacityGridResources>();
+                    var transform = lightGridEntity.Get<Transform>();
+
+                    _commandList.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
+
+                    // TODO: Frustrum cull light injections
+                    _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
+                    _commandList.SetComputeResourceSet(1, _lightingInputsResourceSet);
+                    _commandList.SetComputeResourceSet(2, _worldTransformResourceSet);
+                    _commandList.SetComputeResourceSet(3, opoacityGridResources.OpacityGridResourceSet);
+                    var dispatchSize = lightGridResources.Size / 4;
+                    _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
                 }
             }
 
-            // Clear out the VoxelSpaceLightGrids
-            //_commandList.SetPipeline(_clearLightGridPipeline);
-
-            //foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
-            //{
-            //    var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
-
-            //    _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
-
-            //    var dispathSize = lightGridResources.Size / 4;
-            //    _commandList.Dispatch((uint)dispathSize.X, (uint)dispathSize.Y, (uint)dispathSize.Z);
-            //}
-
             _commandList.End();
             context.GraphicsDevice.SubmitCommands(_commandList);
-            context.GraphicsDevice.WaitForIdle();
-
-            //// Inject the shadow map into each VoxelSpaceLightGrid
-            //// Using second command list because it throws an exception when I use two different compute shaders
-            //_commandList2.Begin();
-            //_commandList2.SetPipeline(_injectLightPipeline);
-
-            //foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
-            //{
-            //    var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
-            //    var transform = lightGridEntity.Get<Transform>();
-
-            //    _commandList2.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
-
-            //    // TODO: Frustrum cull light injections
-            //    _commandList2.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
-            //    _commandList2.SetComputeResourceSet(1, _lightingInputsResourceSet);
-            //    _commandList2.SetComputeResourceSet(2, _worldTransformResourceSet);
-            //    _commandList2.Dispatch(_shadowMapWidth / 8, _shadowMapHeight / 8, 1);
-            //}
-
-            // Inject the shadow map into each VoxelSpaceLightGrid
-            // Using second command list because it throws an exception when I use two different compute shaders
-            _commandList2.Begin();
-            _commandList2.SetPipeline(_grabLightPipeline);
-
-            foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
-            {
-                var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
-                var opoacityGridResources = lightGridEntity.Get<VoxelSpaceOpacityGridResources>();
-                var transform = lightGridEntity.Get<Transform>();
-
-                _commandList2.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
-
-                // TODO: Frustrum cull light injections
-                _commandList2.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
-                _commandList2.SetComputeResourceSet(1, _lightingInputsResourceSet);
-                _commandList2.SetComputeResourceSet(2, _worldTransformResourceSet);
-                _commandList2.SetComputeResourceSet(3, opoacityGridResources.OpacityGridResourceSet);
-                var dispatchSize = lightGridResources.Size / 4;
-                _commandList2.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-            }
-
-
-            _commandList2.End();
-            context.GraphicsDevice.SubmitCommands(_commandList2);
             context.GraphicsDevice.WaitForIdle();
         }
 
         public void Dispose()
         {
             _commandList.Dispose();
-            _commandList2.Dispose();
             _shadowMaterial.Dispose();
             _shadowDepthTexture.Dispose();
             _lightingInputsResourceSet.Dispose();
             _shadowFramebuffer.Dispose();
             _lightViewMatrixBuffer.Dispose();
             _shadowCastingEntities.Dispose();
+            _grabLightPipeline.Dispose();
+            _grabLightShader.Dispose();
+            _clearDirectLightPipeline.Dispose();
+            _clearDirectLightShader.Dispose();
         }
     }
 }

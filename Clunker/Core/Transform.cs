@@ -171,7 +171,8 @@ namespace Clunker.Core
             var position = WorldPosition;
             var orientation = WorldOrientation;
             Vector3 lookDir = Vector3.Transform(-Vector3.UnitZ, orientation);
-            return Matrix4x4.CreateLookAt(position, position + lookDir, Vector3.UnitY);
+            Vector3 upDir = Vector3.Transform(Vector3.UnitY, orientation);
+            return Matrix4x4.CreateLookAt(position, position + lookDir, upDir);
         }
     }
 }

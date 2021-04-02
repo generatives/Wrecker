@@ -346,12 +346,27 @@ namespace ClunkerECSDemo
                     voxelGrid.VoxelSpace.Remove(voxelGrid.MemberIndex);
                 }
             });
+            
+            var lightDirection = Vector3.UnitY;
+            var lightSize = new Vector3i(8 * 32, 8 * 32, 6 * 32);
+            var lightPos = Vector3.Normalize(lightDirection) * lightSize.Z / 2;
 
-            var entity1 = world.CreateEntity();
-            AddCylinder(entity1, _client.GraphicsDevice, shadowMappedMaterial, voxelTexture);
-            ref var transform1 = ref entity1.Get<Transform>();
-            transform1.WorldPosition = new Vector3(0, 5, 0);
-            entity1.Set(transform1);
+            var lightView = Matrix4x4.CreateLookAt(lightPos,
+                lightPos - lightDirection,
+                new Vector3(0.0f, 0.0f, -1.0f));
+
+            var sunEntity = world.CreateEntity();
+            var transform = new Transform(sunEntity)
+            {
+                WorldPosition = lightPos,
+                WorldOrientation = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 2f, 0)
+            };
+            sunEntity.Set(transform);
+            var directionalLight = new DirectionalLight()
+            {
+                ProjectionMatrix = Matrix4x4.CreateOrthographic(lightSize.X, lightSize.Y, 1.0f, lightSize.Z),
+            };
+            sunEntity.Set(directionalLight);
 
             var creationContext = new ResourceCreationContext()
             {
