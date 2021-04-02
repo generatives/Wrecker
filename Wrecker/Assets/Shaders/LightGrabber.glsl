@@ -18,6 +18,14 @@ layout(set = 1, binding = 1) uniform LightInputss
 };
 layout(set = 1, binding = 2) uniform texture2D LightDepthTexture;
 layout(set = 1, binding = 3) uniform sampler LightDepthSampler;
+layout(set = 1, binding = 4) uniform LightProperties
+{
+    float nearStrength;
+    float farStrength;
+    float minDistance;
+    float maxDistance;
+    vec4 lightWorldPosition;
+};
 
 layout(set = 2, binding = 0) uniform WorldBuffer
 {
@@ -39,7 +47,7 @@ uint GetLightValue(vec4 worldPos) {
     projSpacePosition.y = -projSpacePosition.y * 0.5 + 0.5;
     float currentDepth = projSpacePosition.z;
     
-    vec2 texelSize = 1.0 / vec2(768, 768);
+    vec2 texelSize = 1.0 / vec2(1024, 1024);
     float sum = 0.0;
     for(int x = -1; x <= 1; x++) {
         for(int y = -1; y <= 1; y++) {
@@ -48,8 +56,13 @@ uint GetLightValue(vec4 worldPos) {
             sum = sum + (pcfDepth > currentDepth ? 1.0 : 0.0);
         }
     }
+    float avg = sum / 9.0;
+
+    float distance = length(worldPos - lightWorldPosition);
+    float weight = (distance - minDistance) / (maxDistance - minDistance);
+    float str = mix(nearStrength, farStrength, weight);
     
-    return uint((sum / 9.0) * 5);
+    return uint(str * avg);
 }
 
 uint GetOpacityValue(ivec3 texIndex) {

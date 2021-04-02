@@ -1,5 +1,6 @@
 ﻿using Clunker.Core;
 using Clunker.Graphics.Components;
+using Clunker.Graphics.Data;
 using DefaultEcs;
 using System.Text;
 using Veldrid;
@@ -19,6 +20,7 @@ namespace Clunker.Graphics.Systems
         private Framebuffer _shadowFramebuffer;
         private DeviceBuffer _lightViewMatrixBuffer;
         private DeviceBuffer _lightProjectionMatrixBuffer;
+        private DeviceBuffer _lightPropertiesBuffer;
 
         private Shader _clearDirectLightShader;
         private Pipeline _clearDirectLightPipeline;
@@ -34,8 +36,8 @@ namespace Clunker.Graphics.Systems
         private EntitySet _voxelSpaceLightGridEntities;
         private EntitySet _directionalLightEntities;
 
-        private uint _shadowMapWidth = 768;
-        private uint _shadowMapHeight = 768;
+        private uint _shadowMapWidth = 1024;
+        private uint _shadowMapHeight = 1024;
 
         public ShadowMapRenderer(World world)
         {
@@ -78,12 +80,15 @@ namespace Clunker.Graphics.Systems
             _lightProjectionMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _lightProjectionMatrixBuffer.Name = "Light Projection Matrix Buffer";
 
+            _lightPropertiesBuffer = factory.CreateBuffer(new BufferDescription(LightProperties.Size, BufferUsage.UniformBuffer));
+            _lightPropertiesBuffer.Name = "Light Properties Buffer";
+
             var sampler = factory.CreateSampler(new SamplerDescription(SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerFilter.MinPoint_MagPoint_MipPoint, null, 0, 0, uint.MaxValue, 0, SamplerBorderColor.OpaqueBlack));
             sampler.Name = "Shadow Depth Sampler";
             var lightDepthTextureView = factory.CreateTextureView(new TextureViewDescription(_shadowDepthTexture));
             lightDepthTextureView.Name = "Shadow Depth TextureView";
 
-            _lightingInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightingInputs"], _lightProjectionMatrixBuffer, _lightViewMatrixBuffer, lightDepthTextureView, sampler));
+            _lightingInputsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(materialInputLayouts.ResourceLayouts["LightingInputs"], _lightProjectionMatrixBuffer, _lightViewMatrixBuffer, lightDepthTextureView, sampler, _lightPropertiesBuffer));
             _lightingInputsResourceSet.Name = "Lighting Inputs Resource Set";
 
             context.SharedResources.ResourceSets["LightingInputs"] = _lightingInputsResourceSet;
@@ -183,6 +188,10 @@ namespace Clunker.Graphics.Systems
 
                 var lightProj = directionalLight.ProjectionMatrix;
                 _commandList.UpdateBuffer(_lightProjectionMatrixBuffer, 0, ref lightProj);
+
+                var lightProps = directionalLight.LightProperties;
+                lightProps.LightWorldPosition = new System.Numerics.Vector4(lightTransform.WorldPosition, 1);
+                _commandList.UpdateBuffer(_lightPropertiesBuffer, 0, ref lightProps);
 
                 var frustrum = new BoundingFrustum(lightView * lightProj);
 

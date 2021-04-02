@@ -49,7 +49,14 @@ namespace Clunker.Networking
             entity.Set(new Camera());
             entity.Set(new DirectionalLight()
             {
-                ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(0.2f, 1.0f, 0.4f, 1024f)
+                ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(0.2f, 1.0f, 0.1f, 128f),
+                LightProperties = new Clunker.Graphics.Data.LightProperties()
+                {
+                    NearStrength = 15,
+                    FarStrength = 0,
+                    MinDistance = 0,
+                    MaxDistance = 64f
+                }
             });
         }
     }

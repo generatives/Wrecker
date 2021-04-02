@@ -219,7 +219,8 @@ namespace ClunkerECSDemo
                     new ResourceLayoutElementDescription("LightInputs", ResourceKind.UniformBuffer, ShaderStages.Vertex | ShaderStages.Compute),
                     new ResourceLayoutElementDescription("LightInputss", ResourceKind.UniformBuffer, ShaderStages.Vertex | ShaderStages.Compute),
                     new ResourceLayoutElementDescription("LightDepthTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment | ShaderStages.Compute),
-                    new ResourceLayoutElementDescription("LightDepthSampler", ResourceKind.Sampler, ShaderStages.Fragment | ShaderStages.Compute)));
+                    new ResourceLayoutElementDescription("LightDepthSampler", ResourceKind.Sampler, ShaderStages.Fragment | ShaderStages.Compute),
+                    new ResourceLayoutElementDescription("LightProperties", ResourceKind.UniformBuffer, ShaderStages.Compute)));
 
             materialInputLayouts.ResourceLayouts["SingleTexture"] = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
@@ -422,6 +423,13 @@ namespace ClunkerECSDemo
             var directionalLight = new DirectionalLight()
             {
                 ProjectionMatrix = Matrix4x4.CreateOrthographic(lightSize.X, lightSize.Y, 1.0f, lightSize.Z),
+                LightProperties = new Clunker.Graphics.Data.LightProperties()
+                {
+                    NearStrength = 0,
+                    FarStrength = 0,
+                    MinDistance = 0,
+                    MaxDistance = lightSize.Z
+                }
             };
             sunEntity.Set(directionalLight);
         }

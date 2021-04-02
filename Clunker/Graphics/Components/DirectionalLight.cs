@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Clunker.Graphics.Data;
 using System.Numerics;
-using System.Text;
-using Veldrid;
 
 namespace Clunker.Graphics.Components
 {
     public struct DirectionalLight
     {
-        public Matrix4x4 ProjectionMatrix { get; set; }
+        public Matrix4x4 ProjectionMatrix;
+        public LightProperties LightProperties;
     }
 }
