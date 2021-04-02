@@ -347,7 +347,8 @@ namespace ClunkerECSDemo
                 }
             });
             
-            AddSun(world, new Vector3i(8 * 32, 8 * 32, 6 * 32));
+            AddSun(world, new Vector3i(6 * 32, 6 * 32, 6 * 32));
+            AddSun(world, new Vector3i(1 * 32, 1 * 32, 6 * 32));
 
             var creationContext = new ResourceCreationContext()
             {
@@ -409,8 +410,7 @@ namespace ClunkerECSDemo
 
         private static void AddSun(World world, Vector3i lightSize)
         {
-            var lightDirection = Vector3.UnitY;
-            var lightPos = Vector3.Normalize(lightDirection) * lightSize.Z / 2;
+            var lightPos = Vector3.UnitY * lightSize.Z / 2;
 
             var sunEntity = world.CreateEntity();
             var transform = new Transform(sunEntity)

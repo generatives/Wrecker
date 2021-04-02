@@ -78,7 +78,7 @@ namespace Clunker.Graphics.Systems
             _lightProjectionMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _lightProjectionMatrixBuffer.Name = "Light Projection Matrix Buffer";
 
-            var sampler = factory.CreateSampler(new SamplerDescription(SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerFilter.MinPoint_MagPoint_MipPoint, null, 0, 0, uint.MaxValue, 0, SamplerBorderColor.OpaqueWhite));
+            var sampler = factory.CreateSampler(new SamplerDescription(SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerAddressMode.Border, SamplerFilter.MinPoint_MagPoint_MipPoint, null, 0, 0, uint.MaxValue, 0, SamplerBorderColor.OpaqueBlack));
             sampler.Name = "Shadow Depth Sampler";
             var lightDepthTextureView = factory.CreateTextureView(new TextureViewDescription(_shadowDepthTexture));
             lightDepthTextureView.Name = "Shadow Depth TextureView";

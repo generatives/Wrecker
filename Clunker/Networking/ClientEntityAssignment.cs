@@ -1,9 +1,11 @@
 ﻿using Clunker.Graphics;
+using Clunker.Graphics.Components;
 using DefaultEcs;
 using DefaultEcs.System;
 using MessagePack;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace Clunker.Networking
@@ -45,6 +47,10 @@ namespace Clunker.Networking
         protected override void MessageReceived(in ClientEntityAssignment messageData, in Entity entity)
         {
             entity.Set(new Camera());
+            entity.Set(new DirectionalLight()
+            {
+                ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(0.2f, 1.0f, 0.4f, 1024f)
+            });
         }
     }
 }

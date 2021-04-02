@@ -49,7 +49,7 @@ uint GetLightValue(vec4 worldPos) {
         }
     }
     
-    return uint((sum / 9.0) * 15);
+    return uint((sum / 9.0) * 5);
 }
 
 uint GetOpacityValue(ivec3 texIndex) {
