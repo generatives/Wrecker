@@ -1,0 +1,4 @@
+[submodule "veldrid"]
+	path = veldrid
+	url = https://github.com/generatives/veldrid.git
+	branch = user_pipeline_resourceset_count_vk

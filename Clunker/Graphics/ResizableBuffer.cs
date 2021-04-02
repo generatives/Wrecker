@@ -7,7 +7,7 @@ using Veldrid;
 namespace Clunker.Graphics
 {
     public struct ResizableBuffer<T> : IDisposable
-        where T : struct
+        where T : unmanaged
     {
         public bool Exists => GraphicsDevice != null;
         public GraphicsDevice GraphicsDevice { get; private set; }

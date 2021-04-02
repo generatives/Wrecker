@@ -1,12 +1,6 @@
 ﻿using Clunker.Core;
-using Clunker.Geometry;
 using Clunker.Graphics.Components;
-using Clunker.Graphics.Resources;
-using Clunker.Resources;
 using DefaultEcs;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
 using System.Text;
 using Veldrid;
 using Veldrid.SPIRV;
@@ -39,8 +33,6 @@ namespace Clunker.Graphics.Systems
         private EntitySet _shadowCastingEntities;
         private EntitySet _voxelSpaceLightGridEntities;
         private EntitySet _directionalLightEntities;
-
-        private Vector3i _lightSize = new Vector3i(8 * 32, 8 * 32, 6 * 32);
 
         private uint _shadowMapWidth = 768;
         private uint _shadowMapHeight = 768;
@@ -153,23 +145,23 @@ namespace Clunker.Graphics.Systems
         public void Update(RenderingContext context)
         {
             // Clear the direct light channel so light can be summed again
-            //_commandList.Begin();
+            _commandList.Begin();
 
-            //_commandList.SetPipeline(_clearDirectLightPipeline);
+            _commandList.SetPipeline(_clearDirectLightPipeline);
 
-            //foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
-            //{
-            //    var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
+            foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
+            {
+                var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
 
-            //    // TODO: Frustrum cull light injections
-            //    _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
-            //    var dispatchSize = lightGridResources.Size / 4;
-            //    _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-            //}
+                // TODO: Frustrum cull light injections
+                _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
+                var dispatchSize = lightGridResources.Size / 4;
+                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
+            }
 
-            //_commandList.End();
-            //context.GraphicsDevice.SubmitCommands(_commandList);
-            //context.GraphicsDevice.WaitForIdle();
+            _commandList.End();
+            context.GraphicsDevice.SubmitCommands(_commandList);
+            context.GraphicsDevice.WaitForIdle();
 
             _commandList.Begin();
 

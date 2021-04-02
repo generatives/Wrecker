@@ -19,7 +19,6 @@
     <PackageReference Include="LiteNetLib" Version="0.9.2.2" />
     <PackageReference Include="MessagePack" Version="2.1.143" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
-    <PackageReference Include="Veldrid" Version="4.8.0" />
     <PackageReference Include="Veldrid.ImageSharp" Version="4.8.0" />
     <PackageReference Include="Veldrid.ImGui" Version="5.72.0" />
     <PackageReference Include="Veldrid.RenderDoc" Version="1.0.1" />
@@ -35,6 +34,7 @@
   <ItemGroup>
     <ProjectReference Include="..\bepuphysics2\BepuPhysics\BepuPhysics.csproj" />
     <ProjectReference Include="..\bepuphysics2\BepuUtilities\BepuUtilities.csproj" />
+    <ProjectReference Include="..\veldrid\src\Veldrid\Veldrid.csproj" />
   </ItemGroup>
 
 </Project>

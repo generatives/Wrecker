@@ -39,7 +39,7 @@ uint GetLightValue(vec4 worldPos) {
     projSpacePosition.y = -projSpacePosition.y * 0.5 + 0.5;
     float currentDepth = projSpacePosition.z;
     
-    vec2 texelSize = 1.0 / vec2(1280, 1280);
+    vec2 texelSize = 1.0 / vec2(768, 768);
     float sum = 0.0;
     for(int x = -1; x <= 1; x++) {
         for(int y = -1; y <= 1; y++) {
@@ -71,10 +71,12 @@ void main()
     vec3 localPosition = (texIndex - Offset.xyz) + vec3(0.5, 0.5, 0.5);
     vec4 worldPosition = World * vec4(localPosition, 1.0);
 
-    uint lightValue = ownOpacity != 1 ? GetLightValue(worldPosition) : 0;
+    // true is for hasOpaqueNeighbour
+    uint lightValue = (ownOpacity != 1 && true) ? GetLightValue(worldPosition) : 0;
 
-    uint newDirectLightValue = true ? lightValue : 0;
     uint ownLightValue = ownTexValue.r;
+    uint currentLightValue = bitfieldExtract(ownLightValue, 0, 4);
+    uint newDirectLightValue = clamp(currentLightValue + lightValue, 0, 15);
     uint newLightValue = bitfieldInsert(ownLightValue, newDirectLightValue, 0, 4);
 
     imageStore(LightImage, texIndex, uvec4(newLightValue, ownTexValue.g, ownTexValue.b, ownTexValue.a));

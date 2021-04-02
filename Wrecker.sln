@@ -15,6 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bepu", "Bepu", "{00677077-4
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wrecker.PerformanceTests", "Wrecker.PerformanceTests\Wrecker.PerformanceTests.csproj", "{82450954-B59C-4A73-8015-AF4757D19BB0}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Veldrid", "Veldrid", "{B5896CB7-B786-4E4B-A362-0531A62E0750}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid", "veldrid\src\Veldrid\Veldrid.csproj", "{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +78,16 @@ Global
 		{82450954-B59C-4A73-8015-AF4757D19BB0}.ReleaseStrip|Any CPU.Build.0 = Release|Any CPU
 		{82450954-B59C-4A73-8015-AF4757D19BB0}.ReleaseStripNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
 		{82450954-B59C-4A73-8015-AF4757D19BB0}.ReleaseStripNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.DebugLeakDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.DebugLeakDebug|Any CPU.Build.0 = Debug|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.ReleaseStrip|Any CPU.ActiveCfg = Release|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.ReleaseStrip|Any CPU.Build.0 = Release|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.ReleaseStripNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9}.ReleaseStripNoProfiling|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -81,6 +95,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{615F6711-7FA0-45F7-A0F0-3D382ECAC904} = {00677077-4CBC-4A57-B28C-2808403B0406}
 		{F4F7FBCE-221A-4BCD-A516-7455917A6441} = {00677077-4CBC-4A57-B28C-2808403B0406}
+		{CA7FFF10-A0E0-40DF-A9B1-B31EFA57CBA9} = {B5896CB7-B786-4E4B-A362-0531A62E0750}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44ED2339-BCFD-411D-B5AB-5731A6E2E03A}

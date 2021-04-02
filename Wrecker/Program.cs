@@ -347,26 +347,7 @@ namespace ClunkerECSDemo
                 }
             });
             
-            var lightDirection = Vector3.UnitY;
-            var lightSize = new Vector3i(8 * 32, 8 * 32, 6 * 32);
-            var lightPos = Vector3.Normalize(lightDirection) * lightSize.Z / 2;
-
-            var lightView = Matrix4x4.CreateLookAt(lightPos,
-                lightPos - lightDirection,
-                new Vector3(0.0f, 0.0f, -1.0f));
-
-            var sunEntity = world.CreateEntity();
-            var transform = new Transform(sunEntity)
-            {
-                WorldPosition = lightPos,
-                WorldOrientation = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 2f, 0)
-            };
-            sunEntity.Set(transform);
-            var directionalLight = new DirectionalLight()
-            {
-                ProjectionMatrix = Matrix4x4.CreateOrthographic(lightSize.X, lightSize.Y, 1.0f, lightSize.Z),
-            };
-            sunEntity.Set(directionalLight);
+            AddSun(world, new Vector3i(8 * 32, 8 * 32, 6 * 32));
 
             var creationContext = new ResourceCreationContext()
             {
@@ -424,6 +405,25 @@ namespace ClunkerECSDemo
             };
 
             entity.Set(mesh);
+        }
+
+        private static void AddSun(World world, Vector3i lightSize)
+        {
+            var lightDirection = Vector3.UnitY;
+            var lightPos = Vector3.Normalize(lightDirection) * lightSize.Z / 2;
+
+            var sunEntity = world.CreateEntity();
+            var transform = new Transform(sunEntity)
+            {
+                WorldPosition = lightPos,
+                WorldOrientation = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 2f, 0)
+            };
+            sunEntity.Set(transform);
+            var directionalLight = new DirectionalLight()
+            {
+                ProjectionMatrix = Matrix4x4.CreateOrthographic(lightSize.X, lightSize.Y, 1.0f, lightSize.Z),
+            };
+            sunEntity.Set(directionalLight);
         }
 
         private static VoxelType[] LoadVoxelTypes()
