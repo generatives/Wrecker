@@ -348,8 +348,8 @@ namespace ClunkerECSDemo
                 }
             });
             
-            AddSun(world, new Vector3i(6 * 32, 6 * 32, 6 * 32));
-            AddSun(world, new Vector3i(1 * 32, 1 * 32, 6 * 32));
+            AddSun(world, new Vector3i(6 * 32, 6 * 32, 6 * 32), new Vector4(5, 5, 5, 0));
+            AddSun(world, new Vector3i(1 * 32, 1 * 32, 6 * 32), new Vector4(0, 0, 10, 0));
 
             var creationContext = new ResourceCreationContext()
             {
@@ -409,7 +409,7 @@ namespace ClunkerECSDemo
             entity.Set(mesh);
         }
 
-        private static void AddSun(World world, Vector3i lightSize)
+        private static void AddSun(World world, Vector3i lightSize, Vector4 colour)
         {
             var lightPos = Vector3.UnitY * lightSize.Z / 2;
 
@@ -425,8 +425,8 @@ namespace ClunkerECSDemo
                 ProjectionMatrix = Matrix4x4.CreateOrthographic(lightSize.X, lightSize.Y, 1.0f, lightSize.Z),
                 LightProperties = new Clunker.Graphics.Data.LightProperties()
                 {
-                    NearStrength = 0,
-                    FarStrength = 0,
+                    NearColour = colour,
+                    FarColour = colour,
                     MinDistance = 0,
                     MaxDistance = lightSize.Z
                 }

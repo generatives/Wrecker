@@ -52,8 +52,8 @@ namespace Clunker.Networking
                 ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(0.2f, 1.0f, 0.1f, 128f),
                 LightProperties = new Clunker.Graphics.Data.LightProperties()
                 {
-                    NearStrength = 15,
-                    FarStrength = 0,
+                    NearColour = new Vector4(0, 15, 0, 1),
+                    FarColour = new Vector4(15, 0, 0, 1),
                     MinDistance = 0,
                     MaxDistance = 64f
                 }

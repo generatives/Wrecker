@@ -8,7 +8,7 @@ void main()
 {
     ivec3 texIndex = ivec3(gl_GlobalInvocationID.xyz);
     uvec4 ownTexValue = imageLoad(LightImage, texIndex);
-    uint ownLightValue = ownTexValue.r;
-    uint newLightValue = bitfieldInsert(ownLightValue, 0, 0, 4);
-    imageStore(LightImage, texIndex, uvec4(newLightValue, ownTexValue.g, ownTexValue.b, ownTexValue.a));
+    uvec3 ownLightValue = ownTexValue.rgb;
+    uvec3 newLightValue = bitfieldInsert(ownLightValue, uvec3(0), 0, 4);
+    imageStore(LightImage, texIndex, uvec4(newLightValue, ownTexValue.a));
 }

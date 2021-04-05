@@ -11,9 +11,9 @@ layout(set = 2, binding = 0) uniform GridIndexOffsetBinding
 
 const ivec3 TEX_MIN = ivec3(0, 0, 0);
 
-uint getLightValue(ivec3 texIndex)
+uvec3 getLightValue(ivec3 texIndex)
 {
-    uint light = imageLoad(LightTexture, texIndex).r;
+    uvec3 light = imageLoad(LightTexture, texIndex).rgb;
     return bitfieldExtract(light, 4, 4);
 }
 
@@ -33,19 +33,23 @@ void main()
         return;
     }
     
-    uvec3 lights1 = uvec3(getLightValue(texIndex + ivec3(0, 1, 0)), getLightValue(texIndex + ivec3(0, -1, 0)), getLightValue(texIndex + ivec3(1, 0, 0)));
-    uvec3 lights2 = uvec3(getLightValue(texIndex + ivec3(-1, 0, 0)), getLightValue(texIndex + ivec3(0, 0, 1)), getLightValue(texIndex + ivec3(0, 0, -1)));
-    uvec3 maxLights = max(lights1, lights2);
+    uvec3 light1 = getLightValue(texIndex + ivec3(0, 1, 0));
+    uvec3 light2 = getLightValue(texIndex + ivec3(0, -1, 0));
+    uvec3 light3 = getLightValue(texIndex + ivec3(1, 0, 0));
+    uvec3 light4 = getLightValue(texIndex + ivec3(-1, 0, 0));
+    uvec3 light5 = getLightValue(texIndex + ivec3(0, 0, 1));
+    uvec3 light6 = getLightValue(texIndex + ivec3(0, 0, -1));
 
-    uint maxExternalLightValue = max(maxLights.x, max(maxLights.y, maxLights.z));
-    uint externalLightValue = maxExternalLightValue != 0 ? maxExternalLightValue - 1 : 0;
+    uvec3 maxExternalLightValues = max(light1, max(light2, max(light3, max(light4, max(light5, light6)))));
+
+    uvec3 externalLightValues = mix(maxExternalLightValues - 1, uvec3(0), equal(maxExternalLightValues, uvec3(0)));
     
-    uint lightValue = texValue.r;
-    uint directLightValue = bitfieldExtract(lightValue, 0, 4);
+    uvec3 currentLightValues = texValue.rgb;
+    uvec3 directLightValues = bitfieldExtract(currentLightValues, 0, 4);
 
-    uint newIndirectLightValue = opacity != 1 ? max(max(externalLightValue, directLightValue), 0) : 0;
+    uvec3 newIndirectLightValues = opacity != 1 ? max(externalLightValues, directLightValues) : uvec3(0);
 
-    uint newLightValue = bitfieldInsert(lightValue, newIndirectLightValue, 4, 4);
+    uvec3 newLightValues = bitfieldInsert(currentLightValues, newIndirectLightValues, 4, 4);
 
-    imageStore(LightTexture, texIndex, uvec4(newLightValue, texValue.g, texValue.b, texValue.b));
+    imageStore(LightTexture, texIndex, uvec4(newLightValues, texValue.b));
 }

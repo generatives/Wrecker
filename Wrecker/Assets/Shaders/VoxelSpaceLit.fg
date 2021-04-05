@@ -2,7 +2,7 @@
 layout(location = 0) in vec2 fsin_texCoords;
 layout(location = 1) in vec3 fsin_normal;
 layout(location = 2) in float fsin_OpacityScale;
-layout(location = 3) in float fsin_light;
+layout(location = 3) in vec4 fsin_light;
 
 layout(location = 0) out vec4 fsout_color;
 

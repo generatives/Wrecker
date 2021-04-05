@@ -20,10 +20,12 @@ layout(set = 1, binding = 2) uniform texture2D LightDepthTexture;
 layout(set = 1, binding = 3) uniform sampler LightDepthSampler;
 layout(set = 1, binding = 4) uniform LightProperties
 {
-    float nearStrength;
-    float farStrength;
+    vec4 nearColour;
+    vec4 farColour;
     float minDistance;
     float maxDistance;
+    float pad1;
+    float pad2;
     vec4 lightWorldPosition;
 };
 
@@ -36,12 +38,9 @@ layout(set = 3, binding = 0, r8ui) uniform uimage3D OpacityImage;
 
 const ivec3 TEX_MIN = ivec3(0, 0, 0);
 
-uint GetLightValue(vec4 worldPos) {
+uvec3 GetLightValue(vec4 worldPos) {
     vec4 lightSpacePos = LightProjMatrix * LightViewMatrix * worldPos;
     vec3 projSpacePosition = lightSpacePos.xyz / lightSpacePos.w;
-
-    if(projSpacePosition.z > 1.0)
-        return 0;
 
     projSpacePosition.x = projSpacePosition.x * 0.5 + 0.5;
     projSpacePosition.y = -projSpacePosition.y * 0.5 + 0.5;
@@ -60,9 +59,9 @@ uint GetLightValue(vec4 worldPos) {
 
     float distance = length(worldPos - lightWorldPosition);
     float weight = (distance - minDistance) / (maxDistance - minDistance);
-    float str = mix(nearStrength, farStrength, weight);
+    vec3 str = mix(nearColour.rgb, farColour.rgb, weight);
     
-    return uint(str * avg);
+    return uvec3(str * avg);
 }
 
 uint GetOpacityValue(ivec3 texIndex) {
@@ -85,12 +84,12 @@ void main()
     vec4 worldPosition = World * vec4(localPosition, 1.0);
 
     // true is for hasOpaqueNeighbour
-    uint lightValue = (ownOpacity != 1 && true) ? GetLightValue(worldPosition) : 0;
+    uvec3 lightValue = (ownOpacity != 1 && true) ? GetLightValue(worldPosition) : uvec3(0);
 
-    uint ownLightValue = ownTexValue.r;
-    uint currentLightValue = bitfieldExtract(ownLightValue, 0, 4);
-    uint newDirectLightValue = clamp(currentLightValue + lightValue, 0, 15);
-    uint newLightValue = bitfieldInsert(ownLightValue, newDirectLightValue, 0, 4);
+    uvec3 ownLightValue = ownTexValue.rgb;
+    uvec3 currentLightValue = bitfieldExtract(ownLightValue, 0, 4);
+    uvec3 newDirectLightValue = clamp(currentLightValue + lightValue, uvec3(0), uvec3(15));
+    uvec3 newLightValue = bitfieldInsert(ownLightValue, newDirectLightValue, 0, 4);
 
-    imageStore(LightImage, texIndex, uvec4(newLightValue, ownTexValue.g, ownTexValue.b, ownTexValue.a));
+    imageStore(LightImage, texIndex, uvec4(newLightValue, ownTexValue.a));
 }
