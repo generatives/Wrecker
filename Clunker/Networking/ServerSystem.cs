@@ -1,6 +1,8 @@
 ﻿using Clunker.Core;
 using Clunker.ECS;
+using Clunker.Geometry;
 using Clunker.Graphics;
+using Clunker.Graphics.Components;
 using DefaultEcs;
 using DefaultEcs.System;
 using LiteNetLib;
@@ -29,7 +31,9 @@ namespace Clunker.Networking
 
         private NetManager _server;
 
-        public ServerSystem(World world, MessageTargetMap messageTargetMap)
+        private Entity _worldVoxelSpaceEntity;
+
+        public ServerSystem(World world, MessageTargetMap messageTargetMap, Entity worldVoxelSpaceEntity)
         {
             _messageTargetMap = messageTargetMap;
 
@@ -63,6 +67,8 @@ namespace Clunker.Networking
                 MessageRecieved(new ArraySegment<byte>(dataReader.RawData, dataReader.UserDataOffset, dataReader.UserDataSize));
                 dataReader.Recycle();
             };
+
+            _worldVoxelSpaceEntity = worldVoxelSpaceEntity;
         }
 
         public void PreUpdate(double frameTime)
@@ -105,6 +111,11 @@ namespace Clunker.Networking
             clientEntity.Set(new NetworkedEntity() { Id = clientId });
             clientEntity.Set(new Camera());
             clientEntity.Set(new EntityMetaData() { Name = "Player" });
+            clientEntity.Set(new TrackingLightPropogationGridWindow()
+            {
+                WindowDistance = new Vector3i(4, 4, 2),
+                LightPropogationGridEntity = _worldVoxelSpaceEntity
+            });
             _world.Publish(new NewClientConnected(clientEntity));
             channel.SendBuffered();
         }

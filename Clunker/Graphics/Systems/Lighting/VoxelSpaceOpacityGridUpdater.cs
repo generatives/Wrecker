@@ -1,5 +1,4 @@
-﻿using Clunker.Core;
-using Clunker.Geometry;
+﻿using Clunker.Geometry;
 using Clunker.Graphics.Components;
 using Clunker.Physics.Voxels;
 using Clunker.Utilties;
@@ -7,9 +6,6 @@ using Clunker.Voxels;
 using Clunker.Voxels.Space;
 using Collections.Pooled;
 using DefaultEcs;
-using DefaultEcs.System;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Veldrid;
@@ -22,10 +18,11 @@ namespace Clunker.Graphics.Systems.Lighting
         public bool IsEnabled { get; set; } = true;
 
         private EntitySet _changedPhysicsBlocks;
+        private EntitySet _changedPropogationGrids;
 
         private ResourceLayout _singleTextureResourceLayout;
 
-        private CommandList _clearOpacityCommandList;
+        private CommandList _commandList;
         private Shader _clearOpacityShader;
         private Pipeline _clearOpacityPipeline;
 
@@ -35,7 +32,6 @@ namespace Clunker.Graphics.Systems.Lighting
         private ResourceLayout _blockOpacityResouceLayout;
         private ResourceSet _blockOpacityResourceSet;
 
-        private CommandList _uploadOpacityCommandList;
         private Shader _uploadOpacityShader;
         private Pipeline _uploadOpacityPipeline;
 
@@ -44,6 +40,7 @@ namespace Clunker.Graphics.Systems.Lighting
         public VoxelSpaceOpacityGridUpdater(World world, VoxelTypes voxelTypes)
         {
             _changedPhysicsBlocks = world.GetEntities().With<VoxelGrid>().WhenAdded<PhysicsBlocks>().WhenChanged<PhysicsBlocks>().AsSet();
+            _changedPropogationGrids = world.GetEntities().With<VoxelSpace>().WhenAddedEither<LightPropogationGridResources>().WhenChangedEither<LightPropogationGridResources>().AsSet();
             _voxelTypes = voxelTypes;
         }
 
@@ -56,11 +53,8 @@ namespace Clunker.Graphics.Systems.Lighting
             var device = context.Device;
             var factory = device.ResourceFactory;
 
-            _clearOpacityCommandList = factory.CreateCommandList();
-            _clearOpacityCommandList.Name = "Clear Opacity CommandList";
-
-            _uploadOpacityCommandList = factory.CreateCommandList();
-            _uploadOpacityCommandList.Name = "Upload Opacity CommandList";
+            _commandList = factory.CreateCommandList();
+            _commandList.Name = "Opacity Updater CommandList";
 
             _singleTextureResourceLayout = context.MaterialInputLayouts.ResourceLayouts["SingleTexture"];
 
@@ -113,80 +107,43 @@ namespace Clunker.Graphics.Systems.Lighting
             var device = state.GraphicsDevice;
             var factory = device.ResourceFactory;
 
-            using var opacityGridVoxelSpaces = new PooledList<Entity>();
+            using var changedPropogationGrids = new PooledList<Entity>();
             foreach(var entity in _changedPhysicsBlocks.GetEntities())
             {
                 var voxelGrid = entity.Get<VoxelGrid>();
                 var parent = voxelGrid.VoxelSpace.Self;
-                if(parent.Has<VoxelSpaceOpacityGridResources>())
+                if(parent.Has<LightPropogationGridResources>() && parent.Has<VoxelSpace>() && !changedPropogationGrids.Contains(parent))
                 {
-                    opacityGridVoxelSpaces.Add(parent);
+                    changedPropogationGrids.Add(parent);
                 }
             }
 
-            // Recreate or clear each changed opacity grid
-            _clearOpacityCommandList.Begin();
-            foreach (var changedVoxelSpace in opacityGridVoxelSpaces)
+            foreach(var entity in _changedPropogationGrids.GetEntities())
             {
-                var opacityGridResources = changedVoxelSpace.Get<VoxelSpaceOpacityGridResources>();
-                var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
-
-                var (min, max) = GetBoundingIndices(voxelSpace);
-
-                if(opacityGridResources.MinIndex != min || opacityGridResources.MaxIndex != max ||
-                    opacityGridResources.OpacityGridTexture == null || opacityGridResources.OpacityGridResourceSet == null)
+                if (!changedPropogationGrids.Contains(entity))
                 {
-                    device.DisposeWhenIdleIfNotNull(opacityGridResources.OpacityGridTexture);
-                    device.DisposeWhenIdleIfNotNull(opacityGridResources.OpacityGridResourceSet);
-
-                    var size = (max - min + Vector3i.One) * voxelSpace.GridSize;
-                    opacityGridResources.OpacityGridTexture = factory.CreateTexture(TextureDescription.Texture3D(
-                        (uint)size.X,
-                        (uint)size.Y,
-                        (uint)size.Z,
-                        1,
-                        PixelFormat.R8_UInt,
-                        TextureUsage.Storage));
-
-                    if (opacityGridResources.OpacityGridImageData == null)
-                    {
-                        opacityGridResources.OpacityGridImageData = factory.CreateBuffer(new BufferDescription(ImageData.Size, BufferUsage.UniformBuffer));
-                    }
-
-                    var imageData = new ImageData()
-                    {
-                        Offset = new Vector4i(-min.X, -min.Y, -min.Z, 0) * voxelSpace.GridSize
-                    };
-
-                    device.UpdateBuffer(opacityGridResources.OpacityGridImageData, 0, imageData);
-                    var resourceSetDescription = new ResourceSetDescription(_singleTextureResourceLayout, opacityGridResources.OpacityGridTexture, opacityGridResources.OpacityGridImageData);
-                    opacityGridResources.OpacityGridResourceSet = factory.CreateResourceSet(resourceSetDescription);
-
-                    opacityGridResources.MinIndex = min;
-                    opacityGridResources.MaxIndex = max;
-                    opacityGridResources.Size = size;
-                }
-                else
-                {
-
-                    _clearOpacityCommandList.SetPipeline(_clearOpacityPipeline);
-                    _clearOpacityCommandList.SetComputeResourceSet(0, opacityGridResources.OpacityGridResourceSet);
-
-                    var dispathSize = opacityGridResources.Size / 4;
-                    _clearOpacityCommandList.Dispatch((uint)dispathSize.X, (uint)dispathSize.Y, (uint)dispathSize.Z);
+                    changedPropogationGrids.Add(entity);
                 }
             }
 
-            _clearOpacityCommandList.End();
-            state.GraphicsDevice.SubmitCommands(_clearOpacityCommandList);
-            state.GraphicsDevice.WaitForIdle();
+            // Clear each changed opacity grid
+            _commandList.Begin();
+            _commandList.SetPipeline(_clearOpacityPipeline);
+            foreach (var changedVoxelSpace in changedPropogationGrids)
+            {
+                var propogationGrid = changedVoxelSpace.Get<LightPropogationGridResources>();
+
+                _commandList.SetComputeResourceSet(0, propogationGrid.OpacityGridResourceSet);
+
+                var dispathSize = propogationGrid.WindowSize / 4;
+                _commandList.Dispatch((uint)dispathSize.X, (uint)dispathSize.Y, (uint)dispathSize.Z);
+            }
 
             // Upload opacity information
-            _uploadOpacityCommandList.Begin();
-            _uploadOpacityCommandList.SetPipeline(_uploadOpacityPipeline);
-            foreach (var changedVoxelSpace in opacityGridVoxelSpaces)
+            _commandList.SetPipeline(_uploadOpacityPipeline);
+            foreach (var changedVoxelSpace in changedPropogationGrids)
             {
-                var opacityGridResources = changedVoxelSpace.Get<VoxelSpaceOpacityGridResources>();
+                var lightPropogationGrid = changedVoxelSpace.Get<LightPropogationGridResources>();
                 var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
 
                 foreach (var kvp in voxelSpace)
@@ -199,10 +156,10 @@ namespace Clunker.Graphics.Systems.Lighting
                     if (opaqueBlocks.Length > 0)
                     {
                         var positions = opaqueBlocks.Select(b => new Vector4i(b.Index.X, b.Index.Y, b.Index.Z, 0)).ToArray();
-                        var positionBufferChanged = _blockPositionBuffer.Update(positions, _uploadOpacityCommandList);
+                        var positionBufferChanged = _blockPositionBuffer.Update(positions, _commandList);
 
                         var sizes = opaqueBlocks.Select(b => new Vector2i(b.Size.X, b.Size.Z)).ToArray();
-                        var sizeBufferChanged = _blockSizeBuffer.Update(sizes, _uploadOpacityCommandList);
+                        var sizeBufferChanged = _blockSizeBuffer.Update(sizes, _commandList);
 
                         if(positionBufferChanged || sizeBufferChanged || _blockOpacityResourceSet == null)
                         {
@@ -217,39 +174,22 @@ namespace Clunker.Graphics.Systems.Lighting
                         {
                             Offset = new Vector4i(blockToLocalOffset.X, blockToLocalOffset.Y, blockToLocalOffset.Z, 0)
                         };
-                        _uploadOpacityCommandList.UpdateBuffer(_blockToLocalOffsetBuffer, 0, blockToLocalImageData);
+                        _commandList.UpdateBuffer(_blockToLocalOffsetBuffer, 0, blockToLocalImageData);
 
-                        _uploadOpacityCommandList.SetComputeResourceSet(0, _blockOpacityResourceSet);
-                        _uploadOpacityCommandList.SetComputeResourceSet(1, opacityGridResources.OpacityGridResourceSet);
+                        _commandList.SetComputeResourceSet(0, _blockOpacityResourceSet);
+                        _commandList.SetComputeResourceSet(1, lightPropogationGrid.OpacityGridResourceSet);
 
                         // TODO: See if local group sizes can speed this up (shader contains a nested loop so local groups might not work well)
-                        _uploadOpacityCommandList.Dispatch((uint)_blockPositionBuffer.Length, 1, 1);
+                        _commandList.Dispatch((uint)_blockPositionBuffer.Length, 1, 1);
                     }
                 }
             }
 
-            _uploadOpacityCommandList.End();
-            state.GraphicsDevice.SubmitCommands(_uploadOpacityCommandList);
+            _commandList.End();
+            state.GraphicsDevice.SubmitCommands(_commandList);
             state.GraphicsDevice.WaitForIdle();
 
             _changedPhysicsBlocks.Complete();
-        }
-
-        private (Vector3i Min, Vector3i Max) GetBoundingIndices(VoxelSpace voxelSpace)
-        {
-            var min = Vector3i.MaxValue;
-            var max = Vector3i.MinValue;
-            foreach (var index in voxelSpace)
-            {
-                min.X = Math.Min(min.X, index.Key.X);
-                max.X = Math.Max(max.X, index.Key.X);
-                min.Y = Math.Min(min.Y, index.Key.Y);
-                max.Y = Math.Max(max.Y, index.Key.Y);
-                min.Z = Math.Min(min.Z, index.Key.Z);
-                max.Z = Math.Max(max.Z, index.Key.Z);
-            }
-
-            return (min, max);
         }
 
         public void Dispose()

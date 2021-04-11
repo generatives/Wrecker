@@ -11,13 +11,13 @@ namespace Clunker.Utilties
 {
     public static class GeometricUtils
     {
-        public static IEnumerable<Vector3i> Rectangle(Vector3i center, int xLength, int yLength, int zLength)
+        public static IEnumerable<Vector3i> CenteredRectangle(Vector3i center, Vector3i size)
         {
-            for (int x = center.X - xLength; x <= center.X + xLength; x++)
+            for (int x = center.X - size.X; x <= center.X + size.X; x++)
             {
-                for (int y = center.Y - yLength; y <= center.Y + yLength; y++)
+                for (int y = center.Y - size.Y; y <= center.Y + size.Y; y++)
                 {
-                    for (int z = center.Z - zLength; z <= center.Z + zLength; z++)
+                    for (int z = center.Z - size.Z; z <= center.Z + size.Z; z++)
                     {
                         yield return new Vector3i(x, y, z);
                     }
@@ -25,9 +25,27 @@ namespace Clunker.Utilties
             }
         }
 
-        public static IEnumerable<Vector3i> Rectangle(Vector3i center, int length)
+        public static IEnumerable<Vector3i> CenteredRectangle(Vector3i center, int xLength, int yLength, int zLength)
         {
-            return Rectangle(center, length, length, length);
+            return CenteredRectangle(center, new Vector3i(xLength, yLength, zLength));
+        }
+
+        public static IEnumerable<Vector3i> CenteredRectangle(Vector3i center, int length)
+        {
+            return CenteredRectangle(center, Vector3i.One * length);
+        }
+        public static IEnumerable<Vector3i> Rectangle(Vector3i position, Vector3i size)
+        {
+            for (int x = position.X; x <= position.X + size.X; x++)
+            {
+                for (int y = position.Y; y <= position.Y + size.Y; y++)
+                {
+                    for (int z = position.Z; z <= position.Z + size.Z; z++)
+                    {
+                        yield return new Vector3i(x, y, z);
+                    }
+                }
+            }
         }
 
         public static readonly Vector3i[] SixNeighbours = new Vector3i[]

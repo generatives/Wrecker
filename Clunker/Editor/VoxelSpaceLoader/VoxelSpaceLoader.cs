@@ -199,6 +199,7 @@ namespace Clunker.Editor.VoxelSpaceLoader
             spaceEntity.Set(spaceTransform);
             spaceEntity.Set(new VoxelSpaceDynamicBody());
             spaceEntity.Set(new DynamicBody());
+            spaceEntity.Set(new BoundingLightPropogationGridWindow());
             spaceEntity.Set(space);
 
             _world.Publish(new SelectEntityRequest() { Entity = spaceEntity });

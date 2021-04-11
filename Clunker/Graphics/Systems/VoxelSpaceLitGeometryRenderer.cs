@@ -152,7 +152,7 @@ namespace Clunker.Graphics
 
             commandList.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
 
-            var voxelSpaceLightGrid = lightSource.VoxelSpaceEntity.Get<VoxelSpaceLightGridResources>();
+            var voxelSpaceLightGrid = lightSource.VoxelSpaceEntity.Get<LightPropogationGridResources>();
             var voxelSpaceTransform = lightSource.VoxelSpaceEntity.Get<Transform>();
 
             commandList.UpdateBuffer(_toVoxelSpaceMatrixBuffer, 0, voxelSpaceTransform.WorldInverseMatrix);

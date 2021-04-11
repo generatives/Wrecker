@@ -91,6 +91,7 @@ namespace ClunkerECSDemo
             Message<VoxelEditReceiver>();
             Message<VoxelSpaceLoadReciever>();
             Message<ComponentSyncMessageApplier<EntityMetaData>>();
+            Message<TrackingLightPropogationGridWindowMessageApplier>();
 
             _messageTargetMap = new MessageTargetMap(_byType, _byNum);
 
@@ -131,7 +132,13 @@ namespace ClunkerECSDemo
 
             var parallelRunner = new DefaultParallelRunner(4);
 
-            var serverSystem = new ServerSystem(world, _messageTargetMap);
+            var worldVoxelSpace = world.CreateEntity();
+            worldVoxelSpace.Set(NetworkedEntity.NewNetworkedEntity());
+            worldVoxelSpace.Set(new Transform(worldVoxelSpace));
+            worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
+            worldVoxelSpace.Set(new EntityMetaData() { Name = "Voxel Space" });
+
+            var serverSystem = new ServerSystem(world, _messageTargetMap, worldVoxelSpace);
 
             serverSystem.AddListener(new TransformMessageApplier(networkedEntities));
             serverSystem.AddListener(new InputForceApplier(physicsSystem, world));
@@ -142,12 +149,6 @@ namespace ClunkerECSDemo
             scene.AddSystem(serverSystem);
 
             var voxelTypes = LoadVoxelTypes();
-
-            var worldVoxelSpace = world.CreateEntity();
-            worldVoxelSpace.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
-            worldVoxelSpace.Set(new Transform(worldVoxelSpace));
-            worldVoxelSpace.Set(new VoxelSpace(32, 1, worldVoxelSpace));
-            worldVoxelSpace.Set(new EntityMetaData() { Name = "Voxel Space" });
 
             scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
             scene.AddSystem(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
@@ -171,6 +172,7 @@ namespace ClunkerECSDemo
             scene.AddSystem(new VoxelGridExistenceServerSystem(world));
             scene.AddSystem(new VoxelGridChangeServerSystem(world));
             scene.AddSystem(new ComponentSyncServerSystem<EntityMetaData>(world));
+            scene.AddSystem(new TrackingLightPropogationGridWindowServerSystem(world));
 
             scene.AddSystem(new FlagClearingSystem<NeighbourMemberChanged>(world));
 
@@ -272,6 +274,7 @@ namespace ClunkerECSDemo
             clientSystem.AddListener(new VoxelGridChangeMessageApplier(networkedEntities));
             clientSystem.AddListener(new EntityRemover(networkedEntities));
             clientSystem.AddListener(new ComponentSyncMessageApplier<EntityMetaData>(networkedEntities));
+            clientSystem.AddListener(new TrackingLightPropogationGridWindowMessageApplier(networkedEntities));
 
             scene.AddSystem(clientSystem);
 
@@ -286,8 +289,8 @@ namespace ClunkerECSDemo
 
             var voxelTypes = LoadVoxelTypes();
 
+            scene.AddSystem(new VoxelSpaceLightPropogationGridAllocator(world));
             scene.AddSystem(new VoxelSpaceOpacityGridUpdater(world, new VoxelTypes(voxelTypes)));
-            scene.AddSystem(new VoxelSpaceLightGridUpdater(world));
 
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
@@ -314,9 +317,12 @@ namespace ClunkerECSDemo
             scene.AddSystem(_editorMenu);
             scene.AddSystems(editors);
 
+            scene.AddSystem(new TrackingLightPropogationGridWindowUpdater(world));
+            scene.AddSystem(new BoundingLightPropogationGridWindowUpdater(world));
+
             scene.AddSystem(new PhysicsBlockFinder(world, parallelRunner));
 
-            scene.AddSystem(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
+            //scene.AddSystem(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
 
             scene.AddSystem(new VoxelGridMesher(commandRecorder, world, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
 

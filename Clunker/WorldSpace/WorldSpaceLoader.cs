@@ -1,11 +1,7 @@
 ﻿using Clunker.Geometry;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
-using System.Diagnostics;
-using System.Collections.Concurrent;
 using Clunker.Voxels;
 using DefaultEcs.System;
 using Clunker.Core;
@@ -13,9 +9,6 @@ using DefaultEcs;
 using Clunker.Voxels.Space;
 using System.Numerics;
 using Clunker.Physics.Voxels;
-using Clunker.Voxels.Lighting;
-using Clunker.Voxels.Meshing;
-using Clunker.Editor.Utilities;
 using Clunker.Graphics;
 using Clunker.Networking;
 using Clunker.ECS;
@@ -55,9 +48,6 @@ namespace Clunker.WorldSpace
 
         private void GenerateChunkOffsets()
         {
-            //_chunkOffsets = new List<Vector3i>() { Vector3i.Zero, Vector3i.UnitX, -Vector3i.UnitX, Vector3i.UnitZ, -Vector3i.UnitZ };
-            //return;
-
             var xzList = new List<Vector2i>();
             for (int xOffset = -LoadRadius; xOffset <= LoadRadius; xOffset++)
                 for (int zOffset = -LoadRadius; zOffset <= LoadRadius; zOffset++)

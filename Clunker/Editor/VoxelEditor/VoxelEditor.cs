@@ -156,7 +156,7 @@ namespace Clunker.Editor.VoxelEditor
         {
             if (remove)
             {
-                foreach(var i in GeometricUtils.Rectangle(index, size))
+                foreach(var i in GeometricUtils.CenteredRectangle(index, size))
                 {
                     space.SetVoxel(i, new Voxel() { Exists = false });
                 }
@@ -166,7 +166,7 @@ namespace Clunker.Editor.VoxelEditor
                 var addIndex = CalculateAddIndex(space, hitTransform, hitLocation, index);
                 if (addIndex.HasValue)
                 {
-                    foreach (var i in GeometricUtils.Rectangle(addIndex.Value, size))
+                    foreach (var i in GeometricUtils.CenteredRectangle(addIndex.Value, size))
                     {
                         space.SetVoxel(i, voxel);
                     }

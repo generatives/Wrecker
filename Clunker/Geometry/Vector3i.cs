@@ -121,6 +121,26 @@ namespace Clunker.Geometry
             return new Vector3i(v.X % v1.X, v.Y % v1.Y, v.Z % v1.Z);
         }
 
+        public static bool operator >(Vector3i v, Vector3i v1)
+        {
+            return v.X > v1.X && v.Y > v1.Y && v.Z > v1.Z;
+        }
+
+        public static bool operator >=(Vector3i v, Vector3i v1)
+        {
+            return v.X >= v1.X && v.Y >= v1.Y && v.Z >= v1.Z;
+        }
+
+        public static bool operator <(Vector3i v, Vector3i v1)
+        {
+            return v.X < v1.X && v.Y < v1.Y && v.Z < v1.Z;
+        }
+
+        public static bool operator <=(Vector3i v, Vector3i v1)
+        {
+            return v.X <= v1.X && v.Y <= v1.Y && v.Z <= v1.Z;
+        }
+
         public static implicit operator Vector3(Vector3i v)
         {
             return new Vector3(v.X, v.Y, v.Z);
@@ -137,6 +157,22 @@ namespace Clunker.Geometry
                 ClunkerMath.Clamp(value.X, min.X, max.X),
                 ClunkerMath.Clamp(value.Y, min.Y, max.Y),
                 ClunkerMath.Clamp(value.Z, min.Z, max.Z));
+        }
+
+        public static Vector3i Max(Vector3i v1, Vector3i v2)
+        {
+            return new Vector3i(
+                Math.Max(v1.X, v2.X),
+                Math.Max(v1.Y, v2.Y),
+                Math.Max(v1.Z, v2.Z));
+        }
+
+        public static Vector3i Min(Vector3i v1, Vector3i v2)
+        {
+            return new Vector3i(
+                Math.Min(v1.X, v2.X),
+                Math.Min(v1.Y, v2.Y),
+                Math.Min(v1.Z, v2.Z));
         }
 
         public override string ToString()

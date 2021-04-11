@@ -1,6 +1,7 @@
 ﻿using Clunker.Core;
 using Clunker.Graphics.Components;
 using Clunker.Graphics.Data;
+using Clunker.Voxels.Space;
 using DefaultEcs;
 using System.Text;
 using Veldrid;
@@ -48,8 +49,7 @@ namespace Clunker.Graphics.Systems
                 .AsSet();
 
             _voxelSpaceLightGridEntities = world.GetEntities()
-                .With<VoxelSpaceLightGridResources>()
-                .With<VoxelSpaceOpacityGridResources>()
+                .With<LightPropogationGridResources>()
                 .With<Transform>()
                 .AsSet();
 
@@ -156,11 +156,13 @@ namespace Clunker.Graphics.Systems
 
             foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
             {
-                var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
+                var lightGridResources = lightGridEntity.Get<LightPropogationGridResources>();
+                var voxelSpace = lightGridEntity.Get<VoxelSpace>();
 
                 // TODO: Frustrum cull light injections
                 _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
-                var dispatchSize = lightGridResources.Size / 4;
+                var voxelWindowSize = lightGridResources.WindowSize * voxelSpace.GridSize;
+                var dispatchSize = voxelWindowSize / 4;
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
             }
 
@@ -225,18 +227,19 @@ namespace Clunker.Graphics.Systems
 
                 foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
                 {
-                    var lightGridResources = lightGridEntity.Get<VoxelSpaceLightGridResources>();
-                    var opoacityGridResources = lightGridEntity.Get<VoxelSpaceOpacityGridResources>();
+                    var lightPropogationGrid = lightGridEntity.Get<LightPropogationGridResources>();
+                    var voxelSpace = lightGridEntity.Get<VoxelSpace>();
                     var transform = lightGridEntity.Get<Transform>();
 
                     _commandList.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
 
                     // TODO: Frustrum cull light injections
-                    _commandList.SetComputeResourceSet(0, lightGridResources.LightGridResourceSet);
+                    _commandList.SetComputeResourceSet(0, lightPropogationGrid.LightGridResourceSet);
                     _commandList.SetComputeResourceSet(1, _lightingInputsResourceSet);
                     _commandList.SetComputeResourceSet(2, _worldTransformResourceSet);
-                    _commandList.SetComputeResourceSet(3, opoacityGridResources.OpacityGridResourceSet);
-                    var dispatchSize = lightGridResources.Size / 4;
+                    _commandList.SetComputeResourceSet(3, lightPropogationGrid.OpacityGridResourceSet);
+                    var voxelWindowSize = lightPropogationGrid.WindowSize * voxelSpace.GridSize;
+                    var dispatchSize = voxelWindowSize / 4;
                     _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
                 }
             }

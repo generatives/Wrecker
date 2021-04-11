@@ -17,10 +17,10 @@ namespace Clunker.Voxels.Space
         public int GridSize;
         [Key(1)]
         public float VoxelSize;
+        [Key(2)]
+        public bool HasBoundingLightPropogationGridWindow;
     }
 
-    [With(typeof(NetworkedEntity))]
-    [WhenAdded(typeof(VoxelSpace))]
     public class VoxelSpaceAddedServerSystem : ServerSyncSystem<VoxelSpace>
     {
         public VoxelSpaceAddedServerSystem(World world) : base(world)
@@ -38,7 +38,8 @@ namespace Clunker.Voxels.Space
                 Data = new VoxelSpaceMessage()
                 {
                     GridSize = voxelSpace.GridSize,
-                    VoxelSize = voxelSpace.VoxelSize
+                    VoxelSize = voxelSpace.VoxelSize,
+                    HasBoundingLightPropogationGridWindow = entity.Has<BoundingLightPropogationGridWindow>()
                 }
             };
 
@@ -54,9 +55,13 @@ namespace Clunker.Voxels.Space
         {
             if (!entity.Has<VoxelSpace>())
             {
-                entity.Set(new VoxelSpaceOpacityGridResources());
-                entity.Set(new VoxelSpaceLightGridResources());
+                entity.Set(new LightPropogationGridResources());
+                if(message.HasBoundingLightPropogationGridWindow)
+                {
+                    entity.Set(new BoundingLightPropogationGridWindow());
+                }
                 entity.Set(new VoxelSpace(message.GridSize, message.VoxelSize, entity));
+                entity.Set(new LightPropogationGridWindow());
             }
         }
     }
