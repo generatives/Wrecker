@@ -8,7 +8,7 @@ using Veldrid;
 using Veldrid.SPIRV;
 using Veldrid.Utilities;
 
-namespace Clunker.Graphics.Systems
+namespace Clunker.Graphics.Systems.Lighting
 {
     public class LightInjectionSystem : IRendererSystem
     {
@@ -165,12 +165,6 @@ namespace Clunker.Graphics.Systems
                 var dispatchSize = voxelWindowSize / 4;
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
             }
-
-            _commandList.End();
-            context.GraphicsDevice.SubmitCommands(_commandList);
-            context.GraphicsDevice.WaitForIdle();
-
-            _commandList.Begin();
 
             _commandList.SetFramebuffer(_shadowFramebuffer);
 

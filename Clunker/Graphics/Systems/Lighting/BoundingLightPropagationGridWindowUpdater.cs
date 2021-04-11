@@ -19,14 +19,19 @@ namespace Clunker.Graphics.Systems.Lighting
         protected override void Compute(double state, in Entity e)
         {
             var voxelSpace = e.Get<VoxelSpace>();
+            ref var oldWindow = ref e.Get<LightPropogationGridWindow>();
             var (min, max) = GetBoundingIndices(voxelSpace);
 
-            var window = new LightPropogationGridWindow()
+            var newWindow = new LightPropogationGridWindow()
             {
                 WindowPosition = min,
                 WindowSize = max - min + Vector3i.One
             };
-            e.Set(window);
+
+            if (newWindow.WindowPosition != oldWindow.WindowPosition || newWindow.WindowSize != oldWindow.WindowSize)
+            {
+                e.Set(newWindow);
+            }
         }
 
         private (Vector3i Min, Vector3i Max) GetBoundingIndices(VoxelSpace voxelSpace)

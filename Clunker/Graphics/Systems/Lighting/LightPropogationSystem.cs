@@ -1,13 +1,9 @@
 ﻿using Clunker.Core;
 using Clunker.Geometry;
 using Clunker.Graphics.Components;
-using Clunker.Physics.Voxels;
 using Clunker.Utilties;
 using Clunker.Voxels.Space;
 using DefaultEcs;
-using DefaultEcs.System;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -17,7 +13,7 @@ using Veldrid.Utilities;
 
 namespace Clunker.Graphics.Systems.Lighting
 {
-    public class LightPropogator : IRendererSystem
+    public class LightPropogationSystem : IRendererSystem
     {
         public bool IsEnabled { get; set; } = true;
 
@@ -31,7 +27,7 @@ namespace Clunker.Graphics.Systems.Lighting
 
         private EntitySet _voxelSpaceGridEntities;
 
-        public LightPropogator(World world)
+        public LightPropogationSystem(World world)
         {
             _voxelSpaceGridEntities = world.GetEntities().With<Transform>().With<LightPropogationGridResources>().AsSet();
         }
@@ -103,8 +99,8 @@ namespace Clunker.Graphics.Systems.Lighting
                 var localSpaceCorners = worldSpaceCorners.Select(c => transform.GetLocal(c)).ToArray();
                 var localSpaceBoundingBox = GeometricUtils.GetBoundingBox(localSpaceCorners);
                 var localToGridOffset = -lightGridResources.WindowPosition * voxelSpace.GridSize;
-                var minGridIndex = ClunkerMath.Floor(localSpaceBoundingBox.Min + localToGridOffset - new Vector3(12));
-                var maxGridIndex = ClunkerMath.Floor(localSpaceBoundingBox.Max + localToGridOffset + new Vector3(12));
+                var minGridIndex = ClunkerMath.Floor(localSpaceBoundingBox.Min + localToGridOffset - new Vector3(16));
+                var maxGridIndex = ClunkerMath.Floor(localSpaceBoundingBox.Max + localToGridOffset + new Vector3(16));
 
                 var voxelWindowSize = lightGridResources.WindowSize * voxelSpace.GridSize;
                 var clampedMinGridIndex = Vector3i.Clamp(minGridIndex, Vector3i.Zero, voxelWindowSize);

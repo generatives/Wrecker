@@ -132,10 +132,11 @@ namespace Clunker.Graphics.Systems.Lighting
             foreach (var changedVoxelSpace in changedPropogationGrids)
             {
                 var propogationGrid = changedVoxelSpace.Get<LightPropogationGridResources>();
+                var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
 
                 _commandList.SetComputeResourceSet(0, propogationGrid.OpacityGridResourceSet);
 
-                var dispathSize = propogationGrid.WindowSize / 4;
+                var dispathSize = (propogationGrid.WindowSize * voxelSpace.GridSize) / 4;
                 _commandList.Dispatch((uint)dispathSize.X, (uint)dispathSize.Y, (uint)dispathSize.Z);
             }
 
@@ -190,6 +191,7 @@ namespace Clunker.Graphics.Systems.Lighting
             state.GraphicsDevice.WaitForIdle();
 
             _changedPhysicsBlocks.Complete();
+            _changedPropogationGrids.Complete();
         }
 
         public void Dispose()

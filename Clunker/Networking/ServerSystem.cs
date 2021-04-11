@@ -113,7 +113,7 @@ namespace Clunker.Networking
             clientEntity.Set(new EntityMetaData() { Name = "Player" });
             clientEntity.Set(new TrackingLightPropogationGridWindow()
             {
-                WindowDistance = new Vector3i(4, 4, 2),
+                WindowDistance = new Vector3i(5, 5, 2),
                 LightPropogationGridEntity = _worldVoxelSpaceEntity
             });
             _world.Publish(new NewClientConnected(clientEntity));

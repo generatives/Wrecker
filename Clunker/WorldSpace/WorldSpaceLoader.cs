@@ -152,7 +152,7 @@ namespace Clunker.WorldSpace
 
         public Vector3i GetChunk(Entity entity)
         {
-            return Vector3i.Zero;
+            //return Vector3i.Zero;
 
             var transform = entity.Get<Transform>();
             var position = transform.WorldPosition;
