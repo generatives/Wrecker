@@ -10,9 +10,9 @@ using System.Text;
 
 namespace Clunker.Graphics.Systems.Lighting
 {
-    public class BoundingLightPropogationGridWindowUpdater : ComponentChangeSystem<double>
+    public class BoundingLightPropagationGridWindowUpdater : ComponentChangeSystem<double>
     {
-        public BoundingLightPropogationGridWindowUpdater(World world) : base(world, typeof(VoxelSpace), typeof(BoundingLightPropogationGridWindow), typeof(LightPropogationGridWindow))
+        public BoundingLightPropagationGridWindowUpdater(World world) : base(world, typeof(VoxelSpace), typeof(BoundingLightPropogationGridWindow), typeof(LightPropogationGridWindow))
         {
         }
 

@@ -91,7 +91,7 @@ namespace ClunkerECSDemo
             Message<VoxelEditReceiver>();
             Message<VoxelSpaceLoadReciever>();
             Message<ComponentSyncMessageApplier<EntityMetaData>>();
-            Message<TrackingLightPropogationGridWindowMessageApplier>();
+            Message<TrackingLightPropagationGridWindowMessageApplier>();
 
             _messageTargetMap = new MessageTargetMap(_byType, _byNum);
 
@@ -172,7 +172,7 @@ namespace ClunkerECSDemo
             scene.AddSystem(new VoxelGridExistenceServerSystem(world));
             scene.AddSystem(new VoxelGridChangeServerSystem(world));
             scene.AddSystem(new ComponentSyncServerSystem<EntityMetaData>(world));
-            scene.AddSystem(new TrackingLightPropogationGridWindowServerSystem(world));
+            scene.AddSystem(new TrackingLightPropagationGridWindowServerSystem(world));
 
             scene.AddSystem(new FlagClearingSystem<NeighbourMemberChanged>(world));
 
@@ -274,7 +274,7 @@ namespace ClunkerECSDemo
             clientSystem.AddListener(new VoxelGridChangeMessageApplier(networkedEntities));
             clientSystem.AddListener(new EntityRemover(networkedEntities));
             clientSystem.AddListener(new ComponentSyncMessageApplier<EntityMetaData>(networkedEntities));
-            clientSystem.AddListener(new TrackingLightPropogationGridWindowMessageApplier(networkedEntities));
+            clientSystem.AddListener(new TrackingLightPropagationGridWindowMessageApplier(networkedEntities));
 
             scene.AddSystem(clientSystem);
 
@@ -289,7 +289,7 @@ namespace ClunkerECSDemo
 
             var voxelTypes = LoadVoxelTypes();
 
-            scene.AddSystem(new VoxelSpaceLightPropogationGridAllocator(world));
+            scene.AddSystem(new VoxelSpaceLightPropagationGridAllocator(world));
             scene.AddSystem(new VoxelSpaceOpacityGridUpdater(world, new VoxelTypes(voxelTypes)));
 
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
@@ -317,8 +317,8 @@ namespace ClunkerECSDemo
             scene.AddSystem(_editorMenu);
             scene.AddSystems(editors);
 
-            scene.AddSystem(new TrackingLightPropogationGridWindowUpdater(world));
-            scene.AddSystem(new BoundingLightPropogationGridWindowUpdater(world));
+            scene.AddSystem(new TrackingLightPropagationGridWindowUpdater(world));
+            scene.AddSystem(new BoundingLightPropagationGridWindowUpdater(world));
 
             scene.AddSystem(new PhysicsBlockFinder(world, parallelRunner));
 

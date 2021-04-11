@@ -7,14 +7,14 @@ using Veldrid;
 
 namespace Clunker.Graphics.Systems.Lighting
 {
-    public class VoxelSpaceLightPropogationGridAllocator : IRendererSystem
+    public class VoxelSpaceLightPropagationGridAllocator : IRendererSystem
     {
         public bool IsEnabled { get; set; } = true;
 
         private EntitySet _changedPropogationWindows;
         private ResourceLayout _singleTextureResourceLayout;
 
-        public VoxelSpaceLightPropogationGridAllocator(World world)
+        public VoxelSpaceLightPropagationGridAllocator(World world)
         {
             _changedPropogationWindows = world.GetEntities().With<VoxelSpace>().With<LightPropogationGridResources>().WhenAdded<LightPropogationGridWindow>().WhenChanged<LightPropogationGridWindow>().AsSet();
         }

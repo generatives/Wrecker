@@ -10,9 +10,9 @@ using System.Text;
 
 namespace Clunker.Graphics.Systems.Lighting
 {
-    public class TrackingLightPropogationGridWindowUpdater : ComponentChangeSystem<double>
+    public class TrackingLightPropagationGridWindowUpdater : ComponentChangeSystem<double>
     {
-        public TrackingLightPropogationGridWindowUpdater(World world) : base(world, typeof(Transform), typeof(TrackingLightPropogationGridWindow))
+        public TrackingLightPropagationGridWindowUpdater(World world) : base(world, typeof(Transform), typeof(TrackingLightPropogationGridWindow))
         {
         }
 

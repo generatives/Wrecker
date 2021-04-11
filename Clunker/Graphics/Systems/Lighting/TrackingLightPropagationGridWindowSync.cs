@@ -12,7 +12,7 @@ using Clunker.Geometry;
 namespace Clunker.Voxels.Space
 {
     [MessagePackObject]
-    public struct TrackingLightPropogationGridWindowMessage
+    public struct TrackingLightPropagationGridWindowMessage
     {
         [Key(0)]
         public Vector3i WindowDistance;
@@ -20,9 +20,9 @@ namespace Clunker.Voxels.Space
         public Guid VoxelGridEntityId;
     }
 
-    public class TrackingLightPropogationGridWindowServerSystem : ServerSyncSystem<TrackingLightPropogationGridWindow>
+    public class TrackingLightPropagationGridWindowServerSystem : ServerSyncSystem<TrackingLightPropogationGridWindow>
     {
-        public TrackingLightPropogationGridWindowServerSystem(World world) : base(world)
+        public TrackingLightPropagationGridWindowServerSystem(World world) : base(world)
         {
 
         }
@@ -34,25 +34,25 @@ namespace Clunker.Voxels.Space
 
             var voxelGridEntityId = trackingLightGridWindow.LightPropogationGridEntity.Get<NetworkedEntity>().Id;
 
-            var message = new EntityMessage<TrackingLightPropogationGridWindowMessage>()
+            var message = new EntityMessage<TrackingLightPropagationGridWindowMessage>()
             {
                 Id = netEntity.Id,
-                Data = new TrackingLightPropogationGridWindowMessage()
+                Data = new TrackingLightPropagationGridWindowMessage()
                 {
                     WindowDistance = trackingLightGridWindow.WindowDistance,
                     VoxelGridEntityId = voxelGridEntityId
                 }
             };
 
-            target.Channel.AddBuffered<TrackingLightPropogationGridWindowMessageApplier, EntityMessage<TrackingLightPropogationGridWindowMessage>>(message);
+            target.Channel.AddBuffered<TrackingLightPropagationGridWindowMessageApplier, EntityMessage<TrackingLightPropagationGridWindowMessage>>(message);
         }
     }
 
-    public class TrackingLightPropogationGridWindowMessageApplier : EntityMessageApplier<TrackingLightPropogationGridWindowMessage>
+    public class TrackingLightPropagationGridWindowMessageApplier : EntityMessageApplier<TrackingLightPropagationGridWindowMessage>
     {
-        public TrackingLightPropogationGridWindowMessageApplier(NetworkedEntities entities) : base(entities) { }
+        public TrackingLightPropagationGridWindowMessageApplier(NetworkedEntities entities) : base(entities) { }
 
-        protected override void MessageReceived(in TrackingLightPropogationGridWindowMessage message, in Entity entity)
+        protected override void MessageReceived(in TrackingLightPropagationGridWindowMessage message, in Entity entity)
         {
             var voxelSpaceEntity = Entities.GetEntity(message.VoxelGridEntityId);
             entity.Set(new TrackingLightPropogationGridWindow()
