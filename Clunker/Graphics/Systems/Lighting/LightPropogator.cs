@@ -17,7 +17,7 @@ using Veldrid.Utilities;
 
 namespace Clunker.Graphics.Systems.Lighting
 {
-    public class LightGridUpdater : IRendererSystem
+    public class LightPropogator : IRendererSystem
     {
         public bool IsEnabled { get; set; } = true;
 
@@ -31,7 +31,7 @@ namespace Clunker.Graphics.Systems.Lighting
 
         private EntitySet _voxelSpaceGridEntities;
 
-        public LightGridUpdater(World world)
+        public LightPropogator(World world)
         {
             _voxelSpaceGridEntities = world.GetEntities().With<Transform>().With<VoxelSpaceLightGridResources>().With<VoxelSpaceOpacityGridResources>().AsSet();
         }
@@ -55,12 +55,12 @@ namespace Clunker.Graphics.Systems.Lighting
 
             _offsetResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_offsetResourceLayout, _offsetDeviceBuffer));
 
-            var shaderTextRes = context.ResourceLoader.LoadText("Shaders\\LightGridUpdater.glsl");
+            var shaderTextRes = context.ResourceLoader.LoadText("Shaders\\LightPropogator.glsl");
             _lightGridUpdaterShader = factory.CreateFromSpirv(new ShaderDescription(
                 ShaderStages.Compute,
                 Encoding.Default.GetBytes(shaderTextRes.Data),
                 "main"));
-            _lightGridUpdaterShader.Name = "LightGrid Updater Shader";
+            _lightGridUpdaterShader.Name = "Light Propogator Shader";
 
             _lightGridUpdaterPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_lightGridUpdaterShader,
                 new[]
@@ -70,7 +70,7 @@ namespace Clunker.Graphics.Systems.Lighting
                     _offsetResourceLayout
                 },
                 1, 1, 1));
-            _lightGridUpdaterPipeline.Name = "LightGrid Updated Pipeline";
+            _lightGridUpdaterPipeline.Name = "Light Propogation Pipeline";
         }
 
         public void Update(RenderingContext context)

@@ -242,12 +242,6 @@ namespace ClunkerECSDemo
             var mesh3dMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\Mesh.vs"), _client.Resources.LoadText("Shaders\\Mesh.fg"),
                 new string[] { "Model" }, new string[] { "SceneInputs", "WorldTransform", "Texture" }, materialInputLayouts);
 
-            var lightMeshMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\LightMesh.vs"), _client.Resources.LoadText("Shaders\\LightMesh.fg"),
-                new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs" }, materialInputLayouts);
-
-            var shadowMappedMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\ShadowMapped.vs"), _client.Resources.LoadText("Shaders\\ShadowMapped.fg"),
-                new string[] { "Model", "Lighting" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "LightingInputs", "LightGrid" }, materialInputLayouts);
-
             var voxelSpaceLitMaterial = new Material(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.Resources.LoadText("Shaders\\VoxelSpaceLit.vs"), _client.Resources.LoadText("Shaders\\VoxelSpaceLit.fg"),
                 new string[] { "Model" }, new string[] { "SceneInputs", "WorldTransform", "Texture", "CameraInputs", "SingleTexture", "ToVoxelSpaceTransformBinding" }, materialInputLayouts);
 
@@ -292,16 +286,13 @@ namespace ClunkerECSDemo
 
             var voxelTypes = LoadVoxelTypes();
 
-            //scene.AddSystem(new PhysicsBlockUploader(world));
-            //scene.AddSystem(new ReVoxelizer(world));
-
             scene.AddSystem(new VoxelSpaceOpacityGridUpdater(world, new VoxelTypes(voxelTypes)));
             scene.AddSystem(new VoxelSpaceLightGridUpdater(world));
 
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
-            scene.AddSystem(new ShadowMapRenderer(world));
-            scene.AddSystem(new LightGridUpdater(world));
+            scene.AddSystem(new LightInjectionSystem(world));
+            scene.AddSystem(new LightPropogator(world));
 
             scene.AddSystem(new VoxelSpaceLitGeometryRenderer(world));
             scene.AddSystem(new ImGuiSystem(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.WindowWidth, _client.WindowHeight));
@@ -349,7 +340,7 @@ namespace ClunkerECSDemo
             });
             
             AddSun(world, new Vector3i(6 * 32, 6 * 32, 6 * 32), new Vector4(5, 5, 5, 0));
-            AddSun(world, new Vector3i(1 * 32, 1 * 32, 6 * 32), new Vector4(0, 0, 10, 0));
+            AddPointLight(world, Vector3.UnitY * 6, 16f, new Vector4(0, 0, 15, 0));
 
             var creationContext = new ResourceCreationContext()
             {
@@ -432,6 +423,32 @@ namespace ClunkerECSDemo
                 }
             };
             sunEntity.Set(directionalLight);
+        }
+
+        private static void AddPointLight(World world, Vector3 position, float radius, Vector4 colour)
+        {
+            foreach(VoxelSide side in Enum.GetValues(typeof(VoxelSide)))
+            {
+                var sunEntity = world.CreateEntity();
+                var transform = new Transform(sunEntity)
+                {
+                    WorldPosition = position,
+                    WorldOrientation = side.GetQuaternion()
+                };
+                sunEntity.Set(transform);
+                var directionalLight = new DirectionalLight()
+                {
+                    ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI / 2f, 1, 0.1f, radius),
+                    LightProperties = new Clunker.Graphics.Data.LightProperties()
+                    {
+                        NearColour = colour,
+                        FarColour = colour,
+                        MinDistance = 0,
+                        MaxDistance = radius
+                    }
+                };
+                sunEntity.Set(directionalLight);
+            }
         }
 
         private static VoxelType[] LoadVoxelTypes()

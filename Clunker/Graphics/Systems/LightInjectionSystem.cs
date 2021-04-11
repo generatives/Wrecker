@@ -9,7 +9,7 @@ using Veldrid.Utilities;
 
 namespace Clunker.Graphics.Systems
 {
-    public class ShadowMapRenderer : IRendererSystem
+    public class LightInjectionSystem : IRendererSystem
     {
         public bool IsEnabled { get; set; } = true;
 
@@ -39,7 +39,7 @@ namespace Clunker.Graphics.Systems
         private uint _shadowMapWidth = 1024;
         private uint _shadowMapHeight = 1024;
 
-        public ShadowMapRenderer(World world)
+        public LightInjectionSystem(World world)
         {
             _shadowCastingEntities = world.GetEntities()
                 .With<ShadowCaster>()
@@ -106,7 +106,7 @@ namespace Clunker.Graphics.Systems
                 ShaderStages.Compute,
                 Encoding.Default.GetBytes(clearDirectLightTextRes.Data),
                 "main"));
-            _clearDirectLightShader.Name = "ClearDirectLightChannel Shader";
+            _clearDirectLightShader.Name = "Clear Direct Light Channel Shader";
 
             _clearDirectLightPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_clearDirectLightShader,
                 new[]
@@ -116,12 +116,12 @@ namespace Clunker.Graphics.Systems
                 1, 1, 1));
             _clearDirectLightPipeline.Name = "ClearDirectLightChannel Pipeline";
 
-            var grabLightTextRes = context.ResourceLoader.LoadText("Shaders\\LightGrabber.glsl");
+            var grabLightTextRes = context.ResourceLoader.LoadText("Shaders\\LightInjector.glsl");
             _grabLightShader = factory.CreateFromSpirv(new ShaderDescription(
                 ShaderStages.Compute,
                 Encoding.Default.GetBytes(grabLightTextRes.Data),
                 "main"));
-            _grabLightShader.Name = "LightGrabber Shader";
+            _grabLightShader.Name = "Light Injector Shader";
 
             _grabLightPipeline = factory.CreateComputePipeline(new ComputePipelineDescription(_grabLightShader,
                 new[]
@@ -132,7 +132,7 @@ namespace Clunker.Graphics.Systems
                     materialInputLayouts.ResourceLayouts["SingleTexture"]
                 },
                 1, 1, 1));
-            _grabLightPipeline.Name = "Grab Light Pipeline";
+            _grabLightPipeline.Name = "Light Injector Pipeline";
 
             _shadowFramebuffer = factory.CreateFramebuffer(new FramebufferDescription(_shadowDepthTexture));
             _shadowFramebuffer.Name = "Shadow Framebuffer";
@@ -206,7 +206,7 @@ namespace Clunker.Graphics.Systems
                             frustrum.Contains(new BoundingSphere(transform.GetWorld(geometry.BoundingRadiusOffset), geometry.BoundingRadius)) != ContainmentType.Disjoint :
                             true;
 
-                        if (true)
+                        if (shouldRender)
                         {
                             _commandList.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
 

@@ -10,14 +10,10 @@
     <None Remove="Assets\Shaders\ClearDirectLightChannel.glsl" />
     <None Remove="Assets\Shaders\ClearImage3D.glsl" />
     <None Remove="Assets\Shaders\ClearR8UIntImage3D.glsl" />
-    <None Remove="Assets\Shaders\LightGrabber.glsl" />
-    <None Remove="Assets\Shaders\LightGridUpdater.glsl" />
     <None Remove="Assets\Shaders\LightInjector.glsl" />
-    <None Remove="Assets\Shaders\ReVoxelize.glsl" />
+    <None Remove="Assets\Shaders\LightPropogator.glsl" />
     <None Remove="Assets\Shaders\ShadowMap.fg" />
     <None Remove="Assets\Shaders\ShadowMap.vs" />
-    <None Remove="Assets\Shaders\ShadowMapped.fg" />
-    <None Remove="Assets\Shaders\ShadowMapped.vs" />
     <None Remove="Assets\Shaders\UploadOpacity.glsl" />
     <None Remove="Assets\Shaders\VoxelSpaceLit.fg" />
     <None Remove="Assets\Shaders\VoxelSpaceLit.vs" />
@@ -30,13 +26,10 @@
     <Content Include="Assets\Shaders\ClearR8UIntImage3D.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\Shaders\LightGrabber.glsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Assets\Shaders\LightInjector.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\Shaders\LightGridUpdater.glsl">
+    <Content Include="Assets\Shaders\LightPropogator.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Shaders\ClearImage3D.glsl">
@@ -51,25 +44,10 @@
     <Content Include="Assets\Shaders\UploadOpacity.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\Shaders\ReVoxelize.glsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Shaders\ShadowMapped.fg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Shaders\ShadowMapped.vs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Assets\Shaders\ShadowMap.fg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Shaders\ShadowMap.vs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Shaders\LightMesh.fg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Shaders\LightMesh.vs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Shaders\Mesh.fg">
