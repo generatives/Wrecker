@@ -1,14 +1,7 @@
-﻿using Clunker.Core;
-using Clunker.Geometry;
-using Clunker.Graphics;
-using Clunker.Graphics.Components;
+﻿using Clunker.Graphics;
 using DefaultEcs;
 using DefaultEcs.System;
 using MessagePack;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
 
 namespace Clunker.Networking
 {

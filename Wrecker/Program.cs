@@ -345,8 +345,8 @@ namespace ClunkerECSDemo
                 }
             });
             
-            AddSun(world, new Vector3i(6 * 32, 6 * 32, 6 * 32), new Vector4(15, 15, 15, 0));
-            //AddPointLight(world, Vector3.UnitY * 6, 16f, new Vector4(0, 0, 15, 0));
+            AddSun(world, new Vector3i(6 * 32, 6 * 32, 6 * 32), new Vector4(10, 10, 10, 0));
+            AddPointLight(world, Vector3.UnitY * 6, 16f, new Vector4(0, 0, 15, 0));
 
             var creationContext = new ResourceCreationContext()
             {
