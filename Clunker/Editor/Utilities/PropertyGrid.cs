@@ -94,6 +94,7 @@ namespace Clunker.Editor.Utilities
                 if(ImGui.Button("Invoke"))
                 {
                     function.Invoke(obj, new object[0]);
+                    anyChanged = true;
                 }
                 ImGui.PopID();
             }

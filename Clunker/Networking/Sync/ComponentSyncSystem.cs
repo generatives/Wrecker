@@ -23,7 +23,7 @@ namespace Clunker.Networking.Sync
 
         protected override void Sync(double deltaTime, Entity entity, ClientMessagingTarget target, Entity targetEntity)
         {
-            var voxelSpace = entity.Get<TComponent>();
+            var component = entity.Get<TComponent>();
             ref var netEntity = ref entity.Get<NetworkedEntity>();
 
             var message = new EntityMessage<ComponentSyncMessage<TComponent>>()
@@ -31,7 +31,7 @@ namespace Clunker.Networking.Sync
                 Id = netEntity.Id,
                 Data = new ComponentSyncMessage<TComponent>()
                 {
-                    Component = MessagePackSerializer.Serialize(voxelSpace, MessagePack.Resolvers.ContractlessStandardResolver.Options)
+                    Component = MessagePackSerializer.Serialize(component, MessagePack.Resolvers.ContractlessStandardResolver.Options)
         }
             };
 

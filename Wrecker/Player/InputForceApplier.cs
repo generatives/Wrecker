@@ -85,8 +85,8 @@ namespace Wrecker
 
     public class InputForceApplier : MessagePackMessageReciever<InputForceApplierMessage>
     {
-        private float _inputForce = 60;
-        private float _inertialCompensationForce = 30;
+        private float _inputForce = 6;
+        private float _inertialCompensationForce = 3;
         private PhysicsSystem _physicsSystem;
         private EntitySet _dynamicBodies;
 

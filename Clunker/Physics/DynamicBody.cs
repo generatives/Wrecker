@@ -27,5 +27,10 @@ namespace Clunker.Physics
         {
             Body.Velocity = new BodyVelocity();
         }
+
+        public void ResetPosition()
+        {
+            Body.Pose.Position = Vector3.Zero;
+        }
     }
 }

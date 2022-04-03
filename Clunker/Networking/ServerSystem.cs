@@ -47,7 +47,7 @@ namespace Clunker.Networking
 
             EventBasedNetListener listener = new EventBasedNetListener();
             _server = new NetManager(listener);
-            _server.SimulatePacketLoss = true;
+            _server.SimulatePacketLoss = false;
             _server.SimulationPacketLossChance = 5;
             _server.DisconnectTimeout = 60000;
             _server.Start(9050 /* port */);

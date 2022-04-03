@@ -12,6 +12,7 @@ using System.Numerics;
 using Clunker.Physics.Voxels;
 using Clunker.Voxels.Lighting;
 using Clunker.Voxels.Meshing;
+using Clunker.Networking;
 
 namespace Clunker.Voxels.Space
 {
@@ -41,6 +42,7 @@ namespace Clunker.Voxels.Space
 
         private void AddSurrounding(VoxelSpace space, Vector3i addSurrounding)
         {
+            var spaceTransform = space.Self.Get<Transform>();
             for (int x = -1; x <= 1; x++)
                 for (int y = -1; y <= 1; y++)
                     for (int z = -1; z <= 1; z++)
@@ -48,8 +50,8 @@ namespace Clunker.Voxels.Space
                         var index = new Vector3i(addSurrounding.X + x, addSurrounding.Y + y, addSurrounding.Z + z);
                         if(index != addSurrounding && !space.ContainsMember(index))
                         {
-                            var spaceTransform = space.Self.Get<Transform>();
                             var voxelGridObj = space.Self.World.CreateEntity();
+                            voxelGridObj.Set(new NetworkedEntity() { Id = Guid.NewGuid() });
                             var transform = new Transform(voxelGridObj);
                             transform.Position = new Vector3(index.X * space.GridSize * space.VoxelSize, index.Y * space.GridSize * space.VoxelSize, index.Z * space.GridSize * space.VoxelSize);
                             spaceTransform.AddChild(transform);

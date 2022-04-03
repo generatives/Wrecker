@@ -20,7 +20,7 @@ namespace Clunker.Physics
             ref var body = ref entity.Get<DynamicBody>();
             ref var transform = ref entity.Get<Transform>();
 
-            if(body.Body.Exists)
+            if(body.Body.Exists && body.Body.Awake)
             {
                 transform.WorldOrientation = body.Body.Pose.Orientation;
 

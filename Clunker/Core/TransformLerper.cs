@@ -29,54 +29,67 @@ namespace Clunker.Core
             ref var transform = ref entity.Get<Transform>();
             ref var lerp = ref entity.Get<TransformLerp>();
 
+            Utilties.Logging.Metrics.LogMetric($"LogicSystems:TransformLerper:MessageCount", lerp.Messages.Count, TimeSpan.FromSeconds(5));
+
             if (!lerp.CurrentTarget.HasValue)
             {
-                DequeueNextTarget(transform, ref lerp);
-                entity.Set(transform);
-                entity.Set(lerp);
+                if (DequeueNextTarget(transform, ref lerp, in entity))
+                {
+                    entity.Set(transform);
+                    entity.Set(lerp);
+                }
+                else
+                {
+                    return;
+                }
             }
 
-            if (lerp.CurrentTarget.HasValue)
+            var timeRemaining = lerp.CurrentTarget.Value.DeltaTime + lerp.Messages.Sum(m => m.DeltaTime);
+            var frameTime = Math.Max((float)deltaSeconds + (timeRemaining - SpareTimeTarget) * SpareTimeScaler, 0.001f);
+            while (frameTime > 0 && lerp.CurrentTarget.HasValue)
             {
-                Utilties.Logging.Metrics.LogMetric($"LogicSystems:TransformLerper:MessageCount", lerp.Messages.Count, TimeSpan.FromSeconds(5));
                 var serverFrameTime = lerp.CurrentTarget.Value.DeltaTime;
-                // The multiplier scales the affect of the message count on the frame time
-                var timeRemaining = lerp.CurrentTarget.Value.DeltaTime + lerp.Messages.Sum(m => m.DeltaTime);
-                var frameTime = Math.Max((float)deltaSeconds + (timeRemaining - SpareTimeTarget) * SpareTimeScaler, 0.001f);
-                if (lerp.Progress > serverFrameTime)
+                var remainingOnTarget = serverFrameTime - lerp.Progress;
+
+                if(remainingOnTarget > frameTime)
                 {
-                    var remainingOnTarget = serverFrameTime - lerp.Progress;
+                    LerpTransform(transform, lerp.CurrentTarget.Value, remainingOnTarget, frameTime);
+                    entity.Set(transform);
+                    lerp.Progress += frameTime;
+                    entity.Set(lerp);
+                }
+                else
+                {
                     LerpTransform(transform, lerp.CurrentTarget.Value, remainingOnTarget, remainingOnTarget);
-                    DequeueNextTarget(transform, ref lerp);
                     entity.Set(transform);
-                    serverFrameTime = lerp.CurrentTarget?.DeltaTime ?? 0f;
                     frameTime = frameTime - remainingOnTarget;
+                    DequeueNextTarget(transform, ref lerp, in entity);
                 }
-
-                if(lerp.CurrentTarget.HasValue)
-                {
-                    LerpTransform(transform, lerp.CurrentTarget.Value, serverFrameTime - lerp.Progress, frameTime);
-                    entity.Set(transform);
-                }
-
-                lerp.Progress += frameTime;
-
-                entity.Set(lerp);
             }
+
         }
 
-        private void DequeueNextTarget(Transform transform, ref TransformLerp lerp)
+        private bool DequeueNextTarget(Transform transform, ref TransformLerp lerp, in Entity entity)
         {
             if (lerp.Messages.Any())
             {
                 lerp.CurrentTarget = lerp.Messages.Dequeue();
                 transform.Parent = lerp.CurrentTarget.Value.ParentId.HasValue ? _entities.GetEntity(lerp.CurrentTarget.Value.ParentId.Value).GetOrCreate<Transform>((e) => new Transform(e)) : null;
+                lerp.Progress = 0;
+                entity.Set(lerp);
+                entity.Set(transform);
+                return true;
             }
             else
             {
-                lerp.CurrentTarget = null;
+                if (lerp.CurrentTarget.HasValue || lerp.Progress != 0)
+                {
+                    lerp.CurrentTarget = null;
+                    lerp.Progress = 0;
+                    entity.Set(lerp);
+                }
+                return false;
             }
-            lerp.Progress = 0;
         }
 
         private void LerpTransform(Transform transform, TransformMessage target, float remainingTime, float deltaTime)
