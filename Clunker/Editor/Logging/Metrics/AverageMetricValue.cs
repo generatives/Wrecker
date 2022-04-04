@@ -19,7 +19,7 @@ namespace Clunker.Editor.Logging.Metrics
             ImGui.InputText("Search", ref _search, 255);
             foreach(var name in Utilties.Logging.Metrics.ListMetrics())
             {
-                if(string.IsNullOrWhiteSpace(_search) || name.Contains(_search))
+                if(string.IsNullOrWhiteSpace(_search) || name.ToLower().Contains(_search.ToLower()))
                 {
                     var metrics = Utilties.Logging.Metrics.GetMetrics(name);
                     lock (metrics)

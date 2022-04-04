@@ -192,10 +192,12 @@ namespace Clunker.Graphics.Systems.Lighting
 
             _commandList.End();
             state.GraphicsDevice.SubmitCommands(_commandList, _fence);
-            state.GraphicsDevice.WaitForFence(_fence);
 
             _changedPhysicsBlocks.Complete();
             _changedPropogationGrids.Complete();
+
+            state.GraphicsDevice.WaitForFence(_fence);
+            _fence.Reset();
         }
 
         public void Dispose()

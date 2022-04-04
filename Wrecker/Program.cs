@@ -294,8 +294,7 @@ namespace ClunkerECSDemo
 
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
-            scene.AddSystem(new LightInjectionSystem(world));
-            //scene.AddSystem(new LightPropogationSystem(world));
+            scene.AddSystem(new GISystem(world));
 
             scene.AddSystem(new VoxelSpaceLitGeometryRenderer(world));
             scene.AddSystem(new ImGuiSystem(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.WindowWidth, _client.WindowHeight));

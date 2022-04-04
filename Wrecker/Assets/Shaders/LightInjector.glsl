@@ -36,6 +36,11 @@ layout(set = 2, binding = 0) uniform WorldBuffer
 
 layout(set = 3, binding = 0, r8ui) uniform uimage3D OpacityImage;
 
+layout(set = 4, binding = 0) uniform GridIndexOffsetBinding
+{
+    ivec4 GridIndexOffset;
+};
+
 const ivec3 TEX_MIN = ivec3(0, 0, 0);
 
 uvec3 GetLightValue(vec4 worldPos) {
@@ -71,7 +76,7 @@ uint GetOpacityValue(ivec3 texIndex) {
 
 void main()
 {
-    ivec3 texIndex = ivec3(gl_GlobalInvocationID.xyz);
+    ivec3 texIndex = ivec3(gl_GlobalInvocationID.xyz) + GridIndexOffset.xyz;
     uint ownOpacity = GetOpacityValue(texIndex);
     uvec4 ownTexValue = imageLoad(LightImage, texIndex);
 
