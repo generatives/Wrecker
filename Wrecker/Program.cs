@@ -150,7 +150,7 @@ namespace ClunkerECSDemo
 
             var voxelTypes = LoadVoxelTypes();
 
-            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
+            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 2, 3, 32));
             scene.AddSystem(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             scene.AddSystem(new VoxelSpaceExpanderSystem((e) => { }, world));
@@ -295,7 +295,7 @@ namespace ClunkerECSDemo
             scene.AddSystem(new SkyboxRenderer(_client.GraphicsDevice, _client.MainSceneFramebuffer, px, nx, py, ny, pz, nz));
 
             scene.AddSystem(new LightInjectionSystem(world));
-            scene.AddSystem(new LightPropogationSystem(world));
+            //scene.AddSystem(new LightPropogationSystem(world));
 
             scene.AddSystem(new VoxelSpaceLitGeometryRenderer(world));
             scene.AddSystem(new ImGuiSystem(_client.GraphicsDevice, _client.MainSceneFramebuffer, _client.WindowWidth, _client.WindowHeight));
@@ -345,7 +345,7 @@ namespace ClunkerECSDemo
                 }
             });
             
-            AddSun(world, new Vector3i(6 * 32, 6 * 32, 6 * 32), new Vector4(10, 10, 10, 0));
+            AddSun(world, new Vector3i(3 * 32, 3 * 32, 3 * 32), new Vector4(6, 6, 6, 0));
             AddPointLight(world, Vector3.UnitY * 6, 16f, new Vector4(0, 0, 15, 0));
 
             var creationContext = new ResourceCreationContext()

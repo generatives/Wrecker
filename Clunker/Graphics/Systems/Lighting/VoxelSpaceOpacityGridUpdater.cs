@@ -37,6 +37,8 @@ namespace Clunker.Graphics.Systems.Lighting
 
         private VoxelTypes _voxelTypes;
 
+        private Fence _fence;
+
         public VoxelSpaceOpacityGridUpdater(World world, VoxelTypes voxelTypes)
         {
             _changedPhysicsBlocks = world.GetEntities().With<VoxelGrid>().WhenAdded<PhysicsBlocks>().WhenChanged<PhysicsBlocks>().AsSet();
@@ -100,6 +102,8 @@ namespace Clunker.Graphics.Systems.Lighting
                 },
                 1, 1, 1));
             _uploadOpacityPipeline.Name = "Upload Opacity Pipeline";
+
+            _fence = factory.CreateFence(false);
         }
 
         public void Update(RenderingContext state)
@@ -187,8 +191,8 @@ namespace Clunker.Graphics.Systems.Lighting
             }
 
             _commandList.End();
-            state.GraphicsDevice.SubmitCommands(_commandList);
-            state.GraphicsDevice.WaitForIdle();
+            state.GraphicsDevice.SubmitCommands(_commandList, _fence);
+            state.GraphicsDevice.WaitForFence(_fence);
 
             _changedPhysicsBlocks.Complete();
             _changedPropogationGrids.Complete();
