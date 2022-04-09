@@ -130,74 +130,76 @@ namespace Clunker.Graphics.Systems.Lighting
                 }
             }
 
-            // Clear each changed opacity grid
-            _commandList.Begin();
-            _commandList.SetPipeline(_clearOpacityPipeline);
-            foreach (var changedVoxelSpace in changedPropogationGrids)
-            {
-                var propogationGrid = changedVoxelSpace.Get<LightPropogationGridResources>();
-                var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
-
-                _commandList.SetComputeResourceSet(0, propogationGrid.OpacityGridResourceSet);
-
-                var dispathSize = (propogationGrid.WindowSize * voxelSpace.GridSize) / 4;
-                _commandList.Dispatch((uint)dispathSize.X, (uint)dispathSize.Y, (uint)dispathSize.Z);
-            }
-
-            // Upload opacity information
-            _commandList.SetPipeline(_uploadOpacityPipeline);
-            foreach (var changedVoxelSpace in changedPropogationGrids)
-            {
-                var lightPropogationGrid = changedVoxelSpace.Get<LightPropogationGridResources>();
-                var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
-
-                foreach (var kvp in voxelSpace)
+            if(changedPropogationGrids.Any())
+            {// Clear each changed opacity grid
+                _commandList.Begin();
+                _commandList.SetPipeline(_clearOpacityPipeline);
+                foreach (var changedVoxelSpace in changedPropogationGrids)
                 {
-                    var memberIndex = kvp.Key;
-                    var voxelGridEntity = kvp.Value;
+                    var propogationGrid = changedVoxelSpace.Get<LightPropogationGridResources>();
+                    var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
 
-                    var physicsBlocks = voxelGridEntity.Get<PhysicsBlocks>();
-                    var opaqueBlocks = physicsBlocks.Blocks.Where(b => !_voxelTypes[(int)b.BlockType].Transparent).ToArray();
-                    if (opaqueBlocks.Length > 0)
+                    _commandList.SetComputeResourceSet(0, propogationGrid.OpacityGridResourceSet);
+
+                    var dispathSize = (propogationGrid.WindowSize * voxelSpace.GridSize) / 4;
+                    _commandList.Dispatch((uint)dispathSize.X, (uint)dispathSize.Y, (uint)dispathSize.Z);
+                }
+
+                // Upload opacity information
+                _commandList.SetPipeline(_uploadOpacityPipeline);
+                foreach (var changedVoxelSpace in changedPropogationGrids)
+                {
+                    var lightPropogationGrid = changedVoxelSpace.Get<LightPropogationGridResources>();
+                    var voxelSpace = changedVoxelSpace.Get<VoxelSpace>();
+
+                    foreach (var kvp in voxelSpace)
                     {
-                        var positions = opaqueBlocks.Select(b => new Vector4i(b.Index.X, b.Index.Y, b.Index.Z, 0)).ToArray();
-                        var positionBufferChanged = _blockPositionBuffer.Update(positions, _commandList);
+                        var memberIndex = kvp.Key;
+                        var voxelGridEntity = kvp.Value;
 
-                        var sizes = opaqueBlocks.Select(b => new Vector2i(b.Size.X, b.Size.Z)).ToArray();
-                        var sizeBufferChanged = _blockSizeBuffer.Update(sizes, _commandList);
-
-                        if(positionBufferChanged || sizeBufferChanged || _blockOpacityResourceSet == null)
+                        var physicsBlocks = voxelGridEntity.Get<PhysicsBlocks>();
+                        var opaqueBlocks = physicsBlocks.Blocks.Where(b => !_voxelTypes[(int)b.BlockType].Transparent).ToArray();
+                        if (opaqueBlocks.Length > 0)
                         {
-                            state.GraphicsDevice.DisposeWhenIdleIfNotNull(_blockOpacityResourceSet);
+                            var positions = opaqueBlocks.Select(b => new Vector4i(b.Index.X, b.Index.Y, b.Index.Z, 0)).ToArray();
+                            var positionBufferChanged = _blockPositionBuffer.Update(positions, _commandList);
 
-                            var resourceSetDesc = new ResourceSetDescription(_blockOpacityResouceLayout, _blockPositionBuffer.DeviceBuffer, _blockSizeBuffer.DeviceBuffer, _blockToLocalOffsetBuffer);
-                            _blockOpacityResourceSet = factory.CreateResourceSet(resourceSetDesc);
+                            var sizes = opaqueBlocks.Select(b => new Vector2i(b.Size.X, b.Size.Z)).ToArray();
+                            var sizeBufferChanged = _blockSizeBuffer.Update(sizes, _commandList);
+
+                            if (positionBufferChanged || sizeBufferChanged || _blockOpacityResourceSet == null)
+                            {
+                                state.GraphicsDevice.DisposeWhenIdleIfNotNull(_blockOpacityResourceSet);
+
+                                var resourceSetDesc = new ResourceSetDescription(_blockOpacityResouceLayout, _blockPositionBuffer.DeviceBuffer, _blockSizeBuffer.DeviceBuffer, _blockToLocalOffsetBuffer);
+                                _blockOpacityResourceSet = factory.CreateResourceSet(resourceSetDesc);
+                            }
+
+                            var blockToLocalOffset = memberIndex * voxelSpace.GridSize;
+                            var blockToLocalImageData = new ImageData()
+                            {
+                                Offset = new Vector4i(blockToLocalOffset.X, blockToLocalOffset.Y, blockToLocalOffset.Z, 0)
+                            };
+                            _commandList.UpdateBuffer(_blockToLocalOffsetBuffer, 0, blockToLocalImageData);
+
+                            _commandList.SetComputeResourceSet(0, _blockOpacityResourceSet);
+                            _commandList.SetComputeResourceSet(1, lightPropogationGrid.OpacityGridResourceSet);
+
+                            // TODO: See if local group sizes can speed this up (shader contains a nested loop so local groups might not work well)
+                            _commandList.Dispatch((uint)_blockPositionBuffer.Length, 1, 1);
                         }
-
-                        var blockToLocalOffset = memberIndex * voxelSpace.GridSize;
-                        var blockToLocalImageData = new ImageData()
-                        {
-                            Offset = new Vector4i(blockToLocalOffset.X, blockToLocalOffset.Y, blockToLocalOffset.Z, 0)
-                        };
-                        _commandList.UpdateBuffer(_blockToLocalOffsetBuffer, 0, blockToLocalImageData);
-
-                        _commandList.SetComputeResourceSet(0, _blockOpacityResourceSet);
-                        _commandList.SetComputeResourceSet(1, lightPropogationGrid.OpacityGridResourceSet);
-
-                        // TODO: See if local group sizes can speed this up (shader contains a nested loop so local groups might not work well)
-                        _commandList.Dispatch((uint)_blockPositionBuffer.Length, 1, 1);
                     }
                 }
-            }
 
-            _commandList.End();
-            state.GraphicsDevice.SubmitCommands(_commandList, _fence);
+                _commandList.End();
+                state.GraphicsDevice.SubmitCommands(_commandList, _fence);
+
+                state.GraphicsDevice.WaitForFence(_fence);
+                _fence.Reset();
+            }
 
             _changedPhysicsBlocks.Complete();
             _changedPropogationGrids.Complete();
-
-            state.GraphicsDevice.WaitForFence(_fence);
-            _fence.Reset();
         }
 
         public void Dispose()

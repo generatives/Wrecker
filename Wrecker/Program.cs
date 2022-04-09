@@ -150,7 +150,7 @@ namespace ClunkerECSDemo
 
             var voxelTypes = LoadVoxelTypes();
 
-            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 2, 3, 32));
+            scene.AddSystem(new WorldSpaceLoader((e) => { }, world, worldVoxelSpace, 4, 3, 32));
             scene.AddSystem(new ChunkGeneratorSystem(commandRecorder, parallelRunner, new ChunkGenerator(), world));
 
             scene.AddSystem(new VoxelSpaceExpanderSystem((e) => { }, world));
@@ -321,8 +321,6 @@ namespace ClunkerECSDemo
 
             scene.AddSystem(new PhysicsBlockFinder(world, parallelRunner));
 
-            //scene.AddSystem(new SunLightPropogationSystem(world, new VoxelTypes(voxelTypes)));
-
             scene.AddSystem(new VoxelGridMesher(commandRecorder, world, new VoxelTypes(voxelTypes), _client.GraphicsDevice, parallelRunner));
 
             scene.AddSystem(new MeshGeometryCleaner(world));
@@ -344,7 +342,7 @@ namespace ClunkerECSDemo
                 }
             });
             
-            AddSun(world, new Vector3i(3 * 32, 3 * 32, 3 * 32), new Vector4(6, 6, 6, 0));
+            AddSun(world, new Vector3i(6 * 32, 6 * 32, 6 * 32), new Vector4(6, 6, 6, 0));
             AddPointLight(world, Vector3.UnitY * 6, 16f, new Vector4(0, 0, 15, 0));
 
             var creationContext = new ResourceCreationContext()
@@ -443,7 +441,7 @@ namespace ClunkerECSDemo
                 sunEntity.Set(transform);
                 var directionalLight = new DirectionalLight()
                 {
-                    ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI / 2f, 1, 0.1f, radius),
+                    ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI / 2f, 1, 0.5f, radius),
                     LightProperties = new Clunker.Graphics.Data.LightProperties()
                     {
                         NearColour = colour,

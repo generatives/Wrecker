@@ -24,15 +24,6 @@ void main()
     uint opacity = imageLoad(OpacityTexture, texIndex).r;
     uvec4 texValue = imageLoad(LightTexture, texIndex);
 
-    bool beat = GridIndexOffset.w == 0;
-    beat = beat ^^ (texIndex.x % 2 == 1);
-    beat = beat ^^ (texIndex.y % 2 == 1);
-    beat = beat ^^ (texIndex.z % 2 == 1);
-
-    if(beat) {
-        return;
-    }
-    
     uvec3 light1 = getLightValue(texIndex + ivec3(0, 1, 0));
     uvec3 light2 = getLightValue(texIndex + ivec3(0, -1, 0));
     uvec3 light3 = getLightValue(texIndex + ivec3(1, 0, 0));
@@ -42,12 +33,12 @@ void main()
 
     uvec3 maxExternalLightValues = max(light1, max(light2, max(light3, max(light4, max(light5, light6)))));
 
-    uvec3 externalLightValues = mix(maxExternalLightValues - 1, uvec3(0), equal(maxExternalLightValues, uvec3(0)));
+    uvec3 externalLightValues = mix(maxExternalLightValues - 2, uvec3(0), lessThan(maxExternalLightValues, uvec3(2)));
     
     uvec3 currentLightValues = texValue.rgb;
     uvec3 directLightValues = bitfieldExtract(currentLightValues, 0, 4);
 
-    uvec3 newIndirectLightValues = opacity != 1 ? max(externalLightValues, directLightValues) : uvec3(0);
+    uvec3 newIndirectLightValues = opacity != 1 ? max(max(externalLightValues, directLightValues), uvec3(2)) : uvec3(0);
 
     uvec3 newLightValues = bitfieldInsert(currentLightValues, newIndirectLightValues, 4, 4);
 

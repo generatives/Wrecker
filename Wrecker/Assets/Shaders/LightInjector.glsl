@@ -43,6 +43,12 @@ layout(set = 4, binding = 0) uniform GridIndexOffsetBinding
 
 const ivec3 TEX_MIN = ivec3(0, 0, 0);
 
+float isLit(vec2 index, float currentDepth)
+{
+    float pcfDepth = texture(sampler2D(LightDepthTexture, LightDepthSampler), index).r;
+    return (pcfDepth > currentDepth ? 1.0 : 0.0);
+}
+
 uvec3 GetLightValue(vec4 worldPos) {
     vec4 lightSpacePos = LightProjMatrix * LightViewMatrix * worldPos;
     vec3 projSpacePosition = lightSpacePos.xyz / lightSpacePos.w;
@@ -53,14 +59,12 @@ uvec3 GetLightValue(vec4 worldPos) {
     
     vec2 texelSize = 1.0 / vec2(1024, 1024);
     float sum = 0.0;
-    for(int x = -1; x <= 1; x++) {
-        for(int y = -1; y <= 1; y++) {
-            vec2 index = projSpacePosition.xy + vec2(x, y) * texelSize;
-	        float pcfDepth = texture(sampler2D(LightDepthTexture, LightDepthSampler), index).r;
-            sum = sum + (pcfDepth > currentDepth ? 1.0 : 0.0);
-        }
-    }
-    float avg = sum / 9.0;
+    sum = sum + isLit(projSpacePosition.xy + vec2(-1, 0) * texelSize, currentDepth);
+    sum = sum + isLit(projSpacePosition.xy + vec2(1, 0) * texelSize, currentDepth);
+    sum = sum + isLit(projSpacePosition.xy + vec2(0, 0) * texelSize, currentDepth);
+    sum = sum + isLit(projSpacePosition.xy + vec2(0, -1) * texelSize, currentDepth);
+    sum = sum + isLit(projSpacePosition.xy + vec2(0, 1) * texelSize, currentDepth);
+    float avg = sum / 5.0;
 
     float distance = length(worldPos - lightWorldPosition);
     float weight = (distance - minDistance) / (maxDistance - minDistance);
@@ -89,7 +93,7 @@ void main()
     vec4 worldPosition = World * vec4(localPosition, 1.0);
 
     // true is for hasOpaqueNeighbour
-    uvec3 lightValue = (ownOpacity != 1 && true) ? GetLightValue(worldPosition) : uvec3(0);
+    uvec3 lightValue = (ownOpacity != 1 && hasOpaqueNeighbour) ? GetLightValue(worldPosition) : uvec3(0);
 
     uvec3 ownLightValue = ownTexValue.rgb;
     uvec3 currentLightValue = bitfieldExtract(ownLightValue, 0, 4);

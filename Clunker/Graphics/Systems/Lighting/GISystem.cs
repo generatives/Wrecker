@@ -296,8 +296,8 @@ namespace Clunker.Graphics.Systems.Lighting
             var lightProj = directionalLight.ProjectionMatrix;
 
             var lightFrustrum = new BoundingFrustum(lightView * lightProj);
-
-            if(true)
+            var contains = lightFrustrum.Contains(ref cameraFrustrum);
+            if (true)
             {
                 _commandList.ClearDepthStencil(1f);
 
@@ -348,6 +348,7 @@ namespace Clunker.Graphics.Systems.Lighting
 
             _commandList.SetComputeResourceSet(4, _offsetResourceSet);
 
+            // TOFO: Frustrum Cull Injection
             foreach (var lightGridEntity in _voxelSpaceLightGridEntities.GetEntities())
             {
                 var lightPropogationGrid = lightGridEntity.Get<LightPropogationGridResources>();
@@ -367,7 +368,6 @@ namespace Clunker.Graphics.Systems.Lighting
                 _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 0));
                 _commandList.UpdateBuffer(_worldMatrixBuffer, 0, transform.WorldMatrix);
 
-                // TODO: Frustrum cull light injections
                 _commandList.SetComputeResourceSet(0, lightPropogationGrid.LightGridResourceSet);
                 _commandList.SetComputeResourceSet(1, _lightingInputsResourceSet);
                 _commandList.SetComputeResourceSet(2, _worldTransformResourceSet);
@@ -402,26 +402,8 @@ namespace Clunker.Graphics.Systems.Lighting
 
                 _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 0));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 1));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 0));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 1));
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 0));
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 1));
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 0));
-                _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
-
-                _commandList.UpdateBuffer(_offsetDeviceBuffer, 0, new Vector4i(minGridIndex, 1));
                 _commandList.Dispatch((uint)dispatchSize.X, (uint)dispatchSize.Y, (uint)dispatchSize.Z);
             }
         }

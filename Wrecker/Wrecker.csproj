@@ -12,6 +12,7 @@
     <None Remove="Assets\Shaders\ClearR8UIntImage3D.glsl" />
     <None Remove="Assets\Shaders\LightInjector.glsl" />
     <None Remove="Assets\Shaders\LightPropogator.glsl" />
+    <None Remove="Assets\Shaders\LightPropogator2.glsl" />
     <None Remove="Assets\Shaders\ShadowMap.fg" />
     <None Remove="Assets\Shaders\ShadowMap.vs" />
     <None Remove="Assets\Shaders\UploadOpacity.glsl" />
@@ -27,6 +28,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Shaders\LightInjector.glsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Shaders\LightPropogator2.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Shaders\LightPropogator.glsl">
