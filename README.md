@@ -1,3 +1,4 @@
+Note: This project has been spiritually superseded by https://github.com/generatives/clear_skies. Please jump over there for a bigger, better game!
 # Wrecker
 Voxel Engine and Game
 
